@@ -16,8 +16,8 @@ import {
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 const DEFAULT_STATE: RoomState = {
-  layout: 'strip3',
-  sessionCount: 3,
+  layout: 'strip4',
+  sessionCount: 4,
   timer: 3,
   color: 'none',
   colorCSS: 'none',
@@ -32,7 +32,7 @@ export function useRoom(roomId: string, roomCode: string) {
   const participantId = getParticipantId();
 
   const [roomState, setRoomState] = useState<RoomState>(DEFAULT_STATE);
-  const [phase, setPhase] = useState<SessionPhase>('idle');
+  const [phase, setPhase] = useState<SessionPhase | 'error_full'>('idle');
   const [myPhotos, setMyPhotos] = useState<CapturedPhoto[]>([]);
   const [partnerPhotos, setPartnerPhotos] = useState<CapturedPhoto[]>([]);
   const [partnerInfo, setPartnerInfo] = useState<ParticipantInfo | null>(null);
@@ -44,20 +44,29 @@ export function useRoom(roomId: string, roomCode: string) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ── Join room and subscribe ──────────────────────────────────────────────
-
   useEffect(() => {
     let mounted = true;
 
     async function setup() {
-      // Determine role
+      const { data: existing } = await supabase
+        .from('room_participants')
+        .select('*')
+        .eq('room_id', roomId)
+        .eq('participant_id', participantId)
+        .single();
+        
       const count = await getParticipantsCount(roomId);
-      const assignedRole: 'host' | 'guest' = count === 0 ? 'host' : 'guest';
+      
+      if (!existing && count >= 2) {
+        if (mounted) setPhase('error_full');
+        return;
+      }
+
+      const assignedRole: 'host' | 'guest' = count === 0 || existing?.role === 'host' ? 'host' : 'guest';
       if (mounted) setRole(assignedRole);
 
       await joinRoom(roomId, participantId, assignedRole);
 
-      // Subscribe to realtime channel
       const channel = supabase.channel(`room:${roomCode}`, {
         config: { broadcast: { self: false } },
       });
@@ -69,7 +78,6 @@ export function useRoom(roomId: string, roomCode: string) {
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
-            // Announce presence
             broadcast({ type: 'partner_joined', senderId: participantId, payload: { role: assignedRole } });
           }
         });
@@ -84,10 +92,7 @@ export function useRoom(roomId: string, roomCode: string) {
       channelRef.current?.unsubscribe();
       if (countdownRef.current) clearTimeout(countdownRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, roomCode]);
-
-  // ── Broadcast ────────────────────────────────────────────────────────────
+  }, [roomId, roomCode, participantId]);
 
   const broadcast = useCallback((msg: RealtimeMessage) => {
     channelRef.current?.send({
@@ -96,8 +101,6 @@ export function useRoom(roomId: string, roomCode: string) {
       payload: msg,
     });
   }, []);
-
-  // ── Handle incoming messages ─────────────────────────────────────────────
 
   const handleIncoming = useCallback((msg: RealtimeMessage) => {
     switch (msg.type) {
@@ -133,10 +136,7 @@ export function useRoom(roomId: string, roomCode: string) {
         break;
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // ── Countdown logic ──────────────────────────────────────────────────────
 
   const runCountdown = useCallback((timerVal: number, totalCount: number, isMaster: boolean) => {
     setPhase('countdown');
@@ -149,38 +149,28 @@ export function useRoom(roomId: string, roomCode: string) {
       if (current > 0) {
         countdownRef.current = setTimeout(tick, 1000);
       } else {
-        // Time to capture!
         setPhase('capturing');
-        if (isMaster) {
-          // Signal to capture
-          setPhase('capturing');
-        }
       }
     };
 
     countdownRef.current = setTimeout(tick, 1000);
   }, []);
 
-  // ── Start session ────────────────────────────────────────────────────────
-
   const startSession = useCallback(() => {
-    const count = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
+    const totalCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 4;
     setMyPhotos([]);
     setPartnerPhotos([]);
     setPhotoIndex(0);
     setPhase('countdown');
 
-    // Broadcast countdown_start to partner
     broadcast({
       type: 'countdown_start',
       senderId: participantId,
-      payload: { timerVal: roomState.timer, totalCount: count },
+      payload: { timerVal: 3, totalCount },
     });
 
-    runCountdown(roomState.timer, count, true);
+    runCountdown(3, totalCount, true);
   }, [roomState, broadcast, participantId, runCountdown]);
-
-  // ── Called when a photo is captured locally ──────────────────────────────
 
   const onPhotoCaptured = useCallback((dataUrl: string, index: number) => {
     setMyPhotos(prev => {
@@ -189,35 +179,33 @@ export function useRoom(roomId: string, roomCode: string) {
       return next;
     });
 
-    // Broadcast to partner
     broadcast({
       type: 'photo_captured',
       senderId: participantId,
       payload: { dataUrl, index },
     });
 
-    const totalCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
+    const totalCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 4;
 
     if (index + 1 >= totalCount) {
-      // All photos done
       setTimeout(() => {
         setPhase('customizing');
         updateRoomStatus(roomId, 'active');
       }, 800);
     } else {
-      // Next photo
       setPhotoIndex(index + 1);
       setPhase('countdown');
+      
+      const burstDelay = 2;
+      
       broadcast({
         type: 'countdown_start',
         senderId: participantId,
-        payload: { timerVal: roomState.timer, totalCount },
+        payload: { timerVal: burstDelay, totalCount },
       });
-      runCountdown(roomState.timer, totalCount, true);
+      runCountdown(burstDelay, totalCount, true);
     }
   }, [broadcast, participantId, roomState, roomId, runCountdown]);
-
-  // ── Update shared state ──────────────────────────────────────────────────
 
   const updateState = useCallback((partial: Partial<RoomState>) => {
     setRoomState(prev => {
@@ -232,8 +220,6 @@ export function useRoom(roomId: string, roomCode: string) {
     updateState({ color: colorId, colorCSS: found?.css || 'none' });
   }, [updateState]);
 
-  // ── Reset ────────────────────────────────────────────────────────────────
-
   const handleReset = useCallback((andBroadcast = true) => {
     setMyPhotos([]);
     setPartnerPhotos([]);
@@ -247,7 +233,6 @@ export function useRoom(roomId: string, roomCode: string) {
   }, [broadcast, participantId]);
 
   return {
-    // State
     roomState,
     phase,
     myPhotos,
@@ -258,7 +243,6 @@ export function useRoom(roomId: string, roomCode: string) {
     photoIndex,
     participantId,
     role,
-    // Actions
     startSession,
     onPhotoCaptured,
     updateState,

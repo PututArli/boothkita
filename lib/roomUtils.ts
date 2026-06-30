@@ -54,7 +54,6 @@ export async function getRoomByCode(code: string) {
 }
 
 export async function joinRoom(roomId: string, participantId: string, role: 'host' | 'guest') {
-  // Check if already joined
   const { data: existing } = await supabase
     .from('room_participants')
     .select('*')

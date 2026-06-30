@@ -1,3 +1,11 @@
+export type LayoutKey = 'strip3' | 'strip4' | 'grid2x2' | 'single';
+
+export interface LayoutDef {
+  count: number;
+  cols: number;
+  rows: number;
+}
+
 export interface RoomState {
   layout: LayoutKey;
   sessionCount: number;
@@ -9,14 +17,6 @@ export interface RoomState {
   customText: string;
   showDate: boolean;
   adj: { b: number; c: number; s: number; w: number };
-}
-
-export type LayoutKey = 'strip3' | 'strip4' | 'grid2x2' | 'single';
-
-export interface LayoutDef {
-  count: number;
-  cols: number;
-  rows: number;
 }
 
 export interface CapturedPhoto {
@@ -54,6 +54,7 @@ export type SessionPhase =
   | 'capturing'
   | 'reviewing'
   | 'customizing'
+  | 'error_full'
   | 'done';
 
 export const COLOR_FILTERS = [

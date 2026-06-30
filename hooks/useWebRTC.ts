@@ -17,6 +17,9 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [isMirrored, setIsMirrored] = useState(true);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -58,7 +61,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           sendSignal('sdp_offer', offer);
         }
       } catch (e) {
-        console.error('Negotiation error:', e);
       } finally {
         isNegotiating.current = false;
       }
@@ -67,28 +69,48 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     return pc;
   }, [isHost, sendSignal]);
 
+  const toggleCamera = useCallback(() => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+  }, []);
+
+  const toggleMirror = useCallback(() => {
+    setIsMirrored(prev => !prev);
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     let mounted = true;
 
     async function init() {
-      // Get local media
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode },
           audio: false,
         });
         if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
+        
+        if (localStream) {
+          localStream.getTracks().forEach(t => t.stop());
+        }
+        
         setLocalStream(stream);
 
-        // Create peer connection
-        const pc = createPC();
-        pcRef.current = pc;
+        const pc = pcRef.current || createPC();
+        if (!pcRef.current) pcRef.current = pc;
 
-        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        const senders = pc.getSenders();
+        stream.getTracks().forEach(track => {
+          const sender = senders.find(s => s.track?.kind === track.kind);
+          if (sender) {
+            sender.replaceTrack(track);
+          } else {
+            pc.addTrack(track, stream);
+          }
+        });
 
-        // Subscribe to WebRTC signal channel
+        if (channelRef.current) return; 
+
         const channel = supabase.channel(`webrtc:${roomCode}`, {
           config: { broadcast: { self: false } },
         });
@@ -102,7 +124,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           })
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED' && isHost) {
-              // Host creates offer after brief delay to let guest subscribe
               setTimeout(async () => {
                 if (!mounted) return;
                 try {
@@ -110,7 +131,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
                   await pc.setLocalDescription(offer);
                   sendSignal('sdp_offer', offer);
                 } catch (e) {
-                  console.error('Offer error:', e);
                 }
               }, 2000);
             }
@@ -118,7 +138,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
         channelRef.current = channel;
       } catch (e) {
-        console.error('getUserMedia error:', e);
       }
     }
 
@@ -127,7 +146,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
         if (type === 'sdp_offer') {
           const offer = data as RTCSessionDescriptionInit;
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          // Flush pending candidates
           for (const c of pendingCandidates.current) {
             await pc.addIceCandidate(new RTCIceCandidate(c));
           }
@@ -154,7 +172,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           }
         }
       } catch (e) {
-        console.error('Signal handling error:', e);
       }
     }
 
@@ -162,33 +179,16 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     return () => {
       mounted = false;
+    };
+  }, [roomCode, isHost, facingMode, createPC, participantId, sendSignal]);
+  
+  useEffect(() => {
+    return () => {
       localStream?.getTracks().forEach(t => t.stop());
       pcRef.current?.close();
       channelRef.current?.unsubscribe();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, isHost]);
+    }
+  }, []);
 
-  const captureFrame = useCallback((): string | null => {
-    if (!localStream) return null;
-    const video = document.createElement('video');
-    video.srcObject = localStream;
-    video.muted = true;
-
-    // Use the actual live video element on page
-    const liveVideo = document.getElementById('local-video') as HTMLVideoElement;
-    if (!liveVideo) return null;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = liveVideo.videoWidth || 640;
-    canvas.height = liveVideo.videoHeight || 480;
-    const ctx = canvas.getContext('2d')!;
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(liveVideo, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
-    return canvas.toDataURL('image/jpeg', 0.92);
-  }, [localStream]);
-
-  return { localStream, remoteStream, isConnected, captureFrame };
+  return { localStream, remoteStream, isConnected, facingMode, isMirrored, toggleCamera, toggleMirror };
 }

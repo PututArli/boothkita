@@ -1,7 +1,5 @@
 import { RoomState, LAYOUTS, LayoutKey } from './types';
 
-// ─── Border Presets ──────────────────────────────────────────────────────────
-
 const BORDER_DEFS: Record<string, {
   frame: string; accent: string; accentSoft: string;
   symbol: string; symbol2: string; symbol3: string; symbol4: string;
@@ -18,8 +16,6 @@ const BORDER_DEFS: Record<string, {
   nature: { frame: '#2d6a4f', accent: '#95d5b2', accentSoft: 'rgba(149,213,178,0.2)', symbol: '🌿', symbol2: '🌻', symbol3: '🦋', symbol4: '🌺' },
   magic: { frame: '#7b2d8b', accent: '#e040fb', accentSoft: 'rgba(224,64,251,0.2)', symbol: '🔮', symbol2: '⚡', symbol3: '🌙', symbol4: '🦄' },
 };
-
-// ─── Canvas helpers ───────────────────────────────────────────────────────────
 
 function parseGradient(val: string): [string, string] {
   const parts = val.split(',');
@@ -43,8 +39,6 @@ function drawRoundedRect(
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
-
-// ─── Background ───────────────────────────────────────────────────────────────
 
 function drawBackground(
   ctx: CanvasRenderingContext2D,
@@ -91,8 +85,6 @@ function drawBackground(
     }
   }
 }
-
-// ─── Photo slot (with border style) ──────────────────────────────────────────
 
 function drawPhotoSlot(
   ctx: CanvasRenderingContext2D,
@@ -157,7 +149,6 @@ function drawPhotoSlot(
       ctx.restore();
     }
   } else {
-    // plain
     if (img) {
       ctx.save();
       ctx.filter = filter;
@@ -172,8 +163,6 @@ function drawPhotoSlot(
   ctx.restore();
 }
 
-// ─── Special border decorations ───────────────────────────────────────────────
-
 function drawSpecialBorder(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
@@ -184,13 +173,11 @@ function drawSpecialBorder(
 
   ctx.save();
 
-  // Thick colored border
   const bw = Math.round(Math.min(w, h) * 0.03);
   ctx.strokeStyle = preset.frame;
   ctx.lineWidth = bw * 2;
   ctx.strokeRect(0, 0, w, h);
 
-  // Corner accent circles
   const cr = bw * 2.5;
   const corners = [[cr, cr], [w - cr, cr], [cr, h - cr], [w - cr, h - cr]];
   ctx.fillStyle = preset.accent;
@@ -200,7 +187,6 @@ function drawSpecialBorder(
     ctx.fill();
   });
 
-  // Symbols along top and bottom
   const emojis = [preset.symbol, preset.symbol2, preset.symbol3, preset.symbol4];
   ctx.font = `${bw * 2.5}px serif`;
   ctx.textAlign = 'center';
@@ -215,8 +201,6 @@ function drawSpecialBorder(
 
   ctx.restore();
 }
-
-// ─── Footer text ─────────────────────────────────────────────────────────────
 
 function drawFooter(
   ctx: CanvasRenderingContext2D,
@@ -251,11 +235,9 @@ function drawFooter(
   }
 }
 
-// ─── Main compose function ────────────────────────────────────────────────────
-
 interface ComposeOptions {
-  myPhotos: string[];    // dataURL array from local participant
-  partnerPhotos: string[]; // dataURL array from remote participant
+  myPhotos: string[];
+  partnerPhotos: string[];
   state: RoomState;
   canvas: HTMLCanvasElement;
 }
@@ -265,19 +247,15 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
   const layout = LAYOUTS[state.layout as LayoutKey] || LAYOUTS.strip3;
   const count = layout.count;
 
-  // Canvas dimensions
   const PHOTO_W = 480;
   const PHOTO_H = 360;
   const MARGIN = 16;
   const FOOTER_H = Math.round(PHOTO_H * 0.08);
   const TOP_PAD = MARGIN;
 
-  // Side-by-side: my photos on left column, partner on right column
-  // Each cell is PHOTO_W x PHOTO_H, 2 columns wide
   const cols = layout.cols;
   const rows = layout.rows;
 
-  // Total canvas: 2 cameras side by side per row
   const cellW = PHOTO_W;
   const cellH = PHOTO_H;
   const totalW = (cellW + MARGIN) * cols * 2 + MARGIN;
@@ -288,15 +266,13 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
 
   const ctx = canvas.getContext('2d')!;
 
-  // Background
   drawBackground(ctx, totalW, totalH, state.frameBg);
 
-  // Load images
   const loadImg = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => resolve(new Image()); // empty on error
+      img.onerror = () => resolve(new Image());
       img.src = url;
     });
 
@@ -305,7 +281,6 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
 
   const filter = getCombinedFilter(state);
 
-  // Draw photo cells
   for (let i = 0; i < count; i++) {
     const row = Math.floor(i / cols);
     const col = i % cols;
@@ -314,27 +289,20 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
     const partnerX = myX + cellW + MARGIN;
     const cellY = TOP_PAD + row * (cellH + MARGIN);
 
-    // Draw "ME" label area (subtle divider)
     drawPhotoSlot(ctx, myImgs[i] || null, myX, cellY, cellW, cellH, state.photoBorder, filter);
     drawPhotoSlot(ctx, partnerImgs[i] || null, partnerX, cellY, cellW, cellH, state.photoBorder, filter);
   }
 
-  // Special border overlay
   if (BORDER_DEFS[state.photoBorder]) {
     drawSpecialBorder(ctx, totalW, totalH, state.photoBorder);
   }
 
-  // Footer
   drawFooter(ctx, totalW, totalH, state.customText, state.showDate, state.frameBg);
 }
-
-// ─── Single strip compose (for preview) ──────────────────────────────────────
 
 export async function composePreview(opts: ComposeOptions): Promise<void> {
   await composeDuoPhoto(opts);
 }
-
-// ─── Filter CSS helper ────────────────────────────────────────────────────────
 
 export function getCombinedFilter(state: RoomState): string {
   const { b, c, s, w } = state.adj;
