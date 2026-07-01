@@ -4,7 +4,7 @@ interface PreviewModalProps {
   showResult: boolean;
   setShowResult: (val: boolean) => void;
   resultComposed: boolean;
-  resultCanvasRef: RefObject<HTMLCanvasElement>;
+  resultImgUrl: string;
   handleDownload: () => void;
   handleReset: (val: boolean) => void;
 }
@@ -13,7 +13,7 @@ export default function PreviewModal({
   showResult,
   setShowResult,
   resultComposed,
-  resultCanvasRef,
+  resultImgUrl,
   handleDownload,
   handleReset,
 }: PreviewModalProps) {
@@ -35,7 +35,12 @@ export default function PreviewModal({
         </div>
 
         <div className="result-canvas-wrap">
-          <canvas ref={resultCanvasRef} style={{ maxWidth: '100%' }} />
+          {resultImgUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={resultImgUrl} alt="Hasil Foto Berdua" style={{ maxWidth: '100%', borderRadius: 16 }} />
+          ) : (
+            <div style={{ width: '100%', height: 300, background: '#111' }} />
+          )}
         </div>
 
         {!resultComposed && (

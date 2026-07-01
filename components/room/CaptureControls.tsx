@@ -73,10 +73,12 @@ export default function CaptureControls({
       <div className="sidebar-tabs" role="tablist">
         {[
           { id: 'layout', label: '⊞ Layout' },
-          { id: 'color', label: '🎨 Filter' },
-          { id: 'frame', label: '🖼 Frame' },
-          { id: 'border', label: '✨ Border' },
-          { id: 'text', label: '✏️ Teks' },
+          ...(phase === 'customizing' ? [
+            { id: 'color', label: '🎨 Filter' },
+            { id: 'frame', label: '🖼 Frame' },
+            { id: 'border', label: '✨ Border' },
+            { id: 'text', label: '✏️ Teks' },
+          ] : [])
         ].map(t => (
           <button
             key={t.id}

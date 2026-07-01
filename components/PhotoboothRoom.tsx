@@ -32,6 +32,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   const [showResult, setShowResult] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const [resultComposed, setResultComposed] = useState(false);
+  const [resultImgUrl, setResultImgUrl] = useState<string>('');
 
   // Attach local stream to video element
   useEffect(() => {
@@ -100,6 +101,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       state: roomState,
       canvas: resultCanvasRef.current,
     });
+    setResultImgUrl(resultCanvasRef.current.toDataURL('image/png'));
     setResultComposed(true);
   }, [roomState, myPhotos, partnerPhotos]);
 
@@ -116,17 +118,19 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   useEffect(() => {
     if (phase === 'customizing') {
       composeResult();
+    } else {
+      setActiveTab('layout');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomState]);
+  }, [roomState, phase]);
 
   const handleDownload = useCallback(() => {
-    if (!resultCanvasRef.current) return;
+    if (!resultImgUrl) return;
     const a = document.createElement('a');
-    a.href = resultCanvasRef.current.toDataURL('image/png');
+    a.href = resultImgUrl;
     a.download = `photoboothduo-${roomCode}-${Date.now()}.png`;
     a.click();
-  }, [roomCode]);
+  }, [roomCode, resultImgUrl]);
 
   const copyLink = useCallback(() => {
     navigator.clipboard.writeText(`${window.location.origin}/room/${roomCode}`);
@@ -191,7 +195,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         showResult={showResult}
         setShowResult={setShowResult}
         resultComposed={resultComposed}
-        resultCanvasRef={resultCanvasRef}
+        resultImgUrl={resultImgUrl}
         handleDownload={handleDownload}
         handleReset={handleReset}
       />
