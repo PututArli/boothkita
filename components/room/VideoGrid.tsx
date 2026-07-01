@@ -71,7 +71,6 @@ export default function VideoGrid({
                 muted
                 style={{
                   transform: isMirrored ? 'scaleX(-1)' : 'none',
-                  filter: `brightness(${roomState.adj.b}%) contrast(${roomState.adj.c}%) saturate(${roomState.adj.s}%) sepia(${roomState.adj.w}%)${roomState.colorCSS !== 'none' ? ` ${roomState.colorCSS}` : ''}`,
                 }}
               />
               <div className="video-cell-label">
@@ -107,7 +106,6 @@ export default function VideoGrid({
                     autoPlay
                     playsInline
                     muted={false}
-                    style={{ filter: `brightness(${roomState.adj.b}%) contrast(${roomState.adj.c}%) saturate(${roomState.adj.s}%) sepia(${roomState.adj.w}%)${roomState.colorCSS !== 'none' ? ` ${roomState.colorCSS}` : ''}` }}
                   />
                   <div className="video-cell-label">👤 Partner</div>
                 </>

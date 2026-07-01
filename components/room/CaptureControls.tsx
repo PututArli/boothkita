@@ -8,12 +8,11 @@ interface CaptureControlsProps {
   roomState: RoomState;
   partnerConnected: boolean;
   phase: SessionPhase | 'error_full';
-  activeTab: 'layout' | 'color' | 'frame' | 'border' | 'text';
-  setActiveTab: Dispatch<SetStateAction<'layout' | 'color' | 'frame' | 'border' | 'text'>>;
+  activeTab: 'layout' | 'frame' | 'border' | 'text';
+  setActiveTab: Dispatch<SetStateAction<'layout' | 'frame' | 'border' | 'text'>>;
   copyDone: boolean;
   copyLink: () => void;
   updateState: (partial: Partial<RoomState>) => void;
-  setColor: (colorId: string) => void;
   handleReset: (andBroadcast: boolean) => void;
   startSession: () => void;
   setShowResult: (val: boolean) => void;
@@ -29,7 +28,6 @@ export default function CaptureControls({
   copyDone,
   copyLink,
   updateState,
-  setColor,
   handleReset,
   startSession,
   setShowResult,
@@ -73,12 +71,9 @@ export default function CaptureControls({
       <div className="sidebar-tabs" role="tablist">
         {[
           { id: 'layout', label: '⊞ Layout' },
-          ...(phase === 'customizing' ? [
-            { id: 'color', label: '🎨 Filter' },
-            { id: 'frame', label: '🖼 Frame' },
-            { id: 'border', label: '✨ Border' },
-            { id: 'text', label: '✏️ Teks' },
-          ] : [])
+          { id: 'frame', label: '🖼 Frame' },
+          { id: 'border', label: '✨ Border' },
+          { id: 'text', label: '✏️ Teks' },
         ].map(t => (
           <button
             key={t.id}
@@ -86,7 +81,7 @@ export default function CaptureControls({
             role="tab"
             aria-selected={activeTab === t.id}
             className={`sidebar-tab ${activeTab === t.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(t.id as 'layout' | 'color' | 'frame' | 'border' | 'text')}
+            onClick={() => setActiveTab(t.id as 'layout' | 'frame' | 'border' | 'text')}
           >
             {t.label}
           </button>
@@ -126,56 +121,6 @@ export default function CaptureControls({
             ))}
           </div>
 
-          <span className="section-label" style={{ marginTop: 20 }}>Adjust Kamera</span>
-          {[
-            { key: 'b', label: 'Brightness', min: 50, max: 150 },
-            { key: 'c', label: 'Contrast', min: 50, max: 150 },
-            { key: 's', label: 'Saturation', min: 0, max: 200 },
-            { key: 'w', label: 'Warmth', min: 0, max: 100 },
-          ].map(({ key, label, min, max }) => (
-            <div className="slider-group" key={key}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{label}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{roomState.adj[key as keyof typeof roomState.adj]}</span>
-              </div>
-              <input
-                id={`adj-${key}`}
-                type="range"
-                min={min}
-                max={max}
-                value={roomState.adj[key as keyof typeof roomState.adj]}
-                onChange={e => updateState({ adj: { ...roomState.adj, [key]: Number(e.target.value) } })}
-              />
-            </div>
-          ))}
-          <button
-            id="btn-reset-adj"
-            className="opt-btn"
-            style={{ width: '100%', marginTop: 8 }}
-            onClick={() => updateState({ adj: { b: 100, c: 100, s: 100, w: 0 } })}
-          >
-            🔄 Reset Adjust
-          </button>
-        </div>
-
-        <div className={`panel ${activeTab === 'color' ? 'active' : ''}`} id="panel-color">
-          <span className="section-label">Efek Warna</span>
-          <div className="color-grid">
-            {COLOR_FILTERS.map(f => (
-              <button
-                key={f.id}
-                id={`filter-${f.id}`}
-                className={`color-btn ${roomState.color === f.id ? 'active' : ''}`}
-                onClick={() => setColor(f.id)}
-              >
-                <div
-                  className="color-swatch"
-                  style={{ filter: f.css !== 'none' ? f.css : undefined, background: '#88808c' }}
-                />
-                {f.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className={`panel ${activeTab === 'frame' ? 'active' : ''}`} id="panel-frame">
@@ -251,7 +196,7 @@ export default function CaptureControls({
       </div>
 
       <div className="sidebar-footer">
-        {phase === 'customizing' ? (
+        {phase === 'done' ? (
           <>
             <button id="btn-footer-result" className="capture-btn" onClick={() => setShowResult(true)}>
               🎉 Lihat &amp; Unduh Hasil
@@ -265,7 +210,7 @@ export default function CaptureControls({
             id="btn-footer-start"
             className="capture-btn"
             onClick={startSession}
-            disabled={(['countdown', 'capturing', 'customizing', 'error_full'] as string[]).includes(phase) || !partnerConnected}
+            disabled={(['countdown', 'capturing', 'error_full'] as string[]).includes(phase) || !partnerConnected}
           >
             {!partnerConnected ? '⏳ Tunggu partner...' : '📸 MULAI SESI FOTO'}
           </button>

@@ -19,13 +19,10 @@ const DEFAULT_STATE: RoomState = {
   layout: 'strip4',
   sessionCount: 4,
   timer: 3,
-  color: 'none',
-  colorCSS: 'none',
   frameBg: { type: 'solid', val: '#ffffff' },
   photoBorder: 'plain',
   customText: '',
   showDate: true,
-  adj: { b: 100, c: 100, s: 100, w: 0 },
 };
 
 export function useRoom(roomId: string, roomCode: string) {
@@ -160,7 +157,11 @@ export function useRoom(roomId: string, roomCode: string) {
 
       // DB count check removed to prevent permanent room lock. Capacity is now handled via Presence.
 
-      const assignedRole: 'host' | 'guest' = count === 0 || existing?.role === 'host' ? 'host' : 'guest';
+      // Role assignment: existing host stays host, first joiner is host, anyone else is guest
+      const assignedRole: 'host' | 'guest' = existing?.role === 'host' ? 'host'
+        : existing?.role === 'guest' ? 'guest'
+        : count === 0 ? 'host'
+        : 'guest';
       if (mountedRef.current) setRole(assignedRole);
 
       await joinRoom(roomId, participantId, assignedRole);
@@ -256,9 +257,9 @@ export function useRoom(roomId: string, roomCode: string) {
     if (index + 1 >= totalCount) {
       setTimeout(() => {
         if (!mountedRef.current) return;
-        setPhase('customizing');
+        setPhase('done');
         if (role === 'host') {
-          updateRoomStatus(roomIdRef.current, 'active');
+          updateRoomStatus(roomIdRef.current, 'done');
         }
       }, 800);
     } else {
@@ -285,10 +286,7 @@ export function useRoom(roomId: string, roomCode: string) {
     });
   }, [participantId]);
 
-  const setColor = useCallback((colorId: string) => {
-    const found = COLOR_FILTERS.find(f => f.id === colorId);
-    updateState({ color: colorId, colorCSS: found?.css || 'none' });
-  }, [updateState]);
+
 
   return {
     roomState,
@@ -304,7 +302,6 @@ export function useRoom(roomId: string, roomCode: string) {
     startSession,
     onPhotoCaptured,
     updateState,
-    setColor,
     handleReset,
     broadcast,
   };

@@ -10,13 +10,10 @@ export interface RoomState {
   layout: LayoutKey;
   sessionCount: number;
   timer: number;
-  color: string;
-  colorCSS: string;
   frameBg: { type: 'solid' | 'gradient' | 'pattern'; val: string };
   photoBorder: string;
   customText: string;
   showDate: boolean;
-  adj: { b: number; c: number; s: number; w: number };
 }
 
 export interface CapturedPhoto {
@@ -52,21 +49,8 @@ export type SessionPhase =
   | 'idle'
   | 'countdown'
   | 'capturing'
-  | 'reviewing'
-  | 'customizing'
   | 'error_full'
   | 'done';
-
-export const COLOR_FILTERS = [
-  { id: 'none', label: 'Normal', css: 'none' },
-  { id: 'bw', label: 'B & W', css: 'grayscale(100%) contrast(110%)' },
-  { id: 'vintage', label: 'Vintage', css: 'sepia(50%) contrast(120%) saturate(150%)' },
-  { id: 'sepia', label: 'Sepia', css: 'sepia(100%)' },
-  { id: 'warm', label: 'Warm', css: 'saturate(130%) hue-rotate(-20deg) brightness(105%)' },
-  { id: 'cool', label: 'Cool', css: 'saturate(120%) hue-rotate(30deg) brightness(102%)' },
-  { id: 'film', label: 'Retro', css: 'contrast(130%) saturate(110%) brightness(95%)' },
-  { id: 'dramatic', label: 'Drama', css: 'contrast(150%) brightness(85%) saturate(120%)' },
-] as const;
 
 export const LAYOUTS: Record<LayoutKey, LayoutDef> = {
   strip3: { count: 3, cols: 1, rows: 3 },

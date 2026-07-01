@@ -28,7 +28,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   const resultCanvasRef = useRef<HTMLCanvasElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'layout' | 'color' | 'frame' | 'border' | 'text'>('layout');
+  const [activeTab, setActiveTab] = useState<'layout' | 'frame' | 'border' | 'text'>('layout');
   const [showResult, setShowResult] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const [resultComposed, setResultComposed] = useState(false);
@@ -65,12 +65,24 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       setTimeout(() => flashRef.current?.classList.remove('active'), 400);
     }
 
-    const captureVideo = (vid: HTMLVideoElement, mirrored: boolean) => {
-      if (!vid || vid.readyState < 2) return '';
+    const captureVideo = (vid: HTMLVideoElement | null, mirrored: boolean) => {
       const canvas = document.createElement('canvas');
-      canvas.width = vid.videoWidth || 640;
-      canvas.height = vid.videoHeight || 480;
+      canvas.width = 640;
+      canvas.height = 480;
       const ctx = canvas.getContext('2d')!;
+      if (!vid || vid.readyState < 2 || !vid.videoWidth) {
+        // No video ready — return a dark placeholder
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📷 Tidak tersedia', 320, 240);
+        return canvas.toDataURL('image/jpeg', 0.9);
+      }
+      canvas.width = vid.videoWidth;
+      canvas.height = vid.videoHeight;
       ctx.save();
       if (mirrored) {
         ctx.scale(-1, 1);
@@ -82,8 +94,8 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       return canvas.toDataURL('image/jpeg', 0.92);
     };
 
-    const myDataUrl = captureVideo(localVideoRef.current!, isMirrored);
-    const partnerDataUrl = captureVideo(remoteVideoRef.current!, false);
+    const myDataUrl = captureVideo(localVideoRef.current, isMirrored);
+    const partnerDataUrl = captureVideo(remoteVideoRef.current, false);
     
     onPhotoCaptured(myDataUrl, partnerDataUrl, photoIndex);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,20 +120,20 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   }, [roomState, myPhotos, partnerPhotos]);
 
   useEffect(() => {
-    if (phase !== 'customizing') {
+    if (phase !== 'done') {
       setResultComposed(false);
       return;
     }
-    composeResult();
+    composeResult().then(() => {
+      setShowResult(true);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, myPhotos, partnerPhotos]);
 
-  // Re-compose when customization options change
+  // Re-compose if customization changes while in done phase (if they edit after result is shown)
   useEffect(() => {
-    if (phase === 'customizing') {
+    if (phase === 'done') {
       composeResult();
-    } else {
-      setActiveTab('layout');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomState, phase]);
@@ -180,7 +192,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         copyDone={copyDone}
         copyLink={copyLink}
         updateState={updateState}
-        setColor={setColor}
+
         handleReset={handleReset}
         startSession={startSession}
         setShowResult={setShowResult}
