@@ -158,10 +158,7 @@ export function useRoom(roomId: string, roomCode: string) {
 
       const count = await getParticipantsCount(roomId);
 
-      if (!existing && count >= 2) {
-        if (mountedRef.current) setPhase('error_full');
-        return;
-      }
+      // DB count check removed to prevent permanent room lock. Capacity is now handled via Presence.
 
       const assignedRole: 'host' | 'guest' = count === 0 || existing?.role === 'host' ? 'host' : 'guest';
       if (mountedRef.current) setRole(assignedRole);
@@ -180,6 +177,22 @@ export function useRoom(roomId: string, roomCode: string) {
           if (!mountedRef.current) return;
           const state = channel.presenceState();
           const presentKeys = Object.keys(state);
+          
+          // Enforce 2-person limit based on join time
+          if (presentKeys.length > 2) {
+            const sorted = presentKeys.sort((a, b) => {
+              const aTime = new Date((state[a][0] as any)?.online_at || 0).getTime();
+              const bTime = new Date((state[b][0] as any)?.online_at || 0).getTime();
+              return aTime - bTime;
+            });
+            const firstTwo = sorted.slice(0, 2);
+            if (!firstTwo.includes(participantId)) {
+               setPhase('error_full');
+               channel.unsubscribe();
+               return;
+            }
+          }
+
           if (presentKeys.length < 2) {
             setPartnerInfo(null);
             setPartnerReady(false);
