@@ -17,7 +17,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  
+
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isMirrored, setIsMirrored] = useState(true);
 
@@ -25,6 +25,8 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
   const isNegotiating = useRef(false);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(true);
 
   const sendSignal = useCallback((type: string, payload: unknown) => {
     channelRef.current?.send({
@@ -34,7 +36,11 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     });
   }, [participantId]);
 
-  const createPC = useCallback(() => {
+  const getOrCreatePC = useCallback(() => {
+    if (pcRef.current && pcRef.current.connectionState !== 'closed') {
+      return pcRef.current;
+    }
+
     const pc = new RTCPeerConnection(ICE_SERVERS);
 
     pc.onicecandidate = (e) => {
@@ -48,98 +54,40 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
 
     pc.onconnectionstatechange = () => {
+      if (!mountedRef.current) return;
       setIsConnected(pc.connectionState === 'connected');
+      // Reconnect if failed/disconnected
+      if (pc.connectionState === 'failed') {
+        pc.restartIce();
+      }
     };
 
     pc.onnegotiationneeded = async () => {
-      if (isNegotiating.current) return;
+      if (isNegotiating.current || !isHost) return;
       isNegotiating.current = true;
       try {
-        if (isHost) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          sendSignal('sdp_offer', offer);
-        }
-      } catch (e) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        sendSignal('sdp_offer', offer);
+      } catch {
+        // ignore
       } finally {
         isNegotiating.current = false;
       }
     };
 
+    pcRef.current = pc;
     return pc;
   }, [isHost, sendSignal]);
 
-  const toggleCamera = useCallback(() => {
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-  }, []);
-
-  const toggleMirror = useCallback(() => {
-    setIsMirrored(prev => !prev);
-  }, []);
-
+  // Setup signaling channel — run once per room
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (channelRef.current) return;
 
-    let mounted = true;
-
-    async function init() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode },
-          audio: false,
-        });
-        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
-        
-        if (localStream) {
-          localStream.getTracks().forEach(t => t.stop());
-        }
-        
-        setLocalStream(stream);
-
-        const pc = pcRef.current || createPC();
-        if (!pcRef.current) pcRef.current = pc;
-
-        const senders = pc.getSenders();
-        stream.getTracks().forEach(track => {
-          const sender = senders.find(s => s.track?.kind === track.kind);
-          if (sender) {
-            sender.replaceTrack(track);
-          } else {
-            pc.addTrack(track, stream);
-          }
-        });
-
-        if (channelRef.current) return; 
-
-        const channel = supabase.channel(`webrtc:${roomCode}`, {
-          config: { broadcast: { self: false } },
-        });
-
-        channel
-          .on('broadcast', { event: 'webrtc' }, async ({ payload }: {
-            payload: { type: string; senderId: string; data: unknown }
-          }) => {
-            if (!mounted || payload.senderId === participantId) return;
-            await handleSignal(payload.type, payload.data, pc);
-          })
-          .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED' && isHost) {
-              setTimeout(async () => {
-                if (!mounted) return;
-                try {
-                  const offer = await pc.createOffer();
-                  await pc.setLocalDescription(offer);
-                  sendSignal('sdp_offer', offer);
-                } catch (e) {
-                }
-              }, 2000);
-            }
-          });
-
-        channelRef.current = channel;
-      } catch (e) {
-      }
-    }
+    const channel = supabase.channel(`webrtc:${roomCode}`, {
+      config: { broadcast: { self: false } },
+    });
 
     async function handleSignal(type: string, data: unknown, pc: RTCPeerConnection) {
       try {
@@ -150,16 +98,16 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
             await pc.addIceCandidate(new RTCIceCandidate(c));
           }
           pendingCandidates.current = [];
-
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           sendSignal('sdp_answer', answer);
         } else if (type === 'sdp_answer') {
           const answer = data as RTCSessionDescriptionInit;
-          if (pc.signalingState === 'have-local-offer') {
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          const pc2 = pcRef.current;
+          if (pc2 && pc2.signalingState === 'have-local-offer') {
+            await pc2.setRemoteDescription(new RTCSessionDescription(answer));
             for (const c of pendingCandidates.current) {
-              await pc.addIceCandidate(new RTCIceCandidate(c));
+              await pc2.addIceCandidate(new RTCIceCandidate(c));
             }
             pendingCandidates.current = [];
           }
@@ -171,23 +119,121 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
             pendingCandidates.current.push(candidate);
           }
         }
-      } catch (e) {
+      } catch {
+        // ignore signal errors
       }
     }
 
-    init();
+    channel
+      .on('broadcast', { event: 'webrtc' }, async ({ payload }: {
+        payload: { type: string; senderId: string; data: unknown }
+      }) => {
+        if (!mountedRef.current || payload.senderId === participantId) return;
+        const pc = getOrCreatePC();
+        await handleSignal(payload.type, payload.data, pc);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && isHost) {
+          // Wait for remote to subscribe, then send initial offer
+          setTimeout(async () => {
+            if (!mountedRef.current) return;
+            const pc = getOrCreatePC();
+            // Only offer if we haven't yet
+            if (pc.signalingState === 'stable' && pc.localDescription === null) {
+              try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                sendSignal('sdp_offer', offer);
+              } catch {
+                // ignore
+              }
+            }
+          }, 2000);
+        }
+      });
+
+    channelRef.current = channel;
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      channel.unsubscribe();
+      channelRef.current = null;
     };
-  }, [roomCode, isHost, facingMode, createPC, participantId, sendSignal]);
-  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode]);
+
+  // Handle camera stream — re-runs on facingMode change
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let cancelled = false;
+
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode },
+          audio: false,
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
+        // Stop previous local tracks
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach(t => t.stop());
+        }
+
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+
+        // Update tracks on the peer connection if it exists
+        const pc = pcRef.current;
+        if (pc && pc.connectionState !== 'closed') {
+          const senders = pc.getSenders();
+          stream.getTracks().forEach(track => {
+            const sender = senders.find(s => s.track?.kind === track.kind);
+            if (sender) {
+              sender.replaceTrack(track).catch(() => {});
+            } else {
+              pc.addTrack(track, stream);
+            }
+          });
+        } else if (!pc || pc.connectionState === 'closed') {
+          // Create PC if not exists yet and add tracks
+          const newPc = getOrCreatePC();
+          stream.getTracks().forEach(track => {
+            newPc.addTrack(track, stream);
+          });
+        }
+      } catch {
+        // Camera access denied or unavailable
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [facingMode, getOrCreatePC]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      localStream?.getTracks().forEach(t => t.stop());
+      mountedRef.current = false;
+      localStreamRef.current?.getTracks().forEach(t => t.stop());
       pcRef.current?.close();
-      channelRef.current?.unsubscribe();
-    }
+    };
+  }, []);
+
+  const toggleCamera = useCallback(() => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+  }, []);
+
+  const toggleMirror = useCallback(() => {
+    setIsMirrored(prev => !prev);
   }, []);
 
   return { localStream, remoteStream, isConnected, facingMode, isMirrored, toggleCamera, toggleMirror };

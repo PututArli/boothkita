@@ -33,53 +33,61 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   const [copyDone, setCopyDone] = useState(false);
   const [resultComposed, setResultComposed] = useState(false);
 
+  // Attach local stream to video element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
 
+  // Attach remote stream to video element
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);
 
+  // Capture photo when phase transitions to 'capturing'
+  const capturedRef = useRef(false);
   useEffect(() => {
-    if (phase !== 'capturing') return;
-    
+    if (phase !== 'capturing') {
+      capturedRef.current = false;
+      return;
+    }
+    // Guard: only capture once per capture event
+    if (capturedRef.current) return;
+    capturedRef.current = true;
+
+    // Flash effect
     if (flashRef.current) {
       flashRef.current.classList.add('active');
       setTimeout(() => flashRef.current?.classList.remove('active'), 400);
     }
-    
+
     const video = localVideoRef.current;
-    if (!video) return;
+    if (!video || video.readyState < 2) return;
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d')!;
     ctx.save();
-    
+
     if (isMirrored) {
       ctx.scale(-1, 1);
       ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
     } else {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     }
-    
+
     ctx.restore();
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     onPhotoCaptured(dataUrl, photoIndex);
-  }, [phase, photoIndex, onPhotoCaptured, isMirrored]);
-
-  useEffect(() => {
-    if (phase !== 'customizing') { setResultComposed(false); return; }
-    composeResult();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, myPhotos, partnerPhotos, roomState]);
+  }, [phase, photoIndex]);
 
-  async function composeResult() {
+  // Compose result canvas when entering customizing phase or state changes
+  const composeResult = useCallback(async () => {
     if (!resultCanvasRef.current) return;
     const layout = LAYOUTS[roomState.layout as LayoutKey];
     const count = layout.count;
@@ -93,10 +101,22 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       canvas: resultCanvasRef.current,
     });
     setResultComposed(true);
-  }
+  }, [roomState, myPhotos, partnerPhotos]);
 
   useEffect(() => {
-    if (phase === 'customizing') composeResult();
+    if (phase !== 'customizing') {
+      setResultComposed(false);
+      return;
+    }
+    composeResult();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, myPhotos, partnerPhotos]);
+
+  // Re-compose when customization options change
+  useEffect(() => {
+    if (phase === 'customizing') {
+      composeResult();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomState]);
 
@@ -160,6 +180,13 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         setShowResult={setShowResult}
       />
 
+      {/* Canvas always rendered (hidden when modal is closed) */}
+      <canvas
+        ref={resultCanvasRef}
+        style={{ display: 'none' }}
+        aria-hidden="true"
+      />
+
       <PreviewModal
         showResult={showResult}
         setShowResult={setShowResult}
@@ -168,10 +195,6 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         handleDownload={handleDownload}
         handleReset={handleReset}
       />
-
-      {!showResult && (
-        <canvas ref={resultCanvasRef} style={{ display: 'none' }} />
-      )}
     </div>
   );
 }

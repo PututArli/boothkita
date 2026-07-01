@@ -1,3 +1,4 @@
+import React from 'react';
 import Image from 'next/image';
 import { LAYOUTS, COLOR_FILTERS, FRAME_BG_PRESETS, BORDER_PRESETS, LayoutKey, RoomState, SessionPhase } from '@/lib/types';
 import { Dispatch, SetStateAction } from 'react';
@@ -125,10 +126,10 @@ export default function CaptureControls({
 
           <span className="section-label" style={{ marginTop: 20 }}>Adjust Kamera</span>
           {[
-            { key: 'b', label: 'Brightness', min: 50, max: 150, def: 100 },
-            { key: 'c', label: 'Contrast', min: 50, max: 150, def: 100 },
-            { key: 's', label: 'Saturation', min: 0, max: 200, def: 100 },
-            { key: 'w', label: 'Warmth', min: 0, max: 100, def: 0 },
+            { key: 'b', label: 'Brightness', min: 50, max: 150 },
+            { key: 'c', label: 'Contrast', min: 50, max: 150 },
+            { key: 's', label: 'Saturation', min: 0, max: 200 },
+            { key: 'w', label: 'Warmth', min: 0, max: 100 },
           ].map(({ key, label, min, max }) => (
             <div className="slider-group" key={key}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -251,7 +252,7 @@ export default function CaptureControls({
         {phase === 'customizing' ? (
           <>
             <button id="btn-footer-result" className="capture-btn" onClick={() => setShowResult(true)}>
-              🎉 Lihat & Unduh Hasil
+              🎉 Lihat &amp; Unduh Hasil
             </button>
             <button id="btn-footer-reset" className="btn-secondary" style={{ width: '100%' }} onClick={() => handleReset(true)}>
               🔄 Ambil Foto Lagi

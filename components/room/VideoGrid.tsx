@@ -31,6 +31,7 @@ export default function VideoGrid({
   roomState,
   role,
   partnerInfo,
+  isConnected,
   roomCode,
   phase,
   countdown,
@@ -60,6 +61,7 @@ export default function VideoGrid({
       ) : (
         <>
           <div className="video-grid">
+            {/* Local video */}
             <div className="video-cell local" style={{ position: 'relative' }}>
               <video
                 id="local-video"
@@ -72,26 +74,31 @@ export default function VideoGrid({
                   filter: `brightness(${roomState.adj.b}%) contrast(${roomState.adj.c}%) saturate(${roomState.adj.s}%) sepia(${roomState.adj.w}%)${roomState.colorCSS !== 'none' ? ` ${roomState.colorCSS}` : ''}`,
                 }}
               />
-              <div className="video-cell-label">📷 Kamu ({role === 'host' ? 'Host' : 'Tamu'})</div>
+              <div className="video-cell-label">
+                📷 Kamu {role === 'host' ? '(Host)' : '(Tamu)'}
+              </div>
 
               <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8, zIndex: 10 }}>
                 <button
                   onClick={toggleMirror}
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                  style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', fontSize: 16 }}
                   title="Mirror Video"
+                  aria-label="Mirror video"
                 >
                   🪞
                 </button>
                 <button
                   onClick={toggleCamera}
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                  style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', fontSize: 16 }}
                   title="Ganti Kamera"
+                  aria-label="Switch camera"
                 >
                   🔄
                 </button>
               </div>
             </div>
 
+            {/* Remote video */}
             <div className="video-cell">
               {remoteStream ? (
                 <>
@@ -108,13 +115,15 @@ export default function VideoGrid({
                 <div className="video-cell-waiting">
                   <div className="waiting-avatar">👤</div>
                   <p className="waiting-text">
-                    {partnerInfo
-                      ? 'Partner terhubung, menunggu video...'
-                      : 'Menunggu partner masuk...'}
+                    {isConnected
+                      ? 'Terhubung, menunggu video...'
+                      : partnerInfo
+                        ? 'Partner terhubung, menunggu video...'
+                        : 'Menunggu partner masuk...'}
                   </p>
-                  {!partnerInfo && (
+                  {!partnerInfo && !isConnected && (
                     <p className="waiting-text" style={{ fontSize: 11, marginTop: 4 }}>
-                      Share kode <strong style={{ color: 'var(--accent)' }}>{roomCode}</strong>
+                      Bagikan kode <strong style={{ color: 'var(--accent)' }}>{roomCode}</strong>
                     </p>
                   )}
                 </div>
@@ -122,6 +131,7 @@ export default function VideoGrid({
             </div>
           </div>
 
+          {/* Countdown overlay */}
           {(phase === 'countdown' || phase === 'capturing') && countdown > 0 && (
             <div className="countdown-overlay">
               <div className="countdown-number" key={countdown}>{countdown}</div>
@@ -158,6 +168,7 @@ export default function VideoGrid({
                   className="icon-btn"
                   onClick={() => handleReset(true)}
                   title="Ulangi sesi"
+                  aria-label="Ulangi sesi"
                 >
                   🔄
                 </button>
@@ -167,7 +178,7 @@ export default function VideoGrid({
                 id="btn-start"
                 className="capture-btn"
                 onClick={startSession}
-                disabled={['countdown', 'capturing', 'customizing'].includes(phase) || !partnerConnected}
+                disabled={(['countdown', 'capturing', 'customizing'] as string[]).includes(phase) || !partnerConnected}
               >
                 {(['countdown', 'capturing'] as string[]).includes(phase)
                   ? `📸 ${photoIndex + 1}/${totalCount}`
