@@ -38,7 +38,6 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     if (localVideoRef.current && localStream) {
       if (localVideoRef.current.srcObject !== localStream) {
         localVideoRef.current.srcObject = localStream;
-        localVideoRef.current.load(); // Force load for some mobile browsers
         localVideoRef.current.play().catch(e => console.error('Local video play error:', e));
       }
     }
@@ -49,22 +48,20 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     if (remoteVideoRef.current && remoteStream) {
       if (remoteVideoRef.current.srcObject !== remoteStream) {
         remoteVideoRef.current.srcObject = remoteStream;
-        remoteVideoRef.current.load(); // Force load for some mobile browsers
         remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e));
       }
     }
   }, [remoteStream, phase]);
 
   // Capture photo when phase transitions to 'capturing'
-  const capturedRef = useRef(false);
+  const lastCapturedIndexRef = useRef(-1);
   useEffect(() => {
     if (phase !== 'capturing') {
-      capturedRef.current = false;
       return;
     }
     // Guard: only capture once per capture event
-    if (capturedRef.current) return;
-    capturedRef.current = true;
+    if (lastCapturedIndexRef.current === photoIndex) return;
+    lastCapturedIndexRef.current = photoIndex;
 
     // Flash effect
     if (flashRef.current) {
@@ -247,6 +244,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
           localVideoRef={localVideoRef}
           remoteVideoRef={remoteVideoRef}
           myPhotos={myPhotos}
+          partnerPhotos={partnerPhotos}
           startSession={startSession}
           partnerConnected={partnerConnected}
           facingMode={facingMode}

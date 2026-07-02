@@ -357,12 +357,12 @@ export default function DecoratePage({
                       {/* Delete Button */}
                       <button
                         onClick={(e) => { e.stopPropagation(); removeSticker(s.id); }}
-                        style={{ position: 'absolute', top: -15, left: -15, background: 'var(--danger)', color: '#fff', borderRadius: '50%', width: 26, height: 26, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', pointerEvents: 'auto' }}
+                        style={{ position: 'absolute', top: -15, left: -15, background: 'var(--danger)', color: 'var(--bg)', borderRadius: '50%', width: 26, height: 26, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', pointerEvents: 'auto' }}
                       >✕</button>
 
                       {/* Resize Handle */}
                       <div
-                        style={{ position: 'absolute', bottom: -15, right: -15, background: 'var(--accent)', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'nwse-resize', pointerEvents: 'auto' }}
+                        style={{ position: 'absolute', bottom: -15, right: -15, background: 'var(--accent)', color: 'var(--bg)', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'nwse-resize', pointerEvents: 'auto' }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
                           dragRef.current = { id: s.id, type: 'scale', startX: e.clientX, startY: e.clientY, initX: s.x, initY: s.y, initScale: s.scale, initRot: s.rotation };

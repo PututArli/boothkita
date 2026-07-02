@@ -103,7 +103,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
                   )}
                   {isUsed && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,107,152,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: 32, height: 32, background: 'var(--accent)', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>✓</div>
+                      <div style={{ width: 32, height: 32, background: 'var(--accent)', color: 'var(--bg)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>✓</div>
                     </div>
                   )}
                 </button>

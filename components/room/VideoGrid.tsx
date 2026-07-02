@@ -16,6 +16,7 @@ interface VideoGridProps {
   localVideoRef: RefObject<HTMLVideoElement>;
   remoteVideoRef: RefObject<HTMLVideoElement>;
   myPhotos: CapturedPhoto[];
+  partnerPhotos: CapturedPhoto[];
   startSession: () => void;
 
   partnerConnected: boolean;
@@ -45,6 +46,7 @@ export default function VideoGrid({
   localVideoRef,
   remoteVideoRef,
   myPhotos,
+  partnerPhotos,
   startSession,
 
   facingMode,
@@ -157,7 +159,7 @@ export default function VideoGrid({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <div style={{
-                    position: 'absolute', bottom: 16, left: 16, background: 'var(--accent)', color: '#fff',
+                    position: 'absolute', bottom: 16, left: 16, background: 'var(--accent)', color: 'var(--bg)',
                     padding: '6px 16px', borderRadius: 100, fontSize: 13, fontWeight: 800,
                     boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
                   }}>
@@ -185,14 +187,19 @@ export default function VideoGrid({
           </div>
 
           {/* Captured Photos Preview Strip */}
-          {myPhotos.length > 0 && (
+          {(myPhotos.length > 0 || partnerPhotos.length > 0) && (
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16, flexWrap: 'wrap', padding: '0 16px' }}>
               {Array.from({ length: totalCount }).map((_, i) => {
                 const p = myPhotos[i];
+                const p2 = partnerPhotos[i];
+                const hasPhoto = p?.dataUrl || p2?.dataUrl;
                 return (
-                  <div key={i} style={{ width: 64, height: 48, borderRadius: 4, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', border: p ? '2px solid var(--accent)' : '1px dashed rgba(255,255,255,0.3)', flexShrink: 0 }}>
-                    {p?.dataUrl ? (
-                      <img src={p.dataUrl} alt={`Take ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div key={i} style={{ width: 64, height: 48, borderRadius: 4, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', border: hasPhoto ? '2px solid var(--accent)' : '1px dashed rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>
+                    {hasPhoto ? (
+                      <>
+                        {p?.dataUrl ? <img src={p.dataUrl} alt={`Take ${i + 1}`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
+                        {p2?.dataUrl ? <img src={p2.dataUrl} alt={`Take ${i + 1} Partner`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
+                      </>
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{i + 1}</div>
                     )}
