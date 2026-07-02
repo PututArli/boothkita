@@ -266,13 +266,6 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
 
   return (
     <>
-      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', color: 'lime', fontSize: 10, padding: 4 }}>
-        W: {isConnected ? 'C' : 'W'} | 
-        L: {localStream?.getTracks().length || 0} | 
-        R: {remoteStream?.getTracks().length || 0} | 
-        T: {streamTick} | 
-        H: {role === 'host' ? 'Y' : 'N'}
-      </div>
       {/* Hidden audio element to keep voice chat alive across ALL phases */}
       <audio ref={remoteAudioRef} autoPlay style={{ width: 0, height: 0, position: 'absolute', opacity: 0 }} />
       {renderPhase()}
