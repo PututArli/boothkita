@@ -47,6 +47,11 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const isNegotiating = useRef(false);
   const localStreamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
+  const isHostRef = useRef(isHost);
+
+  useEffect(() => {
+    isHostRef.current = isHost;
+  }, [isHost]);
 
   const sendSignal = useCallback((type: string, payload: unknown) => {
     channelRef.current?.send({
@@ -96,7 +101,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     pc.onnegotiationneeded = async () => {
       if (isNegotiating.current) return;
-      if (!isHost) {
+      if (!isHostRef.current) {
         // Guest needs negotiation (e.g. added a new track), ask host to send offer
         sendSignal('request_offer', {});
         return;
@@ -116,7 +121,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     pcRef.current = pc;
     return pc;
-  }, [isHost, sendSignal]);
+  }, [sendSignal]);
 
   // Setup signaling channel — run once per room
   useEffect(() => {
@@ -303,7 +308,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [facingMode, getOrCreatePC]);
+  }, [facingMode]);
 
   // Cleanup on unmount
   useEffect(() => {
