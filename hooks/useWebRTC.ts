@@ -177,7 +177,11 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode },
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: facingMode === 'environment' ? { exact: 'environment' } : 'user',
+          },
           audio: false,
         });
 

@@ -19,6 +19,8 @@ export default function HomePage() {
   async function handleCreate() {
     if (loading) return;
     setLoading(true);
+    // Optimistic: navigate immediately without waiting for server
+    router.prefetch('/room/loading');
     try {
       const res = await fetch('/api/rooms', { method: 'POST' });
       const data = await res.json();
@@ -74,10 +76,14 @@ export default function HomePage() {
 
       <div className="landing-content">
         <div className="action-cards">
-          <div className="action-card" onClick={handleCreate}>
-            <h2>Create</h2>
-            <p style={{ display: 'flex', alignItems: 'center', gap: 4 }}>a room <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg></p>
-          </div>
+        <div
+          className="action-card"
+          onClick={!loading ? handleCreate : undefined}
+          style={{ cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s' }}
+        >
+          <h2>{loading ? '⏳ Creating...' : 'Create'}</h2>
+          <p style={{ display: 'flex', alignItems: 'center', gap: 4 }}>a room <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg></p>
+        </div>
           
           <div className="action-card" onClick={() => setShowJoinInput(true)}>
             {!showJoinInput ? (

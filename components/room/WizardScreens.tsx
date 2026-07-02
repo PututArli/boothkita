@@ -20,7 +20,7 @@ export function SetupLayout({ roomState, updateState, nextStep, role }: WizardPr
 
       <div className="wizard-container" style={{ textAlign: 'center', width: '100%', maxWidth: 700, zIndex: 1 }}>
         <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 }}>
-          {role === 'host' ? 'CHOOSE YOUR STRIP' : 'WAITING FOR HOST TO CHOOSE...'}
+          CHOOSE YOUR STRIP
         </h2>
         
         <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginBottom: 40, flexWrap: 'wrap' }}>
@@ -29,7 +29,7 @@ export function SetupLayout({ roomState, updateState, nextStep, role }: WizardPr
             return (
               <div
                 key={key}
-                onClick={() => role === 'host' && updateState({ layout: key })}
+                onClick={() => updateState({ layout: key })}
                 style={{
                   width: 160,
                   height: 220,
@@ -41,14 +41,20 @@ export function SetupLayout({ roomState, updateState, nextStep, role }: WizardPr
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: role === 'host' ? 'pointer' : 'default',
-                  opacity: (role === 'guest' && !isActive) ? 0.5 : 1,
+                  cursor: 'pointer',
+                  opacity: 1,
                   transition: 'all 0.2s',
                   transform: isActive ? 'translateY(-4px)' : 'none',
                   backdropFilter: 'blur(10px)'
                 }}
               >
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {key === 'strip2' && (
+                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
+                      <rect x="2" y="2" width="28" height="116" />
+                      <line x1="2" y1="60" x2="30" y2="60" />
+                    </svg>
+                  )}
                   {key === 'strip3' && (
                     <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
                       <rect x="2" y="2" width="28" height="116" />
@@ -64,11 +70,28 @@ export function SetupLayout({ roomState, updateState, nextStep, role }: WizardPr
                       <line x1="2" y1="89" x2="30" y2="89" />
                     </svg>
                   )}
+                  {key === 'strip5' && (
+                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
+                      <rect x="2" y="2" width="28" height="116" />
+                      <line x1="2" y1="25" x2="30" y2="25" />
+                      <line x1="2" y1="49" x2="30" y2="49" />
+                      <line x1="2" y1="73" x2="30" y2="73" />
+                      <line x1="2" y1="97" x2="30" y2="97" />
+                    </svg>
+                  )}
                   {key === 'grid2x2' && (
                     <svg width="80" height="54" viewBox="0 0 80 54" fill="none" stroke="var(--text)" strokeWidth="4">
                       <rect x="2" y="2" width="76" height="50" />
                       <line x1="40" y1="2" x2="40" y2="52" />
                       <line x1="2" y1="27" x2="78" y2="27" />
+                    </svg>
+                  )}
+                  {key === 'grid3x2' && (
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" stroke="var(--text)" strokeWidth="4">
+                      <rect x="2" y="2" width="76" height="76" />
+                      <line x1="40" y1="2" x2="40" y2="78" />
+                      <line x1="2" y1="28" x2="78" y2="28" />
+                      <line x1="2" y1="54" x2="78" y2="54" />
                     </svg>
                   )}
                   {key === 'single' && (
@@ -78,21 +101,19 @@ export function SetupLayout({ roomState, updateState, nextStep, role }: WizardPr
                   )}
                 </div>
                 <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)' }}>
-                  {key === 'strip3' ? '3 Pictures' : key === 'strip4' ? '4 Pictures' : key === 'grid2x2' ? '2x2 Grid' : 'Single'}
+                  {key === 'strip2' ? '2 Pictures' : key === 'strip3' ? '3 Pictures' : key === 'strip4' ? '4 Pictures' : key === 'strip5' ? '5 Pictures' : key === 'grid2x2' ? '2x2 Grid' : key === 'grid3x2' ? '3x2 Grid' : 'Single'}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {role === 'host' && (
-          <button 
-            onClick={nextStep}
-            style={{ padding: '14px 32px', display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--accent-glow)' }}
-          >
-            next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-          </button>
-        )}
+        <button 
+          onClick={nextStep}
+          style={{ padding: '14px 32px', display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--accent-glow)' }}
+        >
+          next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+        </button>
       </div>
     </div>
   );
@@ -108,30 +129,62 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
       </div>
       <div className="wizard-container" style={{ textAlign: 'center', width: '100%', maxWidth: 700, zIndex: 1 }}>
         <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 }}>
-          {role === 'host' ? 'CHOOSE YOUR THEME' : 'WAITING FOR HOST TO CHOOSE...'}
+          CHOOSE YOUR THEME
         </h2>
         
         <div style={{ marginBottom: 40 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Frame Color</h3>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', maxWidth: 400, margin: '0 auto' }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>PICK A THEME</h3>
+          <div style={{ 
+            display: 'flex', gap: 16, overflowX: 'auto', padding: '16px 20px', 
+            margin: '0 auto', maxWidth: '100%', scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none'
+          }}>
             {FRAME_BG_PRESETS.map((preset, i) => {
               const isActive = roomState.frameBg.val === preset.val && roomState.frameBg.type === preset.type;
               return (
-                <button
+                <div
                   key={i}
-                  onClick={() => role === 'host' && updateState({ frameBg: { type: preset.type, val: preset.val } })}
+                  onClick={() => updateState({ frameBg: { type: preset.type, val: preset.val } })}
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    ...preset.style as any,
-                    border: isActive ? '3px solid rgba(255,255,255,0.8)' : '1px solid var(--border)',
-                    boxShadow: isActive ? '0 0 0 2px var(--surface) inset, var(--accent-glow)' : 'var(--shadow-sm)',
-                    cursor: role === 'host' ? 'pointer' : 'default',
-                    opacity: (role === 'guest' && !isActive) ? 0.5 : 1
+                    flexShrink: 0,
+                    width: 140,
+                    scrollSnapAlign: 'center',
+                    background: 'var(--surface)',
+                    borderRadius: 12,
+                    padding: '16px 24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 16,
+                    border: isActive ? '2px solid #ff7e5f' : '1px solid var(--border)',
+                    boxShadow: isActive ? '0 4px 20px rgba(255, 126, 95, 0.2)' : 'none',
+                    cursor: 'pointer',
+                    opacity: 1,
+                    transition: 'all 0.2s',
+                    transform: isActive ? 'scale(1.02)' : 'none'
                   }}
-                />
-              )
+                >
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '1/3',
+                    ...preset.style as any,
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)',
+                    padding: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6
+                  }}>
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)' }} />
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)' }} />
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)' }} />
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.2)' }} />
+                    <div style={{ height: 12, background: 'rgba(0,0,0,0.4)', marginTop: 'auto' }} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 500, fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+                    {preset.id}
+                  </span>
+                </div>
+              );
             })}
           </div>
         </div>
@@ -145,26 +198,23 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
             maxLength={35}
             value={roomState.customText}
             onChange={e => updateState({ customText: e.target.value })}
-            disabled={role === 'guest'}
           />
         </div>
 
-        {role === 'host' && (
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-            <button 
-              onClick={prevStep}
-              style={{ padding: '14px 24px', borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text)', fontWeight: 600, fontSize: 16, cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.2s' }}
-            >
-              ← back
-            </button>
-            <button 
-              onClick={nextStep}
-              style={{ padding: '14px 24px', borderRadius: 100, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--accent-glow)' }}
-            >
-              start camera <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+          <button 
+            onClick={prevStep}
+            style={{ padding: '14px 24px', borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text)', fontWeight: 600, fontSize: 16, cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.2s' }}
+          >
+            ← back
+          </button>
+          <button 
+            onClick={nextStep}
+            style={{ padding: '14px 24px', borderRadius: 100, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--accent-glow)' }}
+          >
+            start camera <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   );

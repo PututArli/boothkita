@@ -121,7 +121,12 @@ export function useRoom(roomId: string, roomCode: string) {
         break;
       }
       case 'photo_captured': {
-        // Obsolete: We now capture locally, no need to process incoming base64 images
+        const { index, dataUrl } = msg.payload as { index: number; dataUrl: string };
+        setPartnerPhotos(prev => {
+          const next = [...prev];
+          next[index] = { dataUrl, participantId: msg.senderId, index };
+          return next;
+        });
         break;
       }
       case 'state_update': {
@@ -249,7 +254,6 @@ export function useRoom(roomId: string, roomCode: string) {
   }, [roomId, roomCode, participantId]);
 
   const startSession = useCallback(() => {
-    if (role !== 'host') return; // Only host can start the session
     const totalCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
     clearCountdown();
     setMyPhotos([]);
@@ -262,20 +266,24 @@ export function useRoom(roomId: string, roomCode: string) {
       payload: { timerVal: roomStateRef.current.timer || 3, totalCount },
     });
 
-    runCountdown(roomStateRef.current.timer || 3, totalCount);
-  }, [clearCountdown, participantId, runCountdown, role]);
+    // Delay local start slightly (400ms) to sync with partner receiving the broadcast over network
+    setTimeout(() => {
+      if (mountedRef.current) runCountdown(roomStateRef.current.timer || 3, totalCount);
+    }, 400);
+  }, [clearCountdown, participantId, runCountdown]);
 
-  const onPhotoCaptured = useCallback((myDataUrl: string, partnerDataUrl: string, index: number) => {
+  const onPhotoCaptured = useCallback((myDataUrl: string, index: number) => {
     setMyPhotos(prev => {
       const next = [...prev];
       next[index] = { dataUrl: myDataUrl, participantId, index };
       return next;
     });
     
-    setPartnerPhotos(prev => {
-      const next = [...prev];
-      next[index] = { dataUrl: partnerDataUrl, participantId: partnerInfo?.id || 'partner', index };
-      return next;
+    // Broadcast my photo to partner so they get my exact frame
+    broadcastRef.current?.({
+      type: 'photo_captured',
+      senderId: participantId,
+      payload: { index, dataUrl: myDataUrl }
     });
 
     const totalCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
@@ -284,6 +292,8 @@ export function useRoom(roomId: string, roomCode: string) {
       setTimeout(() => {
         if (!mountedRef.current) return;
         setPhase('done');
+        // Broadcast done to guest so they also leave capturing phase
+        broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'done' });
         if (role === 'host') {
           updateRoomStatus(roomIdRef.current, 'done');
         }

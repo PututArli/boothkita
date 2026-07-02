@@ -227,32 +227,36 @@ function drawFooter(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
   text: string, showDate: boolean,
-  frameBg: RoomState['frameBg']
+  frameBg: RoomState['frameBg'],
+  footerH: number
 ) {
+  // Determine if background is light or dark to set text color
   const isLight = frameBg.type === 'solid' && (
-    frameBg.val === '#ffffff' ||
+    frameBg.val === '#ffffff' || frameBg.val === '#f5efdf' || frameBg.val === '#f8c8d8' ||
     parseInt(frameBg.val.slice(1, 3), 16) > 180
   );
-  ctx.fillStyle = isLight ? '#333' : '#fff';
+  ctx.fillStyle = isLight ? '#111' : '#ffffff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  const footerY = h - Math.round(h * 0.035);
+  // The center of the footer area
+  const footerCenterY = h - (footerH / 2);
 
   if (text) {
-    ctx.font = `bold ${Math.round(h * 0.022)}px Plus Jakarta Sans, sans-serif`;
-    ctx.fillText(text, w / 2, footerY - (showDate ? Math.round(h * 0.015) : 0));
+    ctx.font = `italic ${Math.round(footerH * 0.35)}px 'Playfair Display', serif`;
+    const textY = showDate ? footerCenterY - Math.round(footerH * 0.15) : footerCenterY;
+    ctx.fillText(text, w / 2, textY);
   }
 
   if (showDate) {
-    ctx.font = `${Math.round(h * 0.016)}px Plus Jakarta Sans, sans-serif`;
-    ctx.globalAlpha = 0.7;
+    ctx.font = `600 ${Math.round(footerH * 0.18)}px 'Plus Jakarta Sans', sans-serif`;
+    ctx.globalAlpha = 0.5;
     ctx.fillText(
-      new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+      new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       w / 2,
-      footerY + (text ? Math.round(h * 0.015) : 0)
+      footerCenterY + (text ? Math.round(footerH * 0.25) : 0)
     );
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1.0;
   }
 }
 
@@ -271,7 +275,7 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
   const PHOTO_W = 480;
   const PHOTO_H = 360;
   const MARGIN = 16;
-  const FOOTER_H = Math.round(PHOTO_H * 0.08);
+  const FOOTER_H = 140; // Increased footer height for proper text spacing
   const TOP_PAD = MARGIN;
 
   const cols = layout.cols;
@@ -318,7 +322,7 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
     drawSpecialBorder(ctx, totalW, totalH, state.photoBorder);
   }
 
-  drawFooter(ctx, totalW, totalH, state.customText, state.showDate, state.frameBg);
+  drawFooter(ctx, totalW, totalH, state.customText, state.showDate, state.frameBg, FOOTER_H);
 }
 
 export async function composePreview(opts: ComposeOptions): Promise<void> {

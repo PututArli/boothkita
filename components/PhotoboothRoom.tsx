@@ -4,9 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRoom } from '@/hooks/useRoom';
 import { useWebRTC } from '@/hooks/useWebRTC';
 import { LAYOUTS, LayoutKey } from '@/lib/types';
-import { composeDuoPhoto } from '@/lib/composition';
 import VideoGrid from './room/VideoGrid';
-import PreviewModal from './room/PreviewModal';
+import ResultPage from './room/ResultPage';
 import { SetupLayout, SetupTheme } from './room/WizardScreens';
 
 interface Props {
@@ -28,10 +27,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   const resultCanvasRef = useRef<HTMLCanvasElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
-  const [showResult, setShowResult] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
-  const [resultComposed, setResultComposed] = useState(false);
-  const [resultImgUrl, setResultImgUrl] = useState<string>('');
 
   // Attach local stream to video element
   useEffect(() => {
@@ -80,8 +76,16 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         ctx.fillText('📷 Tidak tersedia', 320, 240);
         return canvas.toDataURL('image/jpeg', 0.9);
       }
-      canvas.width = vid.videoWidth;
-      canvas.height = vid.videoHeight;
+      let width = vid.videoWidth;
+      let height = vid.videoHeight;
+      const MAX_WIDTH = 800;
+      if (width > MAX_WIDTH) {
+        height = Math.floor(height * (MAX_WIDTH / width));
+        width = MAX_WIDTH;
+      }
+      canvas.width = width;
+      canvas.height = height;
+
       ctx.save();
       if (mirrored) {
         ctx.scale(-1, 1);
@@ -90,60 +94,14 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
       }
       ctx.restore();
-      return canvas.toDataURL('image/jpeg', 0.92);
+      return canvas.toDataURL('image/jpeg', 0.85); // Compress for broadcast
     };
 
     const myDataUrl = captureVideo(localVideoRef.current, isMirrored);
-    const partnerDataUrl = captureVideo(remoteVideoRef.current, false);
     
-    onPhotoCaptured(myDataUrl, partnerDataUrl, photoIndex);
+    onPhotoCaptured(myDataUrl, photoIndex);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, photoIndex]);
-
-  // Compose result canvas when entering customizing phase or state changes
-  const composeResult = useCallback(async () => {
-    if (!resultCanvasRef.current) return;
-    const layout = LAYOUTS[roomState.layout as LayoutKey];
-    const count = layout.count;
-    const myUrls = myPhotos.slice(0, count).map(p => p?.dataUrl || '');
-    const partnerUrls = partnerPhotos.slice(0, count).map(p => p?.dataUrl || '');
-
-    await composeDuoPhoto({
-      myPhotos: myUrls,
-      partnerPhotos: partnerUrls,
-      state: roomState,
-      canvas: resultCanvasRef.current,
-    });
-    setResultImgUrl(resultCanvasRef.current.toDataURL('image/png'));
-    setResultComposed(true);
-  }, [roomState, myPhotos, partnerPhotos]);
-
-  useEffect(() => {
-    if (phase !== 'done') {
-      setResultComposed(false);
-      return;
-    }
-    composeResult().then(() => {
-      setShowResult(true);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, myPhotos, partnerPhotos]);
-
-  // Re-compose if customization changes while in done phase (if they edit after result is shown)
-  useEffect(() => {
-    if (phase === 'done') {
-      composeResult();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomState, phase]);
-
-  const handleDownload = useCallback(() => {
-    if (!resultImgUrl) return;
-    const a = document.createElement('a');
-    a.href = resultImgUrl;
-    a.download = `photoboothduo-${roomCode}-${Date.now()}.png`;
-    a.click();
-  }, [roomCode, resultImgUrl]);
 
   const copyLink = useCallback(() => {
     navigator.clipboard.writeText(`${window.location.origin}/room/${roomCode}`);
@@ -216,6 +174,18 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   if (phase === 'setup_theme') {
     return <SetupTheme roomState={roomState} updateState={updateState} nextStep={() => changePhase('ready_to_capture')} prevStep={() => changePhase('setup_layout')} role={role} />;
   }
+  if (phase === 'done') {
+    return (
+      <ResultPage
+        myPhotos={myPhotos}
+        partnerPhotos={partnerPhotos}
+        roomState={roomState}
+        roomCode={roomCode}
+        onRetake={() => handleReset(true)}
+        onBack={() => changePhase('setup_layout')}
+      />
+    );
+  }
 
   return (
     <div className="room-layout-clean">
@@ -240,22 +210,6 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         isMirrored={isMirrored}
         toggleCamera={toggleCamera}
         toggleMirror={toggleMirror}
-      />
-
-
-      <canvas
-        ref={resultCanvasRef}
-        style={{ display: 'none' }}
-        aria-hidden="true"
-      />
-
-      <PreviewModal
-        showResult={showResult}
-        setShowResult={setShowResult}
-        resultComposed={resultComposed}
-        resultImgUrl={resultImgUrl}
-        handleDownload={handleDownload}
-        handleReset={handleReset}
       />
     </div>
   );

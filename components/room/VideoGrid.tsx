@@ -25,6 +25,59 @@ interface VideoGridProps {
   toggleMirror: () => void;
 }
 
+// Countdown bubble inside each video cell
+function CountdownBubble({ countdown, photoIndex, totalCount }: { countdown: number; photoIndex: number; totalCount: number }) {
+  if (countdown <= 0) return null;
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 16,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 4,
+      pointerEvents: 'none',
+    }}>
+      <div
+        key={countdown}
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(12px)',
+          border: '3px solid rgba(255,255,255,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 34,
+          fontWeight: 900,
+          color: '#fff',
+          animation: 'countdownPop 0.3s ease-out',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+        }}
+      >
+        {countdown}
+      </div>
+      <span style={{
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(8px)',
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: 1.5,
+        padding: '3px 10px',
+        borderRadius: 100,
+      }}>
+        {photoIndex + 1}/{totalCount}
+      </span>
+    </div>
+  );
+}
+
 export default function VideoGrid({
   remoteStream,
   roomState,
@@ -46,6 +99,8 @@ export default function VideoGrid({
   toggleCamera,
   toggleMirror,
 }: VideoGridProps) {
+  const isCapturing = (phase === 'countdown' || phase === 'capturing') && countdown > 0;
+
   return (
     <div className="video-area">
       <div className="flash-overlay" ref={flashRef} />
@@ -74,6 +129,7 @@ export default function VideoGrid({
                 📷 Kamu {role === 'host' ? '(Host)' : '(Tamu)'}
               </div>
 
+              {/* Camera controls */}
               <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8, zIndex: 10 }}>
                 <button
                   onClick={toggleMirror}
@@ -92,10 +148,15 @@ export default function VideoGrid({
                   🔄
                 </button>
               </div>
+
+              {/* Countdown inside local video */}
+              {isCapturing && (
+                <CountdownBubble countdown={countdown} photoIndex={photoIndex} totalCount={totalCount} />
+              )}
             </div>
 
             {/* Remote video */}
-            <div className="video-cell">
+            <div className="video-cell" style={{ position: 'relative' }}>
               {remoteStream ? (
                 <>
                   <video
@@ -105,6 +166,11 @@ export default function VideoGrid({
                     muted={false}
                   />
                   <div className="video-cell-label">👤 Partner</div>
+
+                  {/* Countdown inside remote video */}
+                  {isCapturing && (
+                    <CountdownBubble countdown={countdown} photoIndex={photoIndex} totalCount={totalCount} />
+                  )}
                 </>
               ) : (
                 <div className="video-cell-waiting">
@@ -126,24 +192,14 @@ export default function VideoGrid({
             </div>
           </div>
 
-          {/* Countdown overlay */}
-          {(phase === 'countdown' || phase === 'capturing') && countdown > 0 && (
-            <div className="countdown-overlay">
-              <div className="countdown-number" key={countdown}>{countdown}</div>
-              <div className="countdown-label">
-                FOTO {photoIndex + 1} dari {totalCount}
-              </div>
-            </div>
-          )}
-
           <div className="video-bottom" style={{ justifyContent: 'center' }}>
             <button
               id="btn-start"
               onClick={startSession}
-              disabled={(['countdown', 'capturing'] as string[]).includes(phase)}
-              style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: (['countdown', 'capturing'] as string[]).includes(phase) ? 'not-allowed' : 'pointer', opacity: (['countdown', 'capturing'] as string[]).includes(phase) ? 0.7 : 1, transition: 'all 0.2s', boxShadow: (['countdown', 'capturing'] as string[]).includes(phase) ? 'none' : 'var(--accent-glow)' }}
+              disabled={isCapturing}
+              style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: isCapturing ? 'not-allowed' : 'pointer', opacity: isCapturing ? 0.7 : 1, transition: 'all 0.2s', boxShadow: isCapturing ? 'none' : 'var(--accent-glow)' }}
             >
-              {(['countdown', 'capturing'] as string[]).includes(phase)
+              {isCapturing
                 ? `📸 Memotret ${photoIndex + 1}/${totalCount}...`
                 : '📸 MULAI MEMOTRET'}
             </button>
