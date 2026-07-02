@@ -67,8 +67,6 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     }
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
-    pc.addTransceiver('video', { direction: 'sendrecv' });
-    pc.addTransceiver('audio', { direction: 'sendrecv' });
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
@@ -142,8 +140,12 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     async function handleSignal(type: string, data: unknown, pc: RTCPeerConnection) {
       try {
-        if ((type === 'peer_joined' || type === 'request_offer') && isHost) {
+        if (type === 'peer_joined' && isHostRef.current) {
           const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          sendSignal('sdp_offer', offer);
+        } else if (type === 'request_offer' && isHostRef.current) {
+          const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           sendSignal('sdp_offer', offer);
         } else if (type === 'sdp_offer') {
@@ -195,7 +197,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           sendSignal('peer_joined', {});
           sendSignal('mirror_state', isMirroredRef.current);
           
-          if (isHost) {
+          if (isHostRef.current) {
             // Wait for remote to subscribe, then send initial offer
             setTimeout(async () => {
               if (!mountedRef.current) return;
