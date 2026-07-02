@@ -7,35 +7,31 @@ import { getParticipantId } from '@/lib/roomUtils';
 
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
-    // --- STUN Servers (Publik & Gratis) ---
-    // STUN berguna untuk mencari tahu IP Publik (berhasil di sebagian besar jaringan rumah)
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:global.stun.twilio.com:3478' },
-    
-    // --- TURN Servers (Penting untuk Jarak Jauh / Beda Jaringan) ---
-    // Jika masih blank hitam/tidak ada suara saat jarak jauh, itu berarti jaringan memblokir jalur P2P (Symmetric NAT).
-    // Kamu WAJIB menggunakan TURN Server berbayar/kustom (seperti Twilio NTS, Xirsys, atau Metered berbayar).
-    // Silakan hapus komentar di bawah ini dan masukkan kredensial TURN Server kamu:
-    
     {
-      urls: 'turn:boothkita.metered.ca:80',
-      username: 'bbc314a19d82e1f2bee186c0',
-      credential: 'r3Umsf9SU8U+zcGd'
+      urls: "stun:stun.relay.metered.ca:80",
     },
     {
-      urls: 'turn:boothkita.metered.ca:443',
-      username: 'bbc314a19d82e1f2bee186c0',
-      credential: 'r3Umsf9SU8U+zcGd'
+      urls: "turn:global.relay.metered.ca:80",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
     },
     {
-      urls: 'turn:boothkita.metered.ca:443?transport=tcp',
-      username: 'bbc314a19d82e1f2bee186c0',
-      credential: 'r3Umsf9SU8U+zcGd'
-    }
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
   ],
-  iceCandidatePoolSize: 10, // Mempercepat pencarian jalur koneksi
+  iceCandidatePoolSize: 10,
 };
 
 export function useWebRTC(roomCode: string, isHost: boolean) {
