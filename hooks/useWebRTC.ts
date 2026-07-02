@@ -69,10 +69,16 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
 
     pc.ontrack = (e) => {
+      // Force a new MediaStream instance so React detects a state change
       if (e.streams && e.streams.length > 0) {
-        setRemoteStream(e.streams[0]);
+        setRemoteStream(new MediaStream(e.streams[0].getTracks()));
       } else {
-        setRemoteStream(new MediaStream([e.track]));
+        setRemoteStream(prev => {
+          if (prev) {
+            return new MediaStream([...prev.getTracks(), e.track]);
+          }
+          return new MediaStream([e.track]);
+        });
       }
     };
 
