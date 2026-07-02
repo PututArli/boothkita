@@ -169,49 +169,69 @@ export function useRoom(roomId: string, roomCode: string) {
 
       await joinRoom(roomId, participantId, assignedRole);
 
-      const channel = supabase.channel(`room:${roomCode}`, {
+      if (!mountedRef.current) return;
+
+      const channelName = `room:${roomCode}`;
+      
+      // Cleanup any cached channel in strict mode
+      const existingChannels = supabase.getChannels().filter(c => c.topic.includes(channelName));
+      for (const c of existingChannels) {
+        await supabase.removeChannel(c);
+      }
+
+      const channel = supabase.channel(channelName, {
         config: {
           broadcast: { self: false },
           presence: { key: participantId },
         },
       });
 
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          if (!mountedRef.current) return;
-          const state = channel.presenceState();
-          const presentKeys = Object.keys(state);
-          
-          // Enforce 2-person limit based on join time
-          if (presentKeys.length > 2) {
-            const sorted = presentKeys.sort((a, b) => {
-              const aTime = new Date((state[a][0] as any)?.online_at || 0).getTime();
-              const bTime = new Date((state[b][0] as any)?.online_at || 0).getTime();
-              return aTime - bTime;
-            });
-            const firstTwo = sorted.slice(0, 2);
-            if (!firstTwo.includes(participantId)) {
-               setPhase('error_full');
-               channel.unsubscribe();
-               return;
+      try {
+        channel
+          .on('presence', { event: 'sync' }, () => {
+            if (!mountedRef.current) return;
+            const state = channel.presenceState();
+            const presentKeys = Object.keys(state);
+            
+            // Enforce 2-person limit based on join time
+            if (presentKeys.length > 2) {
+              const sorted = presentKeys.sort((a, b) => {
+                const aTime = new Date((state[a][0] as any)?.online_at || 0).getTime();
+                const bTime = new Date((state[b][0] as any)?.online_at || 0).getTime();
+                return aTime - bTime;
+              });
+              const firstTwo = sorted.slice(0, 2);
+              if (!firstTwo.includes(participantId)) {
+                 setPhase('error_full');
+                 channel.unsubscribe();
+                 return;
+              }
             }
-          }
 
-          if (presentKeys.length < 2) {
-            setPartnerInfo(null);
-            setPartnerReady(false);
-          }
-        })
-        .on('broadcast', { event: 'message' }, ({ payload }: { payload: RealtimeMessage }) => {
-          if (!mountedRef.current) return;
-          handleIncoming(payload);
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            await channel.track({ online_at: new Date().toISOString() });
-            broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: assignedRole } });
-          }
-        });
+            if (presentKeys.length < 2) {
+              setPartnerInfo(null);
+              setPartnerReady(false);
+            } else {
+              // Partner is present — detect their ID from presence and update partnerInfo
+              const partnerKey = presentKeys.find(k => k !== participantId);
+              if (partnerKey) {
+                setPartnerInfo(prev => prev ?? { id: partnerKey, role: 'guest', isReady: false });
+              }
+            }
+          })
+          .on('broadcast', { event: 'message' }, ({ payload }: { payload: RealtimeMessage }) => {
+            if (!mountedRef.current) return;
+            handleIncoming(payload);
+          })
+          .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+              await channel.track({ online_at: new Date().toISOString() });
+              broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: assignedRole } });
+            }
+          });
+      } catch (err) {
+        console.warn('Channel subscription error (likely strict mode race condition):', err);
+      }
 
       channelRef.current = channel;
     }
@@ -220,13 +240,16 @@ export function useRoom(roomId: string, roomCode: string) {
 
     return () => {
       mountedRef.current = false;
-      channelRef.current?.unsubscribe();
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
       clearCountdown();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, roomCode, participantId]);
 
   const startSession = useCallback(() => {
+    if (role !== 'host') return; // Only host can start the session
     const totalCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
     clearCountdown();
     setMyPhotos([]);
@@ -240,7 +263,7 @@ export function useRoom(roomId: string, roomCode: string) {
     });
 
     runCountdown(roomStateRef.current.timer || 3, totalCount);
-  }, [clearCountdown, participantId, runCountdown]);
+  }, [clearCountdown, participantId, runCountdown, role]);
 
   const onPhotoCaptured = useCallback((myDataUrl: string, partnerDataUrl: string, index: number) => {
     setMyPhotos(prev => {
@@ -269,15 +292,16 @@ export function useRoom(roomId: string, roomCode: string) {
       const nextIndex = index + 1;
       setPhotoIndex(nextIndex);
 
-      const burstDelay = 2;
       if (role === 'host') {
+        const burstDelay = 2;
         broadcastRef.current?.({
           type: 'countdown_start',
           senderId: participantId,
           payload: { timerVal: burstDelay, totalCount },
         });
+        runCountdown(burstDelay, totalCount);
       }
-      runCountdown(burstDelay, totalCount);
+      // Guest does nothing here. Guest waits for the 'countdown_start' broadcast from the host to ensure they stay in sync.
     }
   }, [participantId, runCountdown, role, partnerInfo]);
 

@@ -85,7 +85,13 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     if (typeof window === 'undefined') return;
     if (channelRef.current) return;
 
-    const channel = supabase.channel(`webrtc:${roomCode}`, {
+    const channelName = `webrtc:${roomCode}`;
+    const existing = supabase.getChannels().filter(c => c.topic.includes(channelName));
+    for (const c of existing) {
+      supabase.removeChannel(c);
+    }
+
+    const channel = supabase.channel(channelName, {
       config: { broadcast: { self: false } },
     });
 
@@ -156,7 +162,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     return () => {
       mountedRef.current = false;
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       channelRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps

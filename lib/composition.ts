@@ -289,11 +289,12 @@ export async function composeDuoPhoto(opts: ComposeOptions): Promise<void> {
 
   drawBackground(ctx, totalW, totalH, state.frameBg);
 
-  const loadImg = (url: string): Promise<HTMLImageElement> =>
+  const loadImg = (url: string): Promise<HTMLImageElement | null> =>
     new Promise((resolve) => {
+      if (!url) return resolve(null);
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => resolve(new Image());
+      img.onerror = () => resolve(null);
       img.src = url;
     });
 

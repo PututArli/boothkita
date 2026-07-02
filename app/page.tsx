@@ -1,52 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 export default function HomePage() {
   const router = useRouter();
-  const [tab, setTab] = useState<'create' | 'join'>('create');
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [recentRoom, setRecentRoom] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('recent_photobooth_room');
+    if (saved) setRecentRoom(saved);
+  }, []);
 
   async function handleCreate() {
+    if (loading) return;
     setLoading(true);
-    setError('');
     try {
       const res = await fetch('/api/rooms', { method: 'POST' });
       const data = await res.json();
       if (data.roomCode) {
+        localStorage.setItem('recent_photobooth_room', data.roomCode);
         router.push(`/room/${data.roomCode}`);
       } else {
-        setError('Gagal membuat room. Coba lagi.');
+        setError('Failed to create room.');
+        setLoading(false);
       }
     } catch {
-      setError('Terjadi kesalahan. Periksa koneksi internet.');
-    } finally {
+      setError('Connection error.');
       setLoading(false);
     }
   }
 
-  async function handleJoin() {
-    const code = joinCode.trim().toUpperCase();
-    if (code.length !== 6) {
-      setError('Kode room harus 6 karakter.');
-      return;
-    }
+  async function handleJoin(codeStr?: string) {
+    if (loading) return;
+    const code = (codeStr || joinCode).trim().toUpperCase();
+    if (code.length !== 6) return;
     setLoading(true);
-    setError('');
     try {
       const res = await fetch(`/api/rooms/${code}`);
       if (res.ok) {
+        localStorage.setItem('recent_photobooth_room', code);
         router.push(`/room/${code}`);
       } else {
-        setError('Room tidak ditemukan atau sudah kadaluarsa.');
+        setError('Room not found or expired.');
+        setLoading(false);
       }
     } catch {
-      setError('Terjadi kesalahan. Periksa koneksi internet.');
-    } finally {
+      setError('Connection error.');
       setLoading(false);
     }
   }
@@ -60,147 +64,66 @@ export default function HomePage() {
         <div className="orb orb-3" />
       </div>
 
+      <div className="landing-hero">
+        <div className="title-area">
+          <h1 style={{ whiteSpace: 'nowrap' }}>
+            Photobooth <span style={{ background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Duo</span>
+          </h1>
+        </div>
+      </div>
+
       <div className="landing-content">
-        {/* Hero */}
-        <div className="landing-hero">
-          <Image
-            src="/logo.png"
-            alt="PhotoBooth Duo Logo"
-            width={72}
-            height={72}
-            className="landing-logo"
-            priority
-          />
-          <h1 className="landing-title">PhotoBooth Duo</h1>
-          <p className="landing-subtitle">
-            Foto berdua secara <strong style={{ color: 'var(--accent)' }}>online real-time</strong> 📸
-            <br />
-            Buat room, share link, dan nikmati momen bersama!
-          </p>
-        </div>
-
-        {/* Feature chips */}
-        <div className="landing-features">
-          {[
-            { icon: '🎥', label: 'Live Video' },
-            { icon: '📸', label: 'Countdown Sinkron' },
-            { icon: '🎨', label: 'Frame & Filter' },
-            { icon: '💾', label: 'Unduh Hasil' },
-          ].map(f => (
-            <div className="feature-chip" key={f.label}>
-              <span className="icon">{f.icon}</span>
-              <span>{f.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Main card */}
-        <div className="landing-card">
-          {/* Tabs */}
-          <div className="card-tabs" role="tablist">
-            <button
-              id="tab-create"
-              role="tab"
-              aria-selected={tab === 'create'}
-              className={`card-tab ${tab === 'create' ? 'active' : ''}`}
-              onClick={() => { setTab('create'); setError(''); }}
-            >
-              ✨ Buat Room Baru
-            </button>
-            <button
-              id="tab-join"
-              role="tab"
-              aria-selected={tab === 'join'}
-              className={`card-tab ${tab === 'join' ? 'active' : ''}`}
-              onClick={() => { setTab('join'); setError(''); }}
-            >
-              🔗 Gabung Room
-            </button>
+        <div className="action-cards">
+          <div className="action-card" onClick={handleCreate}>
+            <h2>Create</h2>
+            <p style={{ display: 'flex', alignItems: 'center', gap: 4 }}>a room <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg></p>
           </div>
-
-          {tab === 'create' && (
-            <div id="panel-create" role="tabpanel">
-              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
-                Buat room baru dan dapatkan kode unik. Share kode tersebut ke pasangan/teman kamu untuk mulai foto bersama! 🎉
-              </p>
-              <button
-                id="btn-create-room"
-                className="btn-primary"
-                onClick={handleCreate}
-                disabled={loading}
-                aria-busy={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
-                    Membuat room...
-                  </>
-                ) : (
-                  '✨ Buat Room Sekarang'
-                )}
-              </button>
-            </div>
-          )}
-
-          {tab === 'join' && (
-            <div id="panel-join" role="tabpanel">
-              <div className="form-group">
-                <label className="form-label" htmlFor="input-room-code">
-                  Masukkan Kode Room
-                </label>
+          
+          <div className="action-card" onClick={() => setShowJoinInput(true)}>
+            {!showJoinInput ? (
+              <>
+                <h2>Join</h2>
+                <p>with a code</p>
+              </>
+            ) : (
+              <div className="form-group" style={{ margin: 0 }} onClick={e => e.stopPropagation()}>
                 <input
-                  id="input-room-code"
                   type="text"
-                  className="form-input"
+                  style={{ background: 'transparent', border: 'none', borderBottom: '2px solid var(--text)', borderRadius: 0, padding: '8px 0', fontSize: '24px', textAlign: 'left', letterSpacing: '4px', outline: 'none', color: 'var(--text)', fontWeight: 800 }}
                   placeholder="XXXXXX"
                   maxLength={6}
                   value={joinCode}
-                  onChange={e => {
-                    setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                    setError('');
-                  }}
+                  onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                   onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                  autoComplete="off"
                   autoFocus
                 />
+                <button onClick={() => handleJoin()} style={{ marginTop: 12, textAlign: 'left', fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                  {loading ? 'Joining...' : 'Join Room'}
+                  {!loading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>}
+                </button>
               </div>
-              <button
-                id="btn-join-room"
-                className="btn-primary"
-                onClick={handleJoin}
-                disabled={loading || joinCode.length < 6}
-                aria-busy={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
-                    Menghubungkan...
-                  </>
-                ) : (
-                  '🔗 Gabung Sekarang'
-                )}
-              </button>
+            )}
+          </div>
+        </div>
+
+        {error && <p style={{ color: '#fa5252', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{error}</p>}
+
+        {recentRoom && (
+          <div className="history-card" onClick={() => handleJoin(recentRoom)}>
+            <div className="status-indicator"></div>
+            <div className="info">
+              <h3>Group Photobooth</h3>
+              <p>Room {recentRoom}</p>
             </div>
-          )}
+            <div className="badge">off</div>
+          </div>
+        )}
 
-          {error && (
-            <p
-              role="alert"
-              style={{
-                marginTop: 12, color: 'var(--danger)', fontSize: 13, textAlign: 'center',
-                padding: '8px 12px', background: 'rgba(248,113,113,0.1)',
-                borderRadius: 8, border: '1px solid rgba(248,113,113,0.2)',
-              }}
-            >
-              ⚠️ {error}
-            </p>
-          )}
-        </div>
-
-        {/* How it works */}
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-          <p>💡 Room aktif selama <strong style={{ color: 'var(--text)' }}>30 menit</strong> · Tanpa perlu login · Gratis!</p>
-        </div>
+        {recentRoom && (
+           <p className="start-session-link" onClick={() => handleJoin(recentRoom)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+             rejoin previous session <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+           </p>
+        )}
       </div>
     </main>
   );

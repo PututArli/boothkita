@@ -38,14 +38,14 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
-  }, [localStream]);
+  }, [localStream, phase]);
 
   // Attach remote stream to video element
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
     }
-  }, [remoteStream]);
+  }, [remoteStream, phase]);
 
   // Capture photo when phase transitions to 'capturing'
   const capturedRef = useRef(false);
@@ -156,33 +156,53 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
 
   if (phase === 'waiting_partner') {
     return (
-      <div className="wizard-screen">
-        <div className="wizard-container" style={{ textAlign: 'center' }}>
-          <h2 className="wizard-title">Layar 1: Ruang Tunggu</h2>
-          <p className="wizard-subtitle">Bagikan link ini ke pasangan/teman Anda agar mereka bisa bergabung.</p>
+      <div className="landing-page" style={{ justifyContent: 'center', position: 'relative' }}>
+        <div className="landing-bg" aria-hidden="true">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+          <div className="orb orb-3" />
+        </div>
+
+        <div className="profile-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: 500, zIndex: 1 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>YOUR CODE</p>
           
-          <div style={{ background: 'var(--surface2)', padding: 16, borderRadius: 'var(--radius-sm)', margin: '24px 0', border: '1px solid var(--border)' }}>
-            <code style={{ fontSize: 24, fontWeight: 700, letterSpacing: 4, color: 'var(--text)' }}>{roomCode}</code>
-          </div>
-          
-          <div className="wizard-actions" style={{ justifyContent: 'center', gap: 12 }}>
-            <button className="btn-secondary" onClick={copyLink}>
-              {copyDone ? 'Tersalin! ✅' : 'Salin Tautan 🔗'}
-            </button>
-            {role === 'host' && (
-              <button 
-                className="btn-primary" 
-                onClick={() => changePhase('setup_layout')}
-                disabled={!partnerConnected}
-              >
-                {!partnerConnected ? '⏳ Menunggu Partner...' : 'Mulai ➔'}
-              </button>
-            )}
-            {role === 'guest' && (
-              <div style={{ marginTop: 12, color: 'var(--text-muted)' }}>
-                {partnerConnected ? '✅ Terhubung! Menunggu Host memulai sesi.' : '⏳ Menghubungkan ke Room...'}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 24 }}>
+            {roomCode.split('').map((char, i) => (
+              <div key={i} style={{ width: 56, height: 72, background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, backdropFilter: 'blur(10px)', border: '1px solid var(--border)', boxShadow: 'var(--accent-glow)' }}>
+                {char}
               </div>
-            )}
+            ))}
+          </div>
+
+          <button onClick={copyLink} style={{ padding: '8px 16px', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid var(--border)', borderRadius: 100, fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 40, cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+            {copyDone ? 'copied!' : 'copy link'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, fontSize: 14, color: 'var(--text-muted)' }}>
+            <span style={{ width: 8, height: 8, border: '2px solid var(--text-muted)', borderRadius: '50%' }}></span>
+            {partnerConnected ? 'partner connected!' : 'waiting for partner...'}
+          </div>
+
+          {role === 'host' && (
+            <button 
+              onClick={() => changePhase('setup_layout')}
+              disabled={!partnerConnected}
+              style={{ width: '100%', maxWidth: 280, padding: '16px 24px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: partnerConnected ? 1 : 0.5, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: partnerConnected ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: partnerConnected ? 'var(--accent-glow)' : 'none' }}
+            >
+              Pilih Layout & Tema <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+            </button>
+          )}
+
+          <div style={{ marginTop: 40 }}>
+            <a href="/" style={{ fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>← back</a>
           </div>
         </div>
       </div>

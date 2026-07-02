@@ -139,10 +139,9 @@ export default function VideoGrid({
           <div className="video-bottom" style={{ justifyContent: 'center' }}>
             <button
               id="btn-start"
-              className="capture-btn"
               onClick={startSession}
               disabled={(['countdown', 'capturing'] as string[]).includes(phase)}
-              style={{ padding: '16px 40px', fontSize: 18 }}
+              style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: (['countdown', 'capturing'] as string[]).includes(phase) ? 'not-allowed' : 'pointer', opacity: (['countdown', 'capturing'] as string[]).includes(phase) ? 0.7 : 1, transition: 'all 0.2s', boxShadow: (['countdown', 'capturing'] as string[]).includes(phase) ? 'none' : 'var(--accent-glow)' }}
             >
               {(['countdown', 'capturing'] as string[]).includes(phase)
                 ? `📸 Memotret ${photoIndex + 1}/${totalCount}...`
