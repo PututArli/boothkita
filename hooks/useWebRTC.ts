@@ -151,7 +151,11 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     async function handleSignal(type: string, data: unknown, pc: RTCPeerConnection) {
       try {
-        if (type === 'sdp_offer') {
+        if (type === 'peer_joined' && isHostRef.current) {
+          const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          sendSignal('sdp_offer', offer);
+        } else if (type === 'sdp_offer') {
           const offer = data as RTCSessionDescriptionInit;
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
           const answer = await pc.createAnswer();

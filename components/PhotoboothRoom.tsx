@@ -274,7 +274,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         H: {role === 'host' ? 'Y' : 'N'}
       </div>
       {/* Hidden audio element to keep voice chat alive across ALL phases */}
-      <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
+      <audio ref={remoteAudioRef} autoPlay style={{ width: 0, height: 0, position: 'absolute', opacity: 0 }} />
       {renderPhase()}
     </>
   );
