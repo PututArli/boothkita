@@ -98,13 +98,53 @@ function drawBackground(
       for (let gx = 0; gx < w; gx += gs) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
       for (let gy = 0; gy < h; gy += gs) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
     } else if (frameBg.val === 'check') {
-      const cs = 20;
+      const cs = 40;
       for (let cy = 0; cy < h; cy += cs) {
         for (let cx = 0; cx < w; cx += cs) {
-          ctx.fillStyle = ((Math.floor(cy / cs) + Math.floor(cx / cs)) % 2 === 0) ? '#ffffff' : '#f0f0f0';
+          ctx.fillStyle = ((Math.floor(cy / cs) + Math.floor(cx / cs)) % 2 === 0) ? '#1a1a2e' : '#f0f0f0';
           ctx.fillRect(cx, cy, cs, cs);
         }
       }
+    } else if (frameBg.val === 'y2k_check') {
+      const cs = 60;
+      for (let cy = 0; cy < h; cy += cs) {
+        for (let cx = 0; cx < w; cx += cs) {
+          ctx.fillStyle = ((Math.floor(cy / cs) + Math.floor(cx / cs)) % 2 === 0) ? '#ff4757' : '#2ed573';
+          ctx.fillRect(cx, cy, cs, cs);
+        }
+      }
+    } else if (frameBg.val === 'denim') {
+      ctx.fillStyle = '#1e3799';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let i = 0; i < 2000; i++) {
+        ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+      }
+      // Draw dashed white border for jeans look
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([15, 10]);
+      ctx.strokeRect(10, 10, w - 20, h - 20);
+      ctx.setLineDash([]);
+    } else if (frameBg.val === 'clouds') {
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#a1c4fd');
+      grad.addColorStop(1, '#c2e9fb');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      const drawCloud = (cx: number, cy: number, scale: number) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 30 * scale, 0, Math.PI * 2);
+        ctx.arc(cx + 25 * scale, cy - 10 * scale, 35 * scale, 0, Math.PI * 2);
+        ctx.arc(cx + 50 * scale, cy, 25 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      drawCloud(100, 200, 1.5);
+      drawCloud(400, 600, 2);
+      drawCloud(150, 1000, 1.2);
+      drawCloud(450, 1400, 1.8);
     }
   }
 }

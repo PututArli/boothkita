@@ -24,6 +24,7 @@ export interface CapturedPhoto {
 
 export interface RealtimeMessage {
   type:
+    | 'session_start'
     | 'countdown_start'
     | 'countdown_tick'
     | 'photo_captured'
@@ -53,6 +54,7 @@ export type SessionPhase =
   | 'ready_to_capture'
   | 'countdown'
   | 'capturing'
+  | 'arrange'
   | 'error_full'
   | 'done';
 
@@ -70,12 +72,22 @@ export const FRAME_BG_PRESETS = [
   { id: 'white', label: 'white', type: 'solid' as const, val: '#ffffff', style: { background: '#ffffff' } },
   { id: 'cream', label: 'cream', type: 'solid' as const, val: '#f5efdf', style: { background: '#f5efdf' } },
   { id: 'pink', label: 'pink', type: 'solid' as const, val: '#f8c8d8', style: { background: '#f8c8d8' } },
+  { id: 'yellow', label: 'yellow', type: 'solid' as const, val: '#fdfd96', style: { background: '#fdfd96' } },
+  { id: 'sage', label: 'sage', type: 'solid' as const, val: '#c1d7c3', style: { background: '#c1d7c3' } },
+  { id: 'baby blue', label: 'baby blue', type: 'solid' as const, val: '#b0e0e6', style: { background: '#b0e0e6' } },
   { id: 'black', label: 'black', type: 'solid' as const, val: '#0a0a0a', style: { background: '#0a0a0a' } },
   { id: 'pastel', label: 'pastel', type: 'gradient' as const, val: '#ff9a9e,#fecfef', style: { background: 'linear-gradient(135deg, #ff9a9e, #fecfef)' } },
   { id: 'lavender', label: 'lavender', type: 'gradient' as const, val: '#a18cd1,#fbc2eb', style: { background: 'linear-gradient(135deg, #a18cd1, #fbc2eb)' } },
   { id: 'mint', label: 'mint', type: 'gradient' as const, val: '#84fab0,#8fd3f4', style: { background: 'linear-gradient(135deg, #84fab0, #8fd3f4)' } },
   { id: 'peach', label: 'peach', type: 'gradient' as const, val: '#ffecd2,#fcb69f', style: { background: 'linear-gradient(135deg, #ffecd2, #fcb69f)' } },
-  { id: 'dark_blue', label: 'night', type: 'gradient' as const, val: '#30cfd0,#330867', style: { background: 'linear-gradient(135deg, #30cfd0, #330867)' } },
+  { id: 'sunset', label: 'sunset', type: 'gradient' as const, val: '#f6d365,#fda085', style: { background: 'linear-gradient(135deg, #f6d365, #fda085)' } },
+  { id: 'ocean', label: 'ocean', type: 'gradient' as const, val: '#4facfe,#00f2fe', style: { background: 'linear-gradient(135deg, #4facfe, #00f2fe)' } },
+  { id: 'night', label: 'night', type: 'gradient' as const, val: '#30cfd0,#330867', style: { background: 'linear-gradient(135deg, #30cfd0, #330867)' } },
+  { id: 'y2k check', label: 'y2k', type: 'pattern' as const, val: 'y2k_check', style: { background: 'repeating-linear-gradient(45deg, #ff4757 0, #ff4757 10px, #2ed573 10px, #2ed573 20px)' } },
+  { id: 'denim', label: 'denim', type: 'pattern' as const, val: 'denim', style: { background: '#2c3e50', border: '1px dashed #fff' } },
+  { id: 'clouds', label: 'clouds', type: 'pattern' as const, val: 'clouds', style: { background: 'linear-gradient(#a1c4fd, #c2e9fb)' } },
+  { id: 'polka pink', label: 'polka', type: 'pattern' as const, val: 'polka', style: { background: 'radial-gradient(#ff007f 15%, transparent 16%) 0 0, radial-gradient(#ff007f 15%, transparent 16%) 8px 8px', backgroundSize: '16px 16px', backgroundColor: '#fff' } },
+  { id: 'classic check', label: 'check', type: 'pattern' as const, val: 'check', style: { background: 'repeating-linear-gradient(45deg, #000 0, #000 10px, #fff 10px, #fff 20px)' } },
 ];
 
 export const BORDER_PRESETS = [

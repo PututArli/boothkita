@@ -115,8 +115,12 @@ export function useRoom(roomId: string, roomCode: string) {
         setPartnerReady(true);
         break;
       }
-      case 'countdown_start': {
+      case 'session_start': {
         const { timerVal, totalCount } = msg.payload as { timerVal: number; totalCount: number };
+        clearCountdown();
+        setMyPhotos([]);
+        setPartnerPhotos([]);
+        setPhotoIndex(0);
         runCountdown(timerVal, totalCount);
         break;
       }
@@ -254,21 +258,24 @@ export function useRoom(roomId: string, roomCode: string) {
   }, [roomId, roomCode, participantId]);
 
   const startSession = useCallback(() => {
-    const totalCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
+    const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
+    const layoutCount = layout?.count || 4;
+    const captureCount = Math.max(6, layoutCount + 2); // E.g., for 4-slot layout, capture 6.
+    
     clearCountdown();
     setMyPhotos([]);
     setPartnerPhotos([]);
     setPhotoIndex(0);
 
     broadcastRef.current?.({
-      type: 'countdown_start',
+      type: 'session_start',
       senderId: participantId,
-      payload: { timerVal: roomStateRef.current.timer || 3, totalCount },
+      payload: { timerVal: roomStateRef.current.timer || 3, totalCount: captureCount },
     });
 
     // Delay local start slightly (400ms) to sync with partner receiving the broadcast over network
     setTimeout(() => {
-      if (mountedRef.current) runCountdown(roomStateRef.current.timer || 3, totalCount);
+      if (mountedRef.current) runCountdown(roomStateRef.current.timer || 3, captureCount);
     }, 400);
   }, [clearCountdown, participantId, runCountdown]);
 
@@ -286,32 +293,24 @@ export function useRoom(roomId: string, roomCode: string) {
       payload: { index, dataUrl: myDataUrl }
     });
 
-    const totalCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
+    const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
+    const layoutCount = layout?.count || 4;
+    const captureCount = Math.max(6, layoutCount + 2);
 
-    if (index + 1 >= totalCount) {
+    if (index + 1 >= captureCount) {
       setTimeout(() => {
         if (!mountedRef.current) return;
-        setPhase('done');
-        // Broadcast done to guest so they also leave capturing phase
-        broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'done' });
-        if (role === 'host') {
-          updateRoomStatus(roomIdRef.current, 'done');
-        }
+        setPhase('arrange');
+        // Broadcast arrange to guest so they also leave capturing phase
+        broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'arrange' });
+        // NOTE: we do not update RoomStatus to 'done' yet since they are still arranging
       }, 800);
     } else {
       const nextIndex = index + 1;
       setPhotoIndex(nextIndex);
 
-      if (role === 'host') {
-        const burstDelay = 2;
-        broadcastRef.current?.({
-          type: 'countdown_start',
-          senderId: participantId,
-          payload: { timerVal: burstDelay, totalCount },
-        });
-        runCountdown(burstDelay, totalCount);
-      }
-      // Guest does nothing here. Guest waits for the 'countdown_start' broadcast from the host to ensure they stay in sync.
+      const burstDelay = 2;
+      runCountdown(burstDelay, captureCount);
     }
   }, [participantId, runCountdown, role, partnerInfo]);
 

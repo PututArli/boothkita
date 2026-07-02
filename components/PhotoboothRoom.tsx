@@ -7,6 +7,7 @@ import { LAYOUTS, LayoutKey } from '@/lib/types';
 import VideoGrid from './room/VideoGrid';
 import ResultPage from './room/ResultPage';
 import { SetupLayout, SetupTheme } from './room/WizardScreens';
+import { ArrangePage } from './room/ArrangePage';
 
 interface Props {
   roomId: string;
@@ -28,18 +29,23 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   const flashRef = useRef<HTMLDivElement>(null);
 
   const [copyDone, setCopyDone] = useState(false);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   // Attach local stream to video element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+      if (localVideoRef.current.srcObject !== localStream) {
+        localVideoRef.current.srcObject = localStream;
+      }
     }
   }, [localStream, phase]);
 
   // Attach remote stream to video element
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
     }
   }, [remoteStream, phase]);
 
@@ -110,7 +116,8 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   }, [roomCode]);
 
   const partnerConnected = !!partnerInfo || isConnected;
-  const totalCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
+  const layoutCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
+  const totalCount = Math.max(6, layoutCount + 2);
 
   if (phase === 'waiting_partner') {
     return (
@@ -121,13 +128,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
           <div className="orb orb-3" />
         </div>
 
-        <div className="profile-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-        
+
         <div style={{ textAlign: 'center', width: '100%', maxWidth: 500, zIndex: 1 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>YOUR CODE</p>
           
@@ -149,15 +150,13 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
             {partnerConnected ? 'partner connected!' : 'waiting for partner...'}
           </div>
 
-          {role === 'host' && (
-            <button 
-              onClick={() => changePhase('setup_layout')}
-              disabled={!partnerConnected}
-              style={{ width: '100%', maxWidth: 280, padding: '16px 24px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: partnerConnected ? 1 : 0.5, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: partnerConnected ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: partnerConnected ? 'var(--accent-glow)' : 'none' }}
-            >
-              Pilih Layout & Tema <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-            </button>
-          )}
+          <button 
+            onClick={() => changePhase('setup_layout')}
+            disabled={!partnerConnected}
+            style={{ width: '100%', maxWidth: 280, padding: '16px 24px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: partnerConnected ? 1 : 0.5, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: partnerConnected ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: partnerConnected ? 'var(--accent-glow)' : 'none' }}
+          >
+            Pilih Layout & Tema <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+          </button>
 
           <div style={{ marginTop: 40 }}>
             <a href="/" style={{ fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>← back</a>
@@ -174,15 +173,30 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   if (phase === 'setup_theme') {
     return <SetupTheme roomState={roomState} updateState={updateState} nextStep={() => changePhase('ready_to_capture')} prevStep={() => changePhase('setup_layout')} role={role} />;
   }
+
+  if (phase === 'arrange') {
+    return (
+      <ArrangePage
+        myPhotos={myPhotos}
+        layoutKey={roomState.layout}
+        onSubmit={(indices) => {
+          setSelectedIndices(indices);
+          changePhase('done');
+        }}
+      />
+    );
+  }
+
   if (phase === 'done') {
     return (
       <ResultPage
         myPhotos={myPhotos}
         partnerPhotos={partnerPhotos}
+        selectedIndices={selectedIndices}
         roomState={roomState}
         roomCode={roomCode}
         onRetake={() => handleReset(true)}
-        onBack={() => changePhase('setup_layout')}
+        onBack={() => changePhase('ready_to_capture')}
       />
     );
   }

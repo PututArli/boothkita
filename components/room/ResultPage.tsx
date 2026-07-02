@@ -7,6 +7,7 @@ import { composeDuoPhoto } from '@/lib/composition';
 interface ResultPageProps {
   myPhotos: CapturedPhoto[];
   partnerPhotos: CapturedPhoto[];
+  selectedIndices: number[];
   roomState: RoomState;
   roomCode: string;
   onRetake: () => void;
@@ -16,6 +17,7 @@ interface ResultPageProps {
 export default function ResultPage({
   myPhotos,
   partnerPhotos,
+  selectedIndices,
   roomState,
   roomCode,
   onRetake,
@@ -29,14 +31,14 @@ export default function ResultPage({
   useEffect(() => {
     if (!canvasRef.current) return;
     setComposed(false);
-    const layout = LAYOUTS[roomState.layout as LayoutKey];
-    const count = layout?.count || 4;
-    const myUrls = myPhotos.slice(0, count).map(p => p?.dataUrl || '');
-    const partnerUrls = partnerPhotos.slice(0, count).map(p => p?.dataUrl || '');
+    
+    // Map photos using selected indices
+    const orderedMyPhotos = selectedIndices.map(i => myPhotos[i]?.dataUrl || '');
+    const orderedPartnerPhotos = selectedIndices.map(i => partnerPhotos[i]?.dataUrl || '');
 
     composeDuoPhoto({
-      myPhotos: myUrls,
-      partnerPhotos: partnerUrls,
+      myPhotos: orderedMyPhotos,
+      partnerPhotos: orderedPartnerPhotos,
       state: roomState,
       canvas: canvasRef.current,
     }).then(() => {
@@ -44,7 +46,7 @@ export default function ResultPage({
       setImgUrl(url);
       setComposed(true);
     });
-  }, [myPhotos, partnerPhotos, roomState]);
+  }, [myPhotos, partnerPhotos, selectedIndices, roomState]);
 
   const handleDownload = () => {
     if (!imgUrl) return;
@@ -95,10 +97,10 @@ export default function ResultPage({
       {/* Main content */}
       <div style={{
         flex: 1, position: 'relative', zIndex: 1,
-        display: 'flex', flexDirection: 'row',
+        display: 'flex', flexWrap: 'wrap',
         gap: 32, padding: '32px 28px',
         maxWidth: 1100, margin: '0 auto', width: '100%',
-        alignItems: 'flex-start',
+        alignItems: 'flex-start', justifyContent: 'center'
       }}>
         {/* Left: photos grid */}
         <div style={{ flex: 1 }}>
@@ -110,7 +112,9 @@ export default function ResultPage({
             gridTemplateColumns: '1fr 1fr',
             gap: 8,
           }}>
-            {myPhotos.map((photo, i) => (
+            {selectedIndices.map((photoIdx, i) => {
+              const photo = myPhotos[photoIdx];
+              return (
               <div key={i} style={{ aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
                 {photo?.dataUrl ? (
                   <img src={photo.dataUrl} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -118,7 +122,7 @@ export default function ResultPage({
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>—</div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
 
           {/* Partner photos */}
@@ -130,7 +134,9 @@ export default function ResultPage({
             gridTemplateColumns: '1fr 1fr',
             gap: 8,
           }}>
-            {partnerPhotos.map((photo, i) => (
+            {selectedIndices.map((photoIdx, i) => {
+              const photo = partnerPhotos[photoIdx];
+              return (
               <div key={i} style={{ aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
                 {photo?.dataUrl ? (
                   <img src={photo.dataUrl} alt={`Partner Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -138,12 +144,12 @@ export default function ResultPage({
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>—</div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
         {/* Right: strip result */}
-        <div style={{ width: 300, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        <div style={{ width: '100%', maxWidth: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
             Strip Kamu
           </p>

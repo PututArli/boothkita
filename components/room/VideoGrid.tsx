@@ -99,7 +99,7 @@ export default function VideoGrid({
   toggleCamera,
   toggleMirror,
 }: VideoGridProps) {
-  const isCapturing = (phase === 'countdown' || phase === 'capturing') && countdown > 0;
+  const isCapturing = phase === 'countdown' || phase === 'capturing';
 
   return (
     <div className="video-area">
@@ -192,7 +192,25 @@ export default function VideoGrid({
             </div>
           </div>
 
-          <div className="video-bottom" style={{ justifyContent: 'center' }}>
+          {/* Captured Photos Preview Strip */}
+          {myPhotos.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16, flexWrap: 'wrap', padding: '0 16px' }}>
+              {Array.from({ length: totalCount }).map((_, i) => {
+                const p = myPhotos[i];
+                return (
+                  <div key={i} style={{ width: 64, height: 48, borderRadius: 4, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', border: p ? '2px solid var(--accent)' : '1px dashed rgba(255,255,255,0.3)', flexShrink: 0 }}>
+                    {p?.dataUrl ? (
+                      <img src={p.dataUrl} alt={`Take ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{i + 1}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="video-bottom" style={{ justifyContent: 'center', marginTop: 20 }}>
             <button
               id="btn-start"
               onClick={startSession}
