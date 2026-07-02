@@ -178,6 +178,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     return (
       <ArrangePage
         myPhotos={myPhotos}
+        partnerPhotos={partnerPhotos}
         layoutKey={roomState.layout}
         onSubmit={(indices) => {
           setSelectedIndices(indices);

@@ -3,11 +3,12 @@ import { CapturedPhoto, LayoutKey, LAYOUTS } from '@/lib/types';
 
 interface ArrangePageProps {
   myPhotos: CapturedPhoto[];
+  partnerPhotos: CapturedPhoto[];
   layoutKey: string;
   onSubmit: (selectedIndices: number[]) => void;
 }
 
-export function ArrangePage({ myPhotos, layoutKey, onSubmit }: ArrangePageProps) {
+export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, onSubmit }: ArrangePageProps) {
   const layout = LAYOUTS[layoutKey as LayoutKey] || LAYOUTS.strip3;
   const count = layout.count;
   const [selectedIndices, setSelectedIndices] = useState<(number | null)[]>(Array(count).fill(null));
@@ -71,6 +72,7 @@ export function ArrangePage({ myPhotos, layoutKey, onSubmit }: ArrangePageProps)
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12
           }}>
             {myPhotos.map((p, i) => {
+              const partnerP = partnerPhotos[i];
               const isUsed = selectedIndices.includes(i);
               return (
                 <button
@@ -84,8 +86,15 @@ export function ArrangePage({ myPhotos, layoutKey, onSubmit }: ArrangePageProps)
                     opacity: isUsed ? 0.6 : 1, transition: 'all 0.2s',
                   }}
                 >
-                  {p?.dataUrl ? (
-                    <img src={p.dataUrl} alt={`Take ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {p?.dataUrl || partnerP?.dataUrl ? (
+                    <div style={{ display: 'flex', width: '100%', height: '100%', gap: 2 }}>
+                      <img src={p?.dataUrl} alt={`My Take ${i + 1}`} style={{ flex: 1, objectFit: 'cover', minWidth: 0 }} />
+                      {partnerP?.dataUrl ? (
+                        <img src={partnerP.dataUrl} alt={`Partner Take ${i + 1}`} style={{ flex: 1, objectFit: 'cover', minWidth: 0 }} />
+                      ) : (
+                        <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>—</div>
+                      )}
+                    </div>
                   ) : (
                     <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.1)' }} />
                   )}
@@ -110,6 +119,7 @@ export function ArrangePage({ myPhotos, layoutKey, onSubmit }: ArrangePageProps)
             {Array.from({ length: count }).map((_, i) => {
               const photoIdx = selectedIndices[i];
               const p = photoIdx !== null ? myPhotos[photoIdx] : null;
+              const partnerP = photoIdx !== null ? partnerPhotos[photoIdx] : null;
               const isActive = activeSlot === i;
 
               return (
@@ -123,8 +133,15 @@ export function ArrangePage({ myPhotos, layoutKey, onSubmit }: ArrangePageProps)
                     padding: 0, position: 'relative', transition: 'all 0.2s',
                   }}
                 >
-                  {p?.dataUrl ? (
-                    <img src={p.dataUrl} alt={`Slot ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {p?.dataUrl || partnerP?.dataUrl ? (
+                    <div style={{ display: 'flex', width: '100%', height: '100%', gap: 2 }}>
+                      <img src={p?.dataUrl} alt={`My Slot ${i + 1}`} style={{ flex: 1, objectFit: 'cover', minWidth: 0 }} />
+                      {partnerP?.dataUrl ? (
+                        <img src={partnerP.dataUrl} alt={`Partner Slot ${i + 1}`} style={{ flex: 1, objectFit: 'cover', minWidth: 0 }} />
+                      ) : (
+                        <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>—</div>
+                      )}
+                    </div>
                   ) : (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--accent)' : 'rgba(255,255,255,0.3)', fontSize: 24 }}>
                       +
