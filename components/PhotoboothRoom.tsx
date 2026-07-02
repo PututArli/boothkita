@@ -22,7 +22,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     startSession, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
   } = useRoom(roomId, roomCode);
 
-  const { localStream, remoteStream, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host');
+  const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host');
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -50,7 +50,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e));
     }
-  }, [remoteStream, phase]);
+  }, [remoteStream, streamTick, phase]);
 
   // Capture photo when phase transitions to 'capturing'
   const lastCapturedIndexRef = useRef(-1);

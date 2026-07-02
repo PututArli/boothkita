@@ -31,6 +31,7 @@ const ICE_SERVERS = {
 export function useWebRTC(roomCode: string, isHost: boolean) {
   const participantId = getParticipantId();
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [streamTick, setStreamTick] = useState(0);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -69,14 +70,19 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
 
     pc.ontrack = (e) => {
-      setRemoteStream(prev => {
-        const currentTracks = prev ? prev.getTracks() : [];
-        // Only add the track if we don't already have it
-        if (!currentTracks.find(t => t.id === e.track.id)) {
-          return new MediaStream([...currentTracks, e.track]);
-        }
-        return prev;
-      });
+      if (e.streams && e.streams.length > 0) {
+        setRemoteStream(e.streams[0]);
+      } else {
+        setRemoteStream(prev => {
+          if (prev) {
+            prev.addTrack(e.track);
+            return prev;
+          }
+          return new MediaStream([e.track]);
+        });
+      }
+      // Force a tick so components know a new track was added to the stream
+      setStreamTick(t => t + 1);
     };
 
     pc.onconnectionstatechange = () => {
@@ -331,5 +337,5 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     });
   }, []);
 
-  return { localStream, remoteStream, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic };
+  return { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic };
 }
