@@ -10,6 +10,9 @@ const ICE_SERVERS: RTCConfiguration = {
     {
       urls: "stun:stun.relay.metered.ca:80",
     },
+    // MATIKAN SEMENTARA METERED TURN SERVER AGAR TIDAK MENYEDOT KUOTA
+    // KARENA KAMU SUDAH MENGGUNAKAN TAILSCALE (LOKAL)
+    /*
     {
       urls: "turn:global.relay.metered.ca:80",
       username: "bbc314a19d82e1f2bee186c0",
@@ -30,6 +33,7 @@ const ICE_SERVERS: RTCConfiguration = {
       username: "bbc314a19d82e1f2bee186c0",
       credential: "r3Umsf9SU8U+zcGd",
     },
+    */
   ],
   iceCandidatePoolSize: 10,
 };
