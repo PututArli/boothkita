@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="theme-color" content="#0d0d12" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="icon" href="/logo.png" />
+        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
       </head>
       <body>
         {children}
