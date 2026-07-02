@@ -55,6 +55,9 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const localStreamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
   const isHostRef = useRef(isHost);
+  
+  // Ensure isHost is always up-to-date if component re-renders with new props
+  isHostRef.current = isHost;
 
   useEffect(() => {
     isHostRef.current = isHost;
@@ -234,6 +237,23 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, !!localStream]);
+
+  // Full teardown when room changes or unmounts
+  useEffect(() => {
+    return () => {
+      // NOTE: We DO NOT stop the local stream tracks here intentionally!
+      // The stream is managed by the startCamera effect.
+      
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [roomCode]);
 
   // Handle camera stream — re-runs on facingMode change
   useEffect(() => {
