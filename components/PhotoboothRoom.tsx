@@ -26,6 +26,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const resultCanvasRef = useRef<HTMLCanvasElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,11 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       remoteVideoRef.current.srcObject = null;
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e));
+    }
+    if (remoteAudioRef.current && remoteStream) {
+      remoteAudioRef.current.srcObject = null;
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.play().catch(e => console.error('Remote audio play error:', e));
     }
   }, [remoteStream, streamTick, phase]);
 
@@ -261,16 +267,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   return (
     <>
       {/* Hidden audio element to keep voice chat alive across ALL phases */}
-      {remoteStream && (
-        <audio
-          autoPlay
-          ref={(audio) => {
-            if (audio && audio.srcObject !== remoteStream) {
-              audio.srcObject = remoteStream;
-            }
-          }}
-        />
-      )}
+      <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
       {renderPhase()}
     </>
   );
