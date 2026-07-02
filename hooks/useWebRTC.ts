@@ -119,6 +119,8 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
 
     pc.onnegotiationneeded = async () => {
+      if (!isHostRef.current || isNegotiating.current) return;
+      
       try {
         isNegotiating.current = true;
         const offer = await pc.createOffer();
@@ -155,24 +157,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
       try {
         if (type === 'sdp_offer') {
           const offer = data as RTCSessionDescriptionInit;
-          const polite = !isHostRef.current;
-          const offerCollision = isNegotiating.current || pc.signalingState !== 'stable';
-          
-          ignoreOffer.current = !polite && offerCollision;
-          if (ignoreOffer.current) {
-            return;
-          }
-
-          // If we had a collision and we are polite, we must rollback if we have an offer out
-          if (offerCollision) {
-            await Promise.all([
-              pc.setLocalDescription({ type: 'rollback' }),
-              pc.setRemoteDescription(new RTCSessionDescription(offer))
-            ]);
-          } else {
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          }
-          
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           sendSignal('sdp_answer', answer);
