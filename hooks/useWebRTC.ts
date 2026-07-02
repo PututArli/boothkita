@@ -63,7 +63,13 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     };
 
     pc.onnegotiationneeded = async () => {
-      if (isNegotiating.current || !isHost) return;
+      if (isNegotiating.current) return;
+      if (!isHost) {
+        // Guest needs negotiation (e.g. added a new track), ask host to send offer
+        sendSignal('request_offer', {});
+        return;
+      }
+      
       isNegotiating.current = true;
       try {
         const offer = await pc.createOffer();
@@ -97,7 +103,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     async function handleSignal(type: string, data: unknown, pc: RTCPeerConnection) {
       try {
-        if (type === 'peer_joined' && isHost) {
+        if ((type === 'peer_joined' || type === 'request_offer') && isHost) {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           sendSignal('sdp_offer', offer);
@@ -184,23 +190,38 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
     async function startCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: facingMode === 'environment' ? 'environment' : 'user',
-          },
-          audio: false,
-        });
+        // MUST stop previous tracks BEFORE requesting new camera,
+        // otherwise mobile browsers may keep the hardware locked and return the same camera.
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach(t => t.stop());
+          localStreamRef.current = null;
+        }
+
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: facingMode === 'environment' ? { exact: 'environment' } : 'user',
+            },
+            audio: false,
+          });
+        } catch (err) {
+          console.warn('Exact facingMode failed, falling back to soft constraint', err);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: facingMode === 'environment' ? 'environment' : 'user',
+            },
+            audio: false,
+          });
+        }
 
         if (cancelled) {
           stream.getTracks().forEach(t => t.stop());
           return;
-        }
-
-        // Stop previous local tracks
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach(t => t.stop());
         }
 
         localStreamRef.current = stream;
