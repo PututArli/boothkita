@@ -72,7 +72,7 @@ export default function HomePage() {
       <div className="landing-hero">
         <div className="title-area">
           <h1 style={{ whiteSpace: 'nowrap' }}>
-            Photobooth <span style={{ background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Duo</span>
+            Photobooth <span style={{ background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', paddingRight: '0.1em' }}>Duo</span>
           </h1>
         </div>
       </div>
@@ -116,17 +116,6 @@ export default function HomePage() {
         </div>
 
         {error && <p style={{ color: '#fa5252', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{error}</p>}
-
-        {recentRoom && (
-          <div className="history-card" onClick={() => handleJoin(recentRoom)}>
-            <div className="status-indicator"></div>
-            <div className="info">
-              <h3>Group Photobooth</h3>
-              <p>Room {recentRoom}</p>
-            </div>
-            <div className="badge">off</div>
-          </div>
-        )}
 
         {recentRoom && (
            <p className="start-session-link" onClick={() => handleJoin(recentRoom)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>

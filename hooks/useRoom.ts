@@ -116,7 +116,8 @@ export function useRoom(roomId: string, roomCode: string) {
 
     const updateVisuals = () => {
       if (!mountedRef.current) return;
-      const now = Date.now() + timeOffsetRef.current;
+      // Host uses its own clock; Guest converts its clock to Host's clock using the offset
+      const now = isHost ? Date.now() : Date.now() + timeOffsetRef.current;
       const remaining = Math.ceil((captureAt - now) / 1000);
 
       if (remaining > 0) {

@@ -20,7 +20,9 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
 
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isMirrored, setIsMirrored] = useState(true);
+  const [partnerMirrored, setPartnerMirrored] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const isMirroredRef = useRef(true);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -139,6 +141,8 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           } else {
             pendingCandidates.current.push(candidate);
           }
+        } else if (type === 'mirror_state') {
+          setPartnerMirrored(data as boolean);
         }
       } catch {
         // ignore signal errors
@@ -150,12 +154,31 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
         payload: { type: string; senderId: string; data: unknown }
       }) => {
         if (!mountedRef.current || payload.senderId === participantId) return;
+
+        if (payload.type === 'peer_joined') {
+          if (pcRef.current) {
+            pcRef.current.close();
+            pcRef.current = null;
+          }
+          setRemoteStream(null);
+          setIsConnected(false);
+          pendingCandidates.current = [];
+          
+          const newPc = getOrCreatePC();
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+              newPc.addTrack(track, localStreamRef.current!);
+            });
+          }
+        }
+
         const pc = getOrCreatePC();
         await handleSignal(payload.type, payload.data, pc);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           sendSignal('peer_joined', {});
+          sendSignal('mirror_state', isMirroredRef.current);
           
           if (isHost) {
             // Wait for remote to subscribe, then send initial offer
@@ -288,8 +311,13 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   }, []);
 
   const toggleMirror = useCallback(() => {
-    setIsMirrored(prev => !prev);
-  }, []);
+    setIsMirrored(prev => {
+      const next = !prev;
+      isMirroredRef.current = next;
+      sendSignal('mirror_state', next);
+      return next;
+    });
+  }, [sendSignal]);
 
   const toggleMic = useCallback(() => {
     setIsMicOn(prev => {
@@ -301,5 +329,5 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     });
   }, []);
 
-  return { localStream, remoteStream, isConnected, facingMode, isMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic };
+  return { localStream, remoteStream, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic };
 }

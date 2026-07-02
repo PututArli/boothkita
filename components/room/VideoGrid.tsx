@@ -22,6 +22,7 @@ interface VideoGridProps {
   partnerConnected: boolean;
   facingMode: 'user' | 'environment';
   isMirrored: boolean;
+  partnerMirrored: boolean;
   isMicOn: boolean;
   toggleCamera: () => void;
   toggleMirror: () => void;
@@ -51,6 +52,7 @@ export default function VideoGrid({
 
   facingMode,
   isMirrored,
+  partnerMirrored,
   isMicOn,
   toggleCamera,
   toggleMirror,
@@ -156,7 +158,10 @@ export default function VideoGrid({
                     autoPlay
                     playsInline
                     muted
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ 
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      transform: partnerMirrored ? 'scaleX(-1)' : 'none'
+                    }}
                   />
                   <div style={{
                     position: 'absolute', bottom: 16, left: 16, background: 'var(--accent)', color: 'var(--bg)',

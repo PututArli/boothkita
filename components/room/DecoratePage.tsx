@@ -22,7 +22,7 @@ interface StickerItem { id: string; url: string; x: number; y: number; scale: nu
 const STICKERS = [
   '/stickers/blue-cloud.png',
   '/stickers/board.png',
-  '/stickers/cloud.png',
+  '/stickers/black-cloud.png',
   '/stickers/eat.png',
   '/stickers/flowers.png',
   '/stickers/fried-egg.png',
@@ -265,7 +265,7 @@ export default function DecoratePage({
     // Draw base
     const baseImg = new Image();
     baseImg.src = baseImgUrl;
-    await new Promise(r => baseImg.onload = r);
+    await new Promise(r => { baseImg.onload = r; baseImg.onerror = r; });
     ctx.drawImage(baseImg, 0, 0);
 
     // Draw lines
@@ -275,7 +275,7 @@ export default function DecoratePage({
     for (const s of stickers) {
       const sImg = new Image();
       sImg.src = s.url;
-      await new Promise(r => sImg.onload = r);
+      await new Promise(r => { sImg.onload = r; sImg.onerror = r; });
       ctx.save();
       ctx.translate(s.x, s.y);
       ctx.rotate((s.rotation * Math.PI) / 180);
