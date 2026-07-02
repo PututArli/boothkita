@@ -7,11 +7,11 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 const caveat = Caveat({ subsets: ['latin'], variable: '--font-caveat' });
 
 export const metadata: Metadata = {
-  title: 'PhotoBooth Duo',
+  title: 'BoothKita',
   description: 'Ambil foto berdua secara online. Buat room, share link ke pasangan, dan nikmati sesi foto bersama dengan frame dan filter keren!',
   keywords: ['photobooth', 'couple', 'foto bersama', 'online photobooth'],
   openGraph: {
-    title: 'PhotoBooth Duo',
+    title: 'BoothKita',
     description: 'Foto berdua secara online dengan berbagai frame dan filter.',
     type: 'website',
   },

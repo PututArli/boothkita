@@ -11,7 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
-    title: `Room ${params.code.toUpperCase()} — PhotoBooth Duo`,
+    title: `Room ${params.code.toUpperCase()} — BoothKita`,
     description: 'Sesi foto berdua secara online real-time',
   };
 }
