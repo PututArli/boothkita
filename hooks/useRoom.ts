@@ -104,7 +104,7 @@ export function useRoom(roomId: string, roomCode: string) {
     }
   }, []);
 
-  const runCountdown = useCallback((timerVal: number, totalCount: number) => {
+  const runCountdown = useCallback((timerVal: number, totalCount: number, isHost: boolean) => {
     clearCountdown();
     setPhase('countdown');
     let current = timerVal;
@@ -118,20 +118,23 @@ export function useRoom(roomId: string, roomCode: string) {
         countdownRef.current = setTimeout(tick, 1000);
       } else {
         setPhase('capturing');
-        // Schedule next action strictly based on timer, decoupled from photo capture duration
-        setTimeout(() => {
-          if (!mountedRef.current) return;
-          setPhotoIndex(prevIndex => {
-            const nextIndex = prevIndex + 1;
-            if (nextIndex >= totalCount) {
-              setPhase('arrange');
-              broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'arrange' });
-            } else {
-              runCountdown(2, totalCount);
-            }
-            return nextIndex;
-          });
-        }, 800);
+        // Only the host schedules the next photo to prevent timer drift
+        if (isHost) {
+          setTimeout(() => {
+            if (!mountedRef.current) return;
+            setPhotoIndex(prevIndex => {
+              const nextIndex = prevIndex + 1;
+              if (nextIndex >= totalCount) {
+                setPhase('arrange');
+                broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'arrange' });
+              } else {
+                broadcastRef.current?.({ type: 'photo_start', senderId: participantId, payload: { timerVal: 2, totalCount, nextIndex } });
+                runCountdown(2, totalCount, true);
+              }
+              return nextIndex;
+            });
+          }, 1500); // 1.5s delay to allow photo capture to finish smoothly
+        }
       }
     };
 
@@ -171,7 +174,14 @@ export function useRoom(roomId: string, roomCode: string) {
         setMyPhotos([]);
         setPartnerPhotos([]);
         setPhotoIndex(0);
-        runCountdown(timerVal, totalCount);
+        runCountdown(timerVal, totalCount, false);
+        break;
+      }
+      case 'photo_start': {
+        const { timerVal, totalCount, nextIndex } = msg.payload as { timerVal: number; totalCount: number; nextIndex: number };
+        clearCountdown();
+        setPhotoIndex(nextIndex);
+        runCountdown(timerVal, totalCount, false);
         break;
       }
       case 'photo_captured': {
@@ -323,10 +333,10 @@ export function useRoom(roomId: string, roomCode: string) {
       payload: { timerVal: roomStateRef.current.timer || 3, totalCount: captureCount },
     });
 
-    // Delay local start slightly (400ms) to sync with partner receiving the broadcast over network
+    // Delay local start slightly (200ms) to sync with partner receiving the broadcast over network
     setTimeout(() => {
-      if (mountedRef.current) runCountdown(roomStateRef.current.timer || 3, captureCount);
-    }, 400);
+      if (mountedRef.current) runCountdown(roomStateRef.current.timer || 3, captureCount, true);
+    }, 200);
   }, [clearCountdown, participantId, runCountdown]);
 
   const onPhotoCaptured = useCallback((myDataUrl: string, index: number) => {

@@ -8,6 +8,7 @@ import VideoGrid from './room/VideoGrid';
 import ResultPage from './room/ResultPage';
 import { SetupLayout, SetupTheme } from './room/WizardScreens';
 import { ArrangePage } from './room/ArrangePage';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface Props {
   roomId: string;
@@ -84,7 +85,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       }
       let width = vid.videoWidth;
       let height = vid.videoHeight;
-      const MAX_WIDTH = 800;
+      const MAX_WIDTH = 480; // Reduced to fit within Supabase Realtime payload limits (256KB)
       if (width > MAX_WIDTH) {
         height = Math.floor(height * (MAX_WIDTH / width));
         width = MAX_WIDTH;
@@ -100,7 +101,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
       }
       ctx.restore();
-      return canvas.toDataURL('image/jpeg', 0.85); // Compress for broadcast
+      return canvas.toDataURL('image/jpeg', 0.65); // Higher compression for broadcast
     };
 
     const myDataUrl = captureVideo(localVideoRef.current, isMirrored);
@@ -128,6 +129,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
           <div className="orb orb-3" />
         </div>
 
+        <ThemeToggle />
 
         <div style={{ textAlign: 'center', width: '100%', maxWidth: 500, zIndex: 1 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>YOUR CODE</p>

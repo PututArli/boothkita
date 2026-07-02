@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Caveat } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 const caveat = Caveat({ subsets: ['latin'], variable: '--font-caveat' });
@@ -18,13 +19,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${playfair.variable} ${caveat.variable}`}>
+    <html lang="id" className={`${playfair.variable} ${caveat.variable}`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#0d0d12" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/logo.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

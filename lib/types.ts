@@ -25,6 +25,7 @@ export interface CapturedPhoto {
 export interface RealtimeMessage {
   type:
     | 'session_start'
+    | 'photo_start'
     | 'countdown_start'
     | 'countdown_tick'
     | 'photo_captured'
