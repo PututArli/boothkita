@@ -180,7 +180,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
-            facingMode: facingMode === 'environment' ? { exact: 'environment' } : 'user',
+            facingMode: facingMode === 'environment' ? 'environment' : 'user',
           },
           audio: false,
         });
@@ -217,7 +217,8 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
             newPc.addTrack(track, stream);
           });
         }
-      } catch {
+      } catch (err) {
+        console.error('Camera access error:', err);
         // Camera access denied or unavailable
       }
     }

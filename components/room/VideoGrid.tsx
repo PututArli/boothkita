@@ -165,7 +165,7 @@ export default function VideoGrid({
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
-                    muted={false}
+                    muted
                   />
                   <div className="video-cell-label">👤 Partner</div>
 
