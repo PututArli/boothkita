@@ -69,8 +69,8 @@ export default function HomePage() {
 
       <div className="landing-hero">
         <div className="title-area">
-          <h1 style={{ whiteSpace: 'nowrap' }}>
-            <span style={{ background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', paddingRight: '0.1em' }}>boothkita</span>
+          <h1 style={{ whiteSpace: 'nowrap', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+            boothkita
           </h1>
         </div>
       </div>

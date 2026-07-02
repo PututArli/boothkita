@@ -174,13 +174,16 @@ export function useRoom(roomId: string, roomCode: string) {
         const p = msg.payload as { role: 'host' | 'guest' };
         
         // Prevent infinite ping-pong! Only reply if this is a NEW partner joining.
-        if (partnerInfoRef.current?.id !== msg.senderId) {
+        if (partnerInfoRef.current?.id !== msg.senderId || partnerInfoRef.current?.role !== p.role) {
+          const isNewPartner = partnerInfoRef.current?.id !== msg.senderId;
           const newInfo = { id: msg.senderId, role: p.role, isReady: false };
           partnerInfoRef.current = newInfo; // Synchronous update!
           setPartnerInfo(newInfo);
           
-          // Reply so they know we're here too
-          broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+          if (isNewPartner) {
+            // Reply so they know we're here too
+            broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+          }
         }
         break;
       }
@@ -324,7 +327,7 @@ export function useRoom(roomId: string, roomCode: string) {
               // Partner is present — detect their ID from presence and update partnerInfo
               const partnerKey = presentKeys.find(k => k !== participantId);
               if (partnerKey) {
-                setPartnerInfo(prev => prev ?? { id: partnerKey, role: 'guest', isReady: false });
+                setPartnerInfo(prev => prev ?? { id: partnerKey, role: roleRef.current === 'host' ? 'guest' : 'host', isReady: false });
               }
             }
           })
