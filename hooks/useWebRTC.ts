@@ -208,9 +208,14 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
             video: {
               width: { ideal: 1280 },
               height: { ideal: 720 },
+              frameRate: { ideal: 24 }, // Lower framerate to reduce encoder delay
               facingMode: facingMode === 'environment' ? { exact: 'environment' } : 'user',
             },
-            audio: true,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: false, // Turn off noise suppression to reduce processing delay
+              autoGainControl: true,
+            },
           });
         } catch (err) {
           console.warn('Exact facingMode failed, falling back to soft constraint', err);
@@ -218,9 +223,14 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
             video: {
               width: { ideal: 1280 },
               height: { ideal: 720 },
+              frameRate: { ideal: 24 },
               facingMode: facingMode === 'environment' ? 'environment' : 'user',
             },
-            audio: true,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: false,
+              autoGainControl: true,
+            },
           });
         }
 
