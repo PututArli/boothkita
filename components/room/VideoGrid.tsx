@@ -28,6 +28,7 @@ interface VideoGridProps {
   toggleMirror: () => void;
   toggleMic: () => void;
   onBack?: () => void;
+  updateState?: (state: Partial<RoomState>) => void;
 }
 
 // Removed CountdownBubble to replace with a centralized overlay
@@ -58,6 +59,7 @@ export default function VideoGrid({
   toggleMirror,
   toggleMic,
   onBack,
+  updateState,
 }: VideoGridProps) {
   const isCapturing = phase === 'countdown' || phase === 'capturing';
 
@@ -72,8 +74,6 @@ export default function VideoGrid({
         </div>
       ) : (
         <>
-          {/* Global Photo Counter removed - redundant with button text and covers UI */}
-
           {/* Global Countdown Overlay */}
           {isCapturing && countdown > 0 && (
             <div style={{
@@ -101,6 +101,36 @@ export default function VideoGrid({
           )}
 
           <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
+            
+            {/* Timer controls at top left */}
+            {!isCapturing && (
+              <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8, zIndex: 10 }}>
+                {[3, 5, 10].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => updateState && updateState({ timer: t })}
+                    style={{
+                      padding: '8px 16px',
+                      background: roomState.timer === t ? 'var(--text)' : 'rgba(255,255,255,0.2)',
+                      color: roomState.timer === t ? 'var(--bg)' : '#fff',
+                      border: '1px solid var(--border)',
+                      borderRadius: 100,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(10px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    ⏱ {t}s
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Local video */}
             <div className="video-cell local" style={{ position: 'relative', borderRadius: 0 }}>
               <video

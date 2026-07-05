@@ -250,6 +250,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
           myPhotos={myPhotos}
           partnerPhotos={partnerPhotos}
           startSession={startSession}
+          updateState={updateState}
           partnerConnected={partnerConnected}
           facingMode={facingMode}
           isMirrored={isMirrored}
