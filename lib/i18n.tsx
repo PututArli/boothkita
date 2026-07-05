@@ -44,7 +44,8 @@ const dictionary = {
     'room.waiting': 'waiting for partner...',
     'room.connected': 'partner connected!',
     'room.chooseLayout': 'Choose Layout & Theme',
-    'room.back': '← back',
+    'room.back': 'back',
+    'room.yourCode': 'YOUR CODE',
     'room.unmutePartner': '🔊 Tap to Hear Partner!',
     
     // VideoGrid
@@ -57,7 +58,14 @@ const dictionary = {
     'video.mirror': 'Mirror Video',
     'video.switchCamera': 'Switch Camera',
     'video.cameraError': 'Failed to access camera. Please allow permission.',
+    'video.cameraUnavailable': 'Camera unavailable',
     'video.startCamera': 'Start Camera',
+    'video.waitingVideo': 'Connected, waiting for video...',
+    'video.partnerWaitingVideo': 'Partner connected, waiting for video...',
+    'video.waitingPartner': 'Waiting for partner to join...',
+    'video.shareCode': 'Share code ',
+    'video.capturing': 'Capturing ',
+    'video.startCapture': 'START CAPTURE',
     
     // Wizard
     'wizard.layoutTitle': 'Select Photo Layout',
@@ -110,7 +118,40 @@ const dictionary = {
     'result.downloadPng': 'Download PNG',
     'result.processing': '⏳ Processing...',
     'result.downloadGif': 'Download GIF',
-    'result.retake': 'Retake Photo'
+    'result.retake': 'Retake Photo',
+
+    // Theme Backgrounds
+    'theme.bg.white': 'White',
+    'theme.bg.cream': 'Cream',
+    'theme.bg.pink': 'Pink',
+    'theme.bg.yellow': 'Yellow',
+    'theme.bg.sage': 'Sage',
+    'theme.bg.baby blue': 'Baby Blue',
+    'theme.bg.black': 'Black',
+    'theme.bg.pastel': 'Pastel',
+    'theme.bg.lavender': 'Lavender',
+    'theme.bg.mint': 'Mint',
+    'theme.bg.peach': 'Peach',
+    'theme.bg.sunset': 'Sunset',
+    'theme.bg.ocean': 'Ocean',
+    'theme.bg.night': 'Night',
+    'theme.bg.y2k check': 'Y2K',
+    'theme.bg.denim': 'Denim',
+    'theme.bg.clouds': 'Clouds',
+    'theme.bg.polka pink': 'Polka',
+    'theme.bg.classic check': 'Check',
+
+    // Theme Borders
+    'theme.border.plain': 'Plain',
+    'theme.border.polaroid': 'Polaroid',
+    'theme.border.film': 'Film',
+    'theme.border.neon': 'Neon Glow',
+    'theme.border.romantic': 'Romantic',
+    'theme.border.birthday': 'Birthday',
+    'theme.border.sakura': 'Sakura',
+    'theme.border.galaxy': 'Galaxy',
+    'theme.border.summer': 'Summer',
+    'theme.border.christmas': 'Christmas'
   },
   id: {
     // Lobby
@@ -152,6 +193,7 @@ const dictionary = {
     'room.connected': 'teman terhubung!',
     'room.chooseLayout': 'Pilih Layout & Tema',
     'room.back': 'kembali',
+    'room.yourCode': 'KODE RUANGAN',
     'room.unmutePartner': '🔊 Nyalakan Suara Partner!',
     
     // VideoGrid
@@ -164,7 +206,14 @@ const dictionary = {
     'video.mirror': 'Mirror Video',
     'video.switchCamera': 'Ganti Kamera',
     'video.cameraError': 'Gagal mengakses kamera. Mohon izinkan akses.',
+    'video.cameraUnavailable': 'Kamera tidak tersedia',
     'video.startCamera': 'Mulai Kamera',
+    'video.waitingVideo': 'Terhubung, menunggu video...',
+    'video.partnerWaitingVideo': 'Partner terhubung, menunggu video...',
+    'video.waitingPartner': 'Menunggu partner masuk...',
+    'video.shareCode': 'Bagikan kode ',
+    'video.capturing': 'Memotret ',
+    'video.startCapture': 'MULAI MEMOTRET',
     
     // Wizard
     'wizard.layoutTitle': 'Pilih Tata Letak Foto',
@@ -217,7 +266,40 @@ const dictionary = {
     'result.downloadPng': 'Unduh PNG',
     'result.processing': '⏳ Memproses...',
     'result.downloadGif': 'Unduh GIF',
-    'result.retake': 'Foto Ulang'
+    'result.retake': 'Foto Ulang',
+
+    // Theme Backgrounds
+    'theme.bg.white': 'Putih',
+    'theme.bg.cream': 'Krem',
+    'theme.bg.pink': 'Merah Muda',
+    'theme.bg.yellow': 'Kuning',
+    'theme.bg.sage': 'Sage',
+    'theme.bg.baby blue': 'Biru Muda',
+    'theme.bg.black': 'Hitam',
+    'theme.bg.pastel': 'Pastel',
+    'theme.bg.lavender': 'Lavender',
+    'theme.bg.mint': 'Mint',
+    'theme.bg.peach': 'Persik',
+    'theme.bg.sunset': 'Senja',
+    'theme.bg.ocean': 'Samudra',
+    'theme.bg.night': 'Malam',
+    'theme.bg.y2k check': 'Y2K',
+    'theme.bg.denim': 'Denim',
+    'theme.bg.clouds': 'Awan',
+    'theme.bg.polka pink': 'Polkadot',
+    'theme.bg.classic check': 'Kotak',
+
+    // Theme Borders
+    'theme.border.plain': 'Polos',
+    'theme.border.polaroid': 'Polaroid',
+    'theme.border.film': 'Film',
+    'theme.border.neon': 'Neon Glow',
+    'theme.border.romantic': 'Romantis',
+    'theme.border.birthday': 'Ulang Tahun',
+    'theme.border.sakura': 'Sakura',
+    'theme.border.galaxy': 'Galaksi',
+    'theme.border.summer': 'Musim Panas',
+    'theme.border.christmas': 'Natal'
   }
 };
 

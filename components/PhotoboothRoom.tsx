@@ -100,7 +100,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         ctx.font = 'bold 20px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('📷 Tidak tersedia', 320, 240);
+        ctx.fillText('📷 ' + t('video.cameraUnavailable'), 320, 240);
         return canvas.toDataURL('image/jpeg', 0.9);
       }
       let width = vid.videoWidth;
@@ -155,7 +155,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
 
 
         <div style={{ textAlign: 'center', width: '100%', maxWidth: 500, zIndex: 1 }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>YOUR CODE</p>
+          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>{t('room.yourCode')}</p>
           
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 24 }}>
             {roomCode.split('').map((char, i) => (

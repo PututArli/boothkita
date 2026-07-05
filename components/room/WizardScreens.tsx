@@ -194,7 +194,7 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
                     <div style={{ height: 12, background: 'rgba(0,0,0,0.4)', marginTop: 'auto' }} />
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 500, fontFamily: 'monospace', color: 'var(--text-muted)' }}>
-                    {preset.id}
+                    {t(('theme.bg.' + preset.id) as any)}
                   </span>
                 </div>
               );
@@ -225,7 +225,7 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
             onClick={nextStep}
             style={{ padding: '14px 24px', borderRadius: 100, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 700, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'var(--accent-glow)' }}
           >
-            start camera <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+            {t('video.startCamera')} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
           </button>
         </div>
       </div>

@@ -182,7 +182,7 @@ export default function ResultPage({
               return (
               <div key={i} style={{ aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)' }}>
                 {photo?.dataUrl ? (
-                  <img src={photo.dataUrl} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={photo.dataUrl} alt={`${t('arrange.myTake')} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>—</div>
                 )}
@@ -204,7 +204,7 @@ export default function ResultPage({
               return (
               <div key={i} style={{ aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--border)' }}>
                 {photo?.dataUrl ? (
-                  <img src={photo.dataUrl} alt={`Partner Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={photo.dataUrl} alt={`${t('arrange.partnerTake')} ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>—</div>
                 )}

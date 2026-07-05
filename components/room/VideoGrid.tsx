@@ -299,14 +299,14 @@ export default function VideoGrid({
                   <div className="waiting-avatar">👤</div>
                   <p className="waiting-text">
                     {isConnected
-                      ? 'Terhubung, menunggu video...'
+                      ? t('video.waitingVideo')
                       : partnerInfo
-                        ? 'Partner terhubung, menunggu video...'
-                        : 'Menunggu partner masuk...'}
+                        ? t('video.partnerWaitingVideo')
+                        : t('video.waitingPartner')}
                   </p>
                   {!partnerInfo && !isConnected && (
                     <p className="waiting-text" style={{ fontSize: 11, marginTop: 4 }}>
-                      Bagikan kode <strong style={{ color: 'var(--accent)' }}>{roomCode}</strong>
+                      {t('video.shareCode')} <strong style={{ color: 'var(--accent)' }}>{roomCode}</strong>
                     </p>
                   )}
                 </div>
@@ -325,8 +325,8 @@ export default function VideoGrid({
                   <div key={i} style={{ width: 64, height: 48, borderRadius: 4, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', border: hasPhoto ? '2px solid var(--accent)' : '1px dashed rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>
                     {hasPhoto ? (
                       <>
-                        {p?.dataUrl ? <img src={p.dataUrl} alt={`Take ${i + 1}`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
-                        {p2?.dataUrl ? <img src={p2.dataUrl} alt={`Take ${i + 1} Partner`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
+                        {p?.dataUrl ? <img src={p.dataUrl} alt={`${t('arrange.myTake')} ${i + 1}`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
+                        {p2?.dataUrl ? <img src={p2.dataUrl} alt={`${t('arrange.partnerTake')} ${i + 1}`} style={{ flex: 1, width: '50%', height: '100%', objectFit: 'cover' }} /> : <div style={{ flex: 1, width: '50%' }} />}
                       </>
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{i + 1}</div>
@@ -343,7 +343,7 @@ export default function VideoGrid({
                 onClick={onBack}
                 style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
               >
-                ← back
+                ← {t('room.back')}
               </button>
             )}
             <button
@@ -353,8 +353,8 @@ export default function VideoGrid({
               style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: isCapturing ? 'not-allowed' : 'pointer', opacity: isCapturing ? 0.7 : 1, transition: 'all 0.2s', boxShadow: isCapturing ? 'none' : 'var(--accent-glow)' }}
             >
               {isCapturing
-                ? `📸 Memotret ${photoIndex + 1}/${totalCount}...`
-                : '📸 MULAI MEMOTRET'}
+                ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
+                : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>
