@@ -208,8 +208,8 @@ export default function HomePage() {
                   <a href="mailto:rafaelpututarli@gmail.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
                     📧 Email
                   </a>
-                  <a href="https://instagram.com/ar_lii" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
-                    📸 Instagram (@ar_lii)
+                  <a href="https://www.instagram.com/ar__lii?igsh=ZWhsZWZqZ21vcnEx" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
+                    📸 Instagram (@ar__lii)
                   </a>
                 </div>
               </div>
