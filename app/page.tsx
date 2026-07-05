@@ -107,10 +107,18 @@ export default function HomePage() {
                   onKeyDown={e => e.key === 'Enter' && handleJoin()}
                   autoFocus
                 />
-                <button onClick={() => handleJoin()} style={{ marginTop: 12, textAlign: 'left', fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                  {loading ? 'Joining...' : 'Join Room'}
-                  {!loading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg>}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                  <button onClick={() => handleJoin()} style={{ textAlign: 'left', fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                    {loading ? 'Joining...' : 'Join Room'}
+                    {!loading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg>}
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setShowJoinInput(false); }} 
+                    style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.1)', border: 'none', padding: '4px 8px', borderRadius: 100, cursor: 'pointer' }}
+                  >
+                    Batal
+                  </button>
+                </div>
               </div>
             )}
           </div>
