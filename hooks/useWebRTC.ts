@@ -177,7 +177,11 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
 
     async function handleSignal(type: string, data: unknown, pc: RTCPeerConnection) {
       try {
-        if (type === 'peer_joined' && isHostRef.current) {
+        // If guest receives host_joined, it means the host just connected or reconnected.
+        // Guest should send peer_joined so the host knows to send an offer.
+        if (type === 'host_joined' && !isHostRef.current) {
+          sendSignal('peer_joined', {});
+        } else if (type === 'peer_joined' && isHostRef.current) {
           const offer = await pc.createOffer({ iceRestart: true });
           await pc.setLocalDescription(offer);
           sendSignal('sdp_offer', offer);
@@ -212,8 +216,8 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
         } else if (type === 'mirror_state') {
           setPartnerMirrored(data as boolean);
         }
-      } catch {
-        // ignore signal errors
+      } catch (err) {
+        console.error('Signal error', err);
       }
     }
 
@@ -228,16 +232,15 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          sendSignal('peer_joined', {});
           sendSignal('mirror_state', isMirroredRef.current);
           
           if (isHostRef.current) {
-            // Wait for remote to subscribe, then send initial offer
+            sendSignal('host_joined', {});
+            // Fallback: send offer if no peer_joined received after a while
             setTimeout(async () => {
               if (!mountedRef.current) return;
               const pc = getOrCreatePC();
-              // Only offer if we haven't yet
-              if (pc.signalingState === 'stable' && pc.localDescription === null) {
+              if (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') {
                 try {
                   const offer = await pc.createOffer();
                   await pc.setLocalDescription(offer);
@@ -246,7 +249,9 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
                   // ignore
                 }
               }
-            }, 2000);
+            }, 3000);
+          } else {
+            sendSignal('peer_joined', {});
           }
         }
       });
