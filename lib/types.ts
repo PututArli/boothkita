@@ -14,6 +14,7 @@ export interface RoomState {
   photoBorder: string;
   customText: string;
   showDate: boolean;
+  videoFilter: string;
   arrangeIndices?: (number | null)[];
   arrangeActiveSlot?: number;
 }

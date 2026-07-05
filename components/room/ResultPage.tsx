@@ -29,6 +29,8 @@ export default function ResultPage({
   const [imgUrl, setImgUrl] = useState('');
   const [composed, setComposed] = useState(false);
   const [downloadDone, setDownloadDone] = useState(false);
+  const [isGeneratingGif, setIsGeneratingGif] = useState(false);
+  const [gifDone, setGifDone] = useState(false);
 
   useEffect(() => {
     if (decoratedImgUrl) {
@@ -64,6 +66,55 @@ export default function ResultPage({
     a.click();
     setDownloadDone(true);
     setTimeout(() => setDownloadDone(false), 2000);
+  };
+
+  const handleDownloadGif = async () => {
+    if (isGeneratingGif || !selectedIndices.length) return;
+    setIsGeneratingGif(true);
+
+    try {
+      // @ts-ignore
+      const GIF = require('gif.js');
+      const gif = new (GIF.default || GIF)({
+        workers: 2,
+        quality: 10,
+        workerScript: '/gif.worker.js'
+      });
+
+      const tempCanvas = document.createElement('canvas');
+
+      for (const i of selectedIndices) {
+        const myPhoto = myPhotos[i]?.dataUrl;
+        const partnerPhoto = partnerPhotos[i]?.dataUrl;
+        
+        await composeDuoPhoto({
+          myPhotos: [myPhoto || ''],
+          partnerPhotos: [partnerPhoto || ''],
+          state: { ...roomState, layout: 'single' },
+          canvas: tempCanvas
+        });
+        
+        gif.addFrame(tempCanvas, { copy: true, delay: 600 });
+      }
+
+      gif.on('finished', (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `photoboothduo-${roomCode}-${Date.now()}.gif`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        setGifDone(true);
+        setIsGeneratingGif(false);
+        setTimeout(() => setGifDone(false), 2000);
+      });
+
+      gif.render();
+    } catch (e) {
+      console.error(e);
+      setIsGeneratingGif(false);
+    }
   };
 
   return (
@@ -178,23 +229,43 @@ export default function ResultPage({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-            <button
-              onClick={handleDownload}
-              disabled={!composed}
-              style={{
-                width: '100%', padding: '14px 24px', borderRadius: 100,
-                fontSize: 15, fontWeight: 700,
-                border: 'none', background: 'var(--text)', color: 'var(--bg)',
-                cursor: composed ? 'pointer' : 'not-allowed',
-                opacity: composed ? 1 : 0.5,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'all 0.2s',
-                boxShadow: composed ? 'var(--accent-glow)' : 'none',
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              {downloadDone ? '✓ Tersimpan!' : 'Download PNG'}
-            </button>
+            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+              <button
+                onClick={handleDownload}
+                disabled={!composed}
+                style={{
+                  flex: 1, padding: '14px 16px', borderRadius: 100,
+                  fontSize: 14, fontWeight: 700,
+                  border: 'none', background: 'var(--text)', color: 'var(--bg)',
+                  cursor: composed ? 'pointer' : 'not-allowed',
+                  opacity: composed ? 1 : 0.5,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  transition: 'all 0.2s',
+                  boxShadow: composed ? 'var(--accent-glow)' : 'none',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                {downloadDone ? '✓ Tersimpan!' : 'Unduh PNG'}
+              </button>
+
+              <button
+                onClick={handleDownloadGif}
+                disabled={isGeneratingGif || !composed}
+                style={{
+                  flex: 1, padding: '14px 16px', borderRadius: 100,
+                  fontSize: 14, fontWeight: 700,
+                  border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+                  cursor: (isGeneratingGif || !composed) ? 'not-allowed' : 'pointer',
+                  opacity: (isGeneratingGif || !composed) ? 0.5 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  transition: 'all 0.2s',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                {gifDone ? '✓ Tersimpan!' : isGeneratingGif ? '⏳ Memproses...' : 'Unduh GIF'}
+              </button>
+            </div>
 
             <button
               onClick={onRetake}

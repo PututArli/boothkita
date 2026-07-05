@@ -101,6 +101,9 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       canvas.height = height;
 
       ctx.save();
+      if (roomState.videoFilter && roomState.videoFilter !== 'none') {
+        ctx.filter = roomState.videoFilter;
+      }
       if (mirrored) {
         ctx.scale(-1, 1);
         ctx.drawImage(vid, -canvas.width, 0, canvas.width, canvas.height);
@@ -115,7 +118,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     
     onPhotoCaptured(myDataUrl, photoIndex);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, photoIndex]);
+  }, [phase, photoIndex, roomState.videoFilter]);
 
   const copyLink = useCallback(() => {
     navigator.clipboard.writeText(`${window.location.origin}/room/${roomCode}`);

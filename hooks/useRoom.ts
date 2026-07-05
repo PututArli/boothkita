@@ -22,6 +22,7 @@ const DEFAULT_STATE: RoomState = {
   photoBorder: 'plain',
   customText: '',
   showDate: true,
+  videoFilter: 'none',
 };
 
 export function useRoom(roomId: string, roomCode: string) {

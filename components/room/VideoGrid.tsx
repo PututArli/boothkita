@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import { RefObject, useState } from 'react';
 import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto } from '@/lib/types';
 
 interface VideoGridProps {
@@ -31,6 +31,15 @@ interface VideoGridProps {
   updateState?: (state: Partial<RoomState>) => void;
 }
 
+const VIDEO_FILTERS = [
+  { id: 'none', label: 'Normal', style: 'none' },
+  { id: 'grayscale', label: 'B&W', style: 'grayscale(100%)' },
+  { id: 'sepia', label: 'Vintage', style: 'sepia(80%)' },
+  { id: 'contrast', label: 'Contrast', style: 'contrast(150%)' },
+  { id: 'cool', label: 'Cool', style: 'hue-rotate(180deg) saturate(1.5)' },
+  { id: 'warm', label: 'Warm', style: 'sepia(50%) hue-rotate(-30deg) saturate(1.5)' }
+];
+
 // Removed CountdownBubble to replace with a centralized overlay
 
 export default function VideoGrid({
@@ -62,6 +71,8 @@ export default function VideoGrid({
   updateState,
 }: VideoGridProps) {
   const isCapturing = phase === 'countdown' || phase === 'capturing';
+  const [showGrid, setShowGrid] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   return (
     <div className="video-area">
@@ -131,6 +142,65 @@ export default function VideoGrid({
               </div>
             )}
 
+            {/* Left sidebar for Grid & Filter */}
+            {!isCapturing && (
+              <div style={{ position: 'absolute', top: '50%', left: 16, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 50, background: 'rgba(255,255,255,0.1)', padding: '12px 8px', borderRadius: 24, backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+                <button
+                  onClick={() => setShowGrid(!showGrid)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showGrid ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
+                  title="Kisi (Grid)"
+                >
+                  <div style={{ fontSize: 20 }}>⊞</div>
+                  <span style={{ fontSize: 10, fontWeight: 600 }}>Kisi</span>
+                </button>
+                
+                <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: roomState.videoFilter !== 'none' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
+                    title="Filter Warna"
+                  >
+                    <div style={{ fontSize: 20 }}>🎨</div>
+                    <span style={{ fontSize: 10, fontWeight: 600 }}>Filter</span>
+                  </button>
+
+                  {showFilterMenu && (
+                    <div style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 180, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>Filter Video</span>
+                        <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {VIDEO_FILTERS.map(f => (
+                          <button
+                            key={f.id}
+                            onClick={() => updateState && updateState({ videoFilter: f.style })}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              background: roomState.videoFilter === f.style ? 'rgba(255,255,255,0.1)' : 'transparent',
+                              color: roomState.videoFilter === f.style ? 'var(--text)' : 'var(--text-muted)',
+                              border: roomState.videoFilter === f.style ? '1px solid var(--border)' : '1px solid transparent',
+                              textAlign: 'left',
+                              fontSize: 14,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Local video */}
             <div className="video-cell local" style={{ position: 'relative', borderRadius: 0 }}>
               <video
@@ -141,9 +211,19 @@ export default function VideoGrid({
                 muted
                 style={{
                   transform: isMirrored ? 'scaleX(-1)' : 'none',
-                  width: '100%', height: '100%', objectFit: 'cover'
+                  width: '100%', height: '100%', objectFit: 'cover',
+                  filter: roomState.videoFilter
                 }}
               />
+
+              {showGrid && (
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+                  <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.3)' }} />
+                  <div style={{ position: 'absolute', top: '66.66%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.3)' }} />
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: '33.33%', width: 1, background: 'rgba(255,255,255,0.3)' }} />
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: '66.66%', width: 1, background: 'rgba(255,255,255,0.3)' }} />
+                </div>
+              )}
 
               {/* Camera controls */}
               <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8, zIndex: 10 }}>
@@ -183,9 +263,19 @@ export default function VideoGrid({
                     muted
                     style={{ 
                       width: '100%', height: '100%', objectFit: 'cover',
-                      transform: partnerMirrored ? 'scaleX(-1)' : 'none'
+                      transform: partnerMirrored ? 'scaleX(-1)' : 'none',
+                      filter: roomState.videoFilter
                     }}
                   />
+                  
+                  {showGrid && (
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+                      <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.3)' }} />
+                      <div style={{ position: 'absolute', top: '66.66%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.3)' }} />
+                      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '33.33%', width: 1, background: 'rgba(255,255,255,0.3)' }} />
+                      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '66.66%', width: 1, background: 'rgba(255,255,255,0.3)' }} />
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="video-cell-waiting">
