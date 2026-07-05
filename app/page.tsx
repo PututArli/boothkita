@@ -141,8 +141,8 @@ export default function HomePage() {
             <div style={{ position: 'absolute', top: 2, left: usePremium ? 18 : 2, width: 20, height: 20, background: '#fff', borderRadius: '50%', transition: 'left 0.3s' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Beda Jaringan / Seluler</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Nyalakan jika tidak menggunakan jaringan WiFi yang sama.</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Gunakan Server Cadangan</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Nyalakan jika video atau suara pasanganmu tidak muncul.</span>
           </div>
         </div>
 
