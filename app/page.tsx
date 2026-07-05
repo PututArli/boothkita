@@ -77,15 +77,15 @@ export default function HomePage() {
 
       <div className="landing-content">
         <div className="action-cards">
-        <div
-          className="action-card"
-          onClick={!loading ? handleCreate : undefined}
-          style={{ cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s' }}
-        >
-          <h2>{loading ? '⏳ Creating...' : 'Create'}</h2>
-          <p style={{ display: 'flex', alignItems: 'center', gap: 4 }}>a room <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg></p>
-        </div>
-          
+          <div
+            className="action-card"
+            onClick={!loading ? handleCreate : undefined}
+            style={{ cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s' }}
+          >
+            <h2>{loading ? '⏳ Creating...' : 'Create'}</h2>
+            <p style={{ display: 'flex', alignItems: 'center', gap: 4 }}>a room <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg></p>
+          </div>
+
           <div className="action-card" onClick={() => setShowJoinInput(true)}>
             {!showJoinInput ? (
               <>
@@ -106,7 +106,7 @@ export default function HomePage() {
                 />
                 <button onClick={() => handleJoin()} style={{ marginTop: 12, textAlign: 'left', fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}>
                   {loading ? 'Joining...' : 'Join Room'}
-                  {!loading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>}
+                  {!loading && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg>}
                 </button>
               </div>
             )}
@@ -116,10 +116,14 @@ export default function HomePage() {
         {error && <p style={{ color: '#fa5252', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{error}</p>}
 
         {recentRoom && (
-           <p className="start-session-link" onClick={() => handleJoin(recentRoom)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-             rejoin previous session <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-           </p>
+          <p className="start-session-link" onClick={() => handleJoin(recentRoom)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            rejoin previous session <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg>
+          </p>
         )}
+
+        <p style={{ marginTop: 32, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 300, opacity: 0.8 }}>
+          Disarankan menggunakan PC/Laptop untuk pengalaman photobooth terbaik yaa.
+        </p>
       </div>
     </main>
   );
