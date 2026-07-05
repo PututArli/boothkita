@@ -157,63 +157,72 @@ export default function HomePage() {
       </div>
 
       {showTutor && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 24, width: '100%', maxWidth: 500, padding: 32, position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-            <h2 style={{ fontSize: 24, marginBottom: 12, color: 'var(--text)' }}>{t('tutor.title')}</h2>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
-              {t('tutor.desc')}
-            </p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 24, width: '100%', maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+            
+            <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: 20, color: 'var(--text)', margin: 0 }}>{t('tutor.title')}</h2>
+              <button onClick={() => setShowTutor(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 24, padding: 4 }}>×</button>
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>1</div>
-                <div>
-                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step1.title')}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step1.desc')}</p>
+            <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
+                {t('tutor.desc')}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>1</div>
+                  <div>
+                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step1.title')}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step1.desc')}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>2</div>
+                  <div>
+                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step2.title')}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step2.desc')}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>3</div>
+                  <div>
+                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step3.title')}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step3.desc')}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>4</div>
+                  <div>
+                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step4.title')}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step4.desc')}</p>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>2</div>
-                <div>
-                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step2.title')}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step2.desc')}</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>3</div>
-                <div>
-                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step3.title')}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step3.desc')}</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>4</div>
-                <div>
-                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step4.title')}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step4.desc')}</p>
+
+              {/* Contact Person Section */}
+              <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 600 }}>{t('tutor.help')}</p>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <a href="mailto:rafaelpututarli@gmail.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
+                    📧 Email
+                  </a>
+                  <a href="https://instagram.com/ar_lii" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
+                    📸 Instagram (@ar_lii)
+                  </a>
                 </div>
               </div>
             </div>
 
-            {/* Contact Person Section */}
-            <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 600 }}>{t('tutor.help')}</p>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <a href="mailto:rafaelpututarli@gmail.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
-                  📧 Email
-                </a>
-                <a href="https://instagram.com/ar_lii" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
-                  📸 Instagram (@ar_lii)
-                </a>
-              </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <button 
+                onClick={() => setShowTutor(false)}
+                style={{ width: '100%', padding: '16px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}
+              >
+                {t('tutor.close')}
+              </button>
             </div>
-
-            <button 
-              onClick={() => setShowTutor(false)}
-              style={{ width: '100%', padding: '16px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, marginTop: 24, cursor: 'pointer' }}
-            >
-              {t('tutor.close')}
-            </button>
           </div>
         </div>
       )}
