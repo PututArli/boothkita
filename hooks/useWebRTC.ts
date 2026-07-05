@@ -8,33 +8,25 @@ import { getParticipantId } from '@/lib/roomUtils';
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     {
-      // Menggunakan Google STUN (100% Gratis, Tidak dilacak oleh Metered)
+      // Menggunakan Google STUN (100% Gratis, Pencari IP Publik)
       urls: "stun:stun.l.google.com:19302",
     },
-    // MATIKAN SEMENTARA METERED TURN SERVER AGAR TIDAK MENYEDOT KUOTA
-    // KARENA KAMU SUDAH MENGGUNAKAN TAILSCALE (LOKAL)
-    /*
     {
-      urls: "turn:global.relay.metered.ca:80",
-      username: "bbc314a19d82e1f2bee186c0",
-      credential: "r3Umsf9SU8U+zcGd",
+      // Menggunakan OpenRelay TURN (Gratis & Publik, untuk menembus firewall khalayak ramai)
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
     },
     {
-      urls: "turn:global.relay.metered.ca:80?transport=tcp",
-      username: "bbc314a19d82e1f2bee186c0",
-      credential: "r3Umsf9SU8U+zcGd",
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
     },
     {
-      urls: "turn:global.relay.metered.ca:443",
-      username: "bbc314a19d82e1f2bee186c0",
-      credential: "r3Umsf9SU8U+zcGd",
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
     },
-    {
-      urls: "turns:global.relay.metered.ca:443?transport=tcp",
-      username: "bbc314a19d82e1f2bee186c0",
-      credential: "r3Umsf9SU8U+zcGd",
-    },
-    */
   ],
   iceCandidatePoolSize: 10,
 };
