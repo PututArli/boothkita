@@ -84,7 +84,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
                   style={{
                     padding: 0, border: 'none', background: 'none', cursor: 'pointer',
                     borderRadius: 8, overflow: 'hidden', position: 'relative',
-                    aspectRatio: '4/3', borderStyle: 'solid', borderWidth: 2,
+                    aspectRatio: '8/3', borderStyle: 'solid', borderWidth: 2,
                     borderColor: isUsed ? 'var(--accent)' : 'transparent',
                     opacity: isUsed ? 0.6 : 1, transition: 'all 0.2s',
                   }}
@@ -130,7 +130,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
                   key={i}
                   onClick={() => handleSlotClick(i)}
                   style={{
-                    aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden',
+                    aspectRatio: '8/3', borderRadius: 8, overflow: 'hidden',
                     background: 'var(--accent-soft)', cursor: 'pointer',
                     border: `2px ${isActive ? 'solid' : 'dashed'} ${isActive ? 'var(--accent)' : 'var(--border)'}`,
                     padding: 0, position: 'relative', transition: 'all 0.2s',
