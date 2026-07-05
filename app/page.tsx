@@ -195,9 +195,22 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Contact Person Section */}
+            <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 600 }}>{t('tutor.help')}</p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <a href="mailto:rafaelpututarli@gmail.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
+                  📧 Email
+                </a>
+                <a href="https://instagram.com/ar_lii" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
+                  📸 Instagram (@ar_lii)
+                </a>
+              </div>
+            </div>
+
             <button 
               onClick={() => setShowTutor(false)}
-              style={{ width: '100%', padding: '16px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, marginTop: 32, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '16px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, marginTop: 24, cursor: 'pointer' }}
             >
               {t('tutor.close')}
             </button>

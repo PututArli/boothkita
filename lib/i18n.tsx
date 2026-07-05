@@ -34,6 +34,7 @@ const dictionary = {
     'tutor.step3.desc': 'Switch the toggle to "Active" or "Connected" in the Tailscale app on both devices. A VPN icon will appear.',
     'tutor.step4.title': '4. Try Again!',
     'tutor.step4.desc': 'Return to this website and create/join the room. Your video and audio will now connect instantly!',
+    'tutor.help': 'Still confused? Contact me:',
     'tutor.close': 'Close Tutorial',
     'lobby.recommendation': 'Using a PC/Laptop is recommended for the best experience.',
 
@@ -140,6 +141,7 @@ const dictionary = {
     'tutor.step3.desc': 'Nyalakan saklar di aplikasi Tailscale sampai statusnya "Active" atau "Connected" di kedua HP dan Laptop.',
     'tutor.step4.title': '4. Selesai!',
     'tutor.step4.desc': 'Buka kembali website ini, lalu coba buat/masuk ruangan. Suara dan video kalian pasti langsung tersambung mulus!',
+    'tutor.help': 'Masih bingung? Hubungi saya:',
     'tutor.close': 'Tutup Tutorial',
     'lobby.recommendation': 'Disarankan menggunakan PC/Laptop untuk pengalaman photobooth terbaik yaa.',
 
