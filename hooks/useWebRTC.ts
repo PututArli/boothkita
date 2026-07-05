@@ -42,6 +42,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
   const [isMirrored, setIsMirrored] = useState(true);
   const [partnerMirrored, setPartnerMirrored] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const [cameraError, setCameraError] = useState(false);
   const isMirroredRef = useRef(true);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -301,6 +302,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
         }
 
         localStreamRef.current = stream;
+        setCameraError(false);
         
         // Sync audio track with current mic state
         stream.getAudioTracks().forEach(t => t.enabled = isMicOn);
@@ -328,7 +330,7 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
         }
       } catch (err) {
         console.error('Camera access error:', err);
-        // Camera access denied or unavailable
+        setCameraError(true);
       }
     }
 
@@ -352,6 +354,14 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   }, []);
 
+  const retryCamera = useCallback(() => {
+    setCameraError(false);
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    setTimeout(() => {
+      setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    }, 50);
+  }, []);
+
   const toggleMirror = useCallback(() => {
     setIsMirrored(prev => {
       const next = !prev;
@@ -371,5 +381,5 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
     });
   }, []);
 
-  return { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic };
+  return { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, cameraError, toggleCamera, toggleMirror, toggleMic, retryCamera };
 }
