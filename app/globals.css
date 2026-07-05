@@ -1142,10 +1142,26 @@ input[type='range']::-webkit-slider-thumb {
   .video-grid {
     gap: 6px !important;
     padding: 6px !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
   }
 
   .video-cell {
     border-radius: var(--radius-sm) !important;
+  }
+
+  .timer-controls {
+    top: 8px !important;
+    left: 8px !important;
+    transform: scale(0.85);
+    transform-origin: top left;
+  }
+
+  .camera-controls {
+    top: 8px !important;
+    right: 8px !important;
+    transform: scale(0.85);
+    transform-origin: top right;
   }
 
   .video-cell-label {
