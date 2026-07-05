@@ -313,6 +313,27 @@ export default function DecoratePage({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--surface)' }}
       onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
 
+      {/* Header */}
+      <div style={{
+        position: 'relative', zIndex: 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 20px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface)'
+      }}>
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          {t('room.back')}
+        </button>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+          {t('decorate.title')}
+        </span>
+        <div style={{ width: 80 }} /> {/* spacer */}
+      </div>
+
       {/* Main Canvas Area */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface2)', padding: 8 }}>
         {baseImgUrl && imgSize.w > 0 ? (

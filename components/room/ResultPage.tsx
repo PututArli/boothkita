@@ -85,19 +85,7 @@ export default function ResultPage({
         workerScript: '/gif.worker.js'
       });
 
-      // Calculate offsets if decorations exist
-      let decImg: HTMLImageElement | null = null;
-      if (decorationsUrl) {
-        decImg = new Image();
-        decImg.src = decorationsUrl;
-        await new Promise(r => { decImg.onload = r; decImg.onerror = r; });
-      }
-
       const layoutDef = LAYOUTS[roomState.layout as LayoutKey] || LAYOUTS.strip3;
-      const cellW = 480;
-      const cellH = 360;
-      const margin = 16;
-      const topPad = margin;
 
       for (let f = 0; f < selectedIndices.length; f++) {
         const tempCanvas = document.createElement('canvas');
@@ -112,30 +100,6 @@ export default function ResultPage({
           canvas: tempCanvas
         });
 
-        if (decImg) {
-          const col = f % layoutDef.cols;
-          const row = Math.floor(f / layoutDef.cols);
-          
-          const tctx = tempCanvas.getContext('2d')!;
-
-          // 1. Crop and draw the stickers that belong EXACTLY to this photo row
-          const sx = col * (cellW * 2 + margin * 3);
-          const sy = row * (cellH + margin);
-          const sw = cellW * 2 + margin * 3;
-          const sh = topPad + cellH + margin; // Covers from Y=0 to the bottom of the photo slot
-          
-          tctx.drawImage(decImg, sx, sy, sw, sh, 0, 0, sw, sh);
-
-          // 2. Always draw the global footer stickers at the bottom!
-          // Footer starts after all the rows in the original strip
-          const footerSy = topPad + layoutDef.rows * (cellH + margin);
-          const footerSh = 140; // FOOTER_H
-          const footerDy = topPad + cellH + margin; // Where footer starts in 'single' layout
-          
-          // Draw the footer area from decorations
-          tctx.drawImage(decImg, 0, footerSy, decImg.width, footerSh, 0, footerDy, decImg.width, footerSh);
-        }
-        
         gif.addFrame(tempCanvas, { copy: true, delay: 600 });
       }
 
