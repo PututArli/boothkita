@@ -10,10 +10,13 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [recentRoom, setRecentRoom] = useState<string | null>(null);
+  const [usePremium, setUsePremium] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('recent_photobooth_room');
     if (saved) setRecentRoom(saved);
+    const premiumSaved = localStorage.getItem('use_premium_turn');
+    if (premiumSaved === 'true') setUsePremium(true);
   }, []);
 
   async function handleCreate() {
@@ -120,6 +123,20 @@ export default function HomePage() {
             rejoin previous session <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z" /></svg>
           </p>
         )}
+
+        <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => {
+          const newVal = !usePremium;
+          setUsePremium(newVal);
+          localStorage.setItem('use_premium_turn', newVal ? 'true' : 'false');
+        }}>
+          <div style={{ width: 40, height: 24, background: usePremium ? '#ff7e5f' : 'var(--surface2)', borderRadius: 100, position: 'relative', transition: 'background 0.3s' }}>
+            <div style={{ position: 'absolute', top: 2, left: usePremium ? 18 : 2, width: 20, height: 20, background: '#fff', borderRadius: '50%', transition: 'left 0.3s' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Jalur Premium (Seluler)</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Matikan jika pakai WiFi agar hemat kuota.</span>
+          </div>
+        </div>
 
         <p style={{ marginTop: 32, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 300, opacity: 0.8 }}>
           Disarankan menggunakan PC/Laptop untuk pengalaman photobooth terbaik yaa.

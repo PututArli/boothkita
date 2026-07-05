@@ -5,14 +5,10 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getParticipantId } from '@/lib/roomUtils';
 
-const ICE_SERVERS: RTCConfiguration = {
+const ICE_SERVERS_FREE: RTCConfiguration = {
   iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
     {
-      // Menggunakan Google STUN (100% Gratis, Pencari IP Publik)
-      urls: "stun:stun.l.google.com:19302",
-    },
-    {
-      // Menggunakan OpenRelay TURN (Gratis & Publik, untuk menembus firewall khalayak ramai)
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
       credential: "openrelayproject",
@@ -26,12 +22,39 @@ const ICE_SERVERS: RTCConfiguration = {
       urls: "turn:openrelay.metered.ca:443?transport=tcp",
       username: "openrelayproject",
       credential: "openrelayproject",
+    }
+  ],
+  iceCandidatePoolSize: 10,
+};
+
+const ICE_SERVERS_PREMIUM: RTCConfiguration = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "bbc314a19d82e1f2bee186c0",
+      credential: "r3Umsf9SU8U+zcGd",
     },
   ],
   iceCandidatePoolSize: 10,
 };
 
-export function useWebRTC(roomCode: string, isHost: boolean) {
+export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boolean = false) {
   const participantId = getParticipantId();
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [streamTick, setStreamTick] = useState(0);
@@ -74,7 +97,8 @@ export function useWebRTC(roomCode: string, isHost: boolean) {
       return pcRef.current;
     }
 
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const config = usePremiumTURN ? ICE_SERVERS_PREMIUM : ICE_SERVERS_FREE;
+    const pc = new RTCPeerConnection(config);
 
     let candidateTimeout: NodeJS.Timeout | null = null;
     let candidateQueue: RTCIceCandidateInit[] = [];

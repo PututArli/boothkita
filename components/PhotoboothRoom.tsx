@@ -22,7 +22,17 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
     startSession, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
   } = useRoom(roomId, roomCode);
 
-  const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host');
+  const [usePremiumTurn, setUsePremiumTurn] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const premium = localStorage.getItem('use_premium_turn');
+      if (premium === 'true') {
+        setUsePremiumTurn(true);
+      }
+    }
+  }, []);
+
+  const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host', usePremiumTurn);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
