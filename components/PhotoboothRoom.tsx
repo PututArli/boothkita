@@ -326,7 +326,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   return (
     <>
       <audio ref={remoteAudioRef} autoPlay style={{ width: 0, height: 0, position: 'absolute', opacity: 0 }} />
-      {showRoomBadge && (
+      {showRoomBadge && roomTimeLeft < 31536000000 && (
         <div className={roomTimeLeft <= 60000 ? 'room-expiry-badge danger' : 'room-expiry-badge'}>
           <span>{t('room.timeLeft')}</span>
           <strong>{roomTimeLabel}</strong>

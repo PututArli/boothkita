@@ -21,6 +21,10 @@ export default function HomePage() {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [recentRoom, setRecentRoom] = useState<string | null>(null);
   const [showTutor, setShowTutor] = useState(false);
+  
+  // Promo code for unlimited room
+  const [titleClicks, setTitleClicks] = useState(0);
+  const [promoCode, setPromoCode] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem('recent_photobooth_room');
@@ -33,7 +37,11 @@ export default function HomePage() {
     // Optimistic: navigate immediately without waiting for server
     router.prefetch('/room/loading');
     try {
-      const res = await fetch('/api/rooms', { method: 'POST' });
+      const res = await fetch('/api/rooms', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ promoCode })
+      });
       const data = await res.json();
       if (data.roomCode) {
         localStorage.setItem('recent_photobooth_room', data.roomCode);
@@ -86,9 +94,18 @@ export default function HomePage() {
 
       <div className="landing-hero">
         <div className="title-area">
-          <h1 style={{ whiteSpace: 'nowrap' }}>
+          <h1 style={{ whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }} onClick={() => setTitleClicks(p => p + 1)}>
             <span style={{ background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', paddingRight: '0.1em' }}>{t('lobby.title')}</span>
           </h1>
+          {titleClicks >= 5 && (
+            <input 
+              type="text" 
+              placeholder="Promo Code" 
+              value={promoCode} 
+              onChange={e => setPromoCode(e.target.value)} 
+              style={{ marginTop: 8, padding: '4px 12px', borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.1)', color: 'var(--text)', textAlign: 'center', fontSize: 12 }}
+            />
+          )}
         </div>
       </div>
 

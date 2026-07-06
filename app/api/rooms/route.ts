@@ -4,8 +4,12 @@ import { cleanupExpiredRooms, generateRoomCode, getRoomExpiresAt } from '@/lib/r
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    const body = await req.json().catch(() => ({}));
+    const { promoCode } = body;
+    const isUnlimited = promoCode === 'akuselaludi-sini';
+
     let roomCode = '';
     let attempts = 0;
     let created = false;
@@ -15,10 +19,14 @@ export async function POST() {
     while (attempts < 5) {
       roomCode = generateRoomCode();
 
+      const expiresAt = isUnlimited
+        ? new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString()
+        : getRoomExpiresAt();
+
       const { error } = await supabase.from('rooms').insert({
         room_code: roomCode,
         status: 'waiting',
-        expires_at: getRoomExpiresAt(),
+        expires_at: expiresAt,
       });
 
       if (!error) {

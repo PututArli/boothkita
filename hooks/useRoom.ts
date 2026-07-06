@@ -142,6 +142,13 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
       return;
     }
 
+    // Maximum 32-bit signed integer for setTimeout is ~24.8 days
+    const MAX_TIMEOUT = 2147483647;
+    if (remaining > MAX_TIMEOUT) {
+      // It's an unlimited room, don't set a timeout
+      return;
+    }
+
     roomExpiryTimeoutRef.current = setTimeout(expireRoom, remaining);
 
     return () => {
