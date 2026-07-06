@@ -13,11 +13,12 @@ export function getRoomCreatedAfter(now = Date.now()): string {
 
 export async function cleanupExpiredRooms() {
   const now = new Date().toISOString();
+  const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
   await supabase
     .from('rooms')
     .delete()
-    .lte('expires_at', now);
+    .or(`expires_at.lte.${now},and(status.eq.waiting,created_at.lte.${fiveMinsAgo})`);
 }
 
 export function generateRoomCode(): string {
@@ -75,7 +76,6 @@ export async function getRoomByCode(code: string) {
     .select('*')
     .eq('room_code', code.toUpperCase())
     .gt('expires_at', new Date().toISOString())
-    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (error) return null;
@@ -88,7 +88,6 @@ export async function joinRoom(roomId: string, participantId: string, role: 'hos
     .select('id')
     .eq('id', roomId)
     .gt('expires_at', new Date().toISOString())
-    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (!room) {
@@ -115,6 +114,17 @@ export async function joinRoom(roomId: string, participantId: string, role: 'hos
     .single();
 
   if (error) throw error;
+  
+  // Check if we are the 2nd participant joining
+  const { count } = await supabase
+    .from('room_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('room_id', roomId);
+    
+  if (count && count >= 2) {
+    await updateRoomStatus(roomId, 'active');
+  }
+  
   return data;
 }
 
