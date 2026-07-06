@@ -31,6 +31,7 @@ interface VideoGridProps {
   toggleMirror: () => void;
   toggleMic: () => void;
   onBack?: () => void;
+  onSkipToLayout?: () => void;
   updateState?: (state: Partial<RoomState>) => void;
 }
 
@@ -62,6 +63,7 @@ export default function VideoGrid({
   toggleMirror,
   toggleMic,
   onBack,
+  onSkipToLayout,
   updateState,
 }: VideoGridProps) {
   const isCapturing = phase === 'countdown' || phase === 'capturing';
@@ -163,7 +165,7 @@ export default function VideoGrid({
                 </div>
 
                 {showFilterMenu && (
-                  <div className="filter-menu-panel" style={{ position: 'absolute', top: '50%', left: 72, transform: 'translateY(-50%)', width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60, maxHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
+                  <div className="filter-menu-panel" style={{ position: 'absolute', top: '50%', left: 72, transform: 'translateY(-50%)', width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60, maxHeight: 'min(320px, calc(100% - 32px))', display: 'flex', flexDirection: 'column' }}>
                       <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
                         <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
@@ -331,7 +333,7 @@ export default function VideoGrid({
             </div>
           )}
 
-          <div className="video-bottom" style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 20 }}>
+          <div className="video-bottom" style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 20, flexWrap: 'wrap' }}>
             {!isCapturing && onBack && (
               <button
                 className="video-secondary-action"
@@ -339,6 +341,15 @@ export default function VideoGrid({
                 style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
               >
                 ← {t('room.back')}
+              </button>
+            )}
+            {!isCapturing && myPhotos.length > 0 && onSkipToLayout && (
+              <button
+                className="video-secondary-action"
+                onClick={onSkipToLayout}
+                style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid var(--accent)', background: 'rgba(255,255,255,0.1)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
+              >
+                {t('video.skipToLayout') || 'Skip to Layout'} ⏭
               </button>
             )}
             <button
@@ -350,7 +361,7 @@ export default function VideoGrid({
             >
               {isCapturing
                 ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
-                : `📸 ${t('video.startCapture')}`}
+                : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture') || 'Retake All'}` : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>

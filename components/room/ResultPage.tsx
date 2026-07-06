@@ -166,7 +166,7 @@ export default function ResultPage({
       {/* Header */}
       <div style={{
         position: 'relative', zIndex: 1,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
         padding: '20px 28px',
         borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(20px)',
@@ -174,15 +174,15 @@ export default function ResultPage({
       }}>
         <button
           onClick={onBack}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ justifySelf: 'start', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           {t('room.back')}
         </button>
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>
           {t('result.title')}
         </span>
-        <div style={{ width: 80 }} /> {/* spacer */}
+        <div /> {/* spacer for grid */}
       </div>
 
       {/* Main content */}

@@ -312,6 +312,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
           toggleMirror={toggleMirror}
           toggleMic={toggleMic}
           onBack={() => changePhase('setup_theme')}
+          onSkipToLayout={() => changePhase('arrange')}
         />
       </div>
     );

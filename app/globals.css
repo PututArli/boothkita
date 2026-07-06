@@ -2315,10 +2315,13 @@ input[type='range']::-webkit-slider-thumb {
 
   .filter-options-list {
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     padding-bottom: 8px !important;
     -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+    justify-content: flex-start !important;
   }
 
   .filter-options-list button {
@@ -2326,7 +2329,8 @@ input[type='range']::-webkit-slider-thumb {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    min-width: 72px;
+    min-width: 72px !important;
+    flex: 0 0 auto !important;
     padding: 8px !important;
     text-align: center !important;
     font-size: 11px !important;

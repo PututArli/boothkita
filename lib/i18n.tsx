@@ -69,6 +69,8 @@ const dictionary = {
     'video.shareCode': 'Share code ',
     'video.capturing': 'Capturing ',
     'video.startCapture': 'START CAPTURE',
+    'video.skipToLayout': 'Skip to Layout',
+    'video.retakeCapture': 'Retake All',
     
     // Wizard
     'wizard.layoutTitle': 'Select Photo Layout',
@@ -249,6 +251,8 @@ const dictionary = {
     'video.shareCode': 'Bagikan kode ',
     'video.capturing': 'Memotret ',
     'video.startCapture': 'MULAI MEMOTRET',
+    'video.skipToLayout': 'Lewati ke Layout',
+    'video.retakeCapture': 'Foto Ulang',
     
     // Wizard
     'wizard.layoutTitle': 'Pilih Tata Letak Foto',
