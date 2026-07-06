@@ -13,12 +13,11 @@ export function getRoomCreatedAfter(now = Date.now()): string {
 
 export async function cleanupExpiredRooms() {
   const now = new Date().toISOString();
-  const createdBefore = getRoomCreatedAfter();
 
   await supabase
     .from('rooms')
     .delete()
-    .or(`expires_at.lte.${now},created_at.lte.${createdBefore}`);
+    .lte('expires_at', now);
 }
 
 export function generateRoomCode(): string {

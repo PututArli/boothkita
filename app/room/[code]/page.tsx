@@ -25,15 +25,13 @@ export default async function RoomPage({ params }: Props) {
     .select('*')
     .eq('room_code', code)
     .gt('expires_at', new Date().toISOString())
-    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (!room) {
     notFound();
   }
 
-  const createdExpiry = new Date(new Date(room.created_at).getTime() + ROOM_TTL_MS).toISOString();
-  const roomExpiresAt = new Date(Math.min(new Date(room.expires_at).getTime(), new Date(createdExpiry).getTime())).toISOString();
+  const roomExpiresAt = room.expires_at;
 
   return <PhotoboothRoom roomId={room.id} roomCode={code} roomExpiresAt={roomExpiresAt} />;
 }
