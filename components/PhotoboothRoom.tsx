@@ -63,29 +63,13 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   const [decoratedImgUrl, setDecoratedImgUrl] = useState<string | null>(null);
   const [decorationsUrl, setDecorationsUrl] = useState<string | null>(null);
 
-  // Attach local stream to video element
+  // Attach remote audio stream
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      if (localVideoRef.current.srcObject !== localStream) {
-        localVideoRef.current.srcObject = localStream;
-        localVideoRef.current.play().catch(e => console.error('Local video play error:', e));
-      }
-    }
-  }, [localStream]);
-
-  // Attach remote stream to video element
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      if (remoteVideoRef.current.srcObject !== remoteStream) {
-        remoteVideoRef.current.srcObject = remoteStream;
-      }
-      remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e));
-    }
     if (remoteAudioRef.current && remoteStream) {
       if (remoteAudioRef.current.srcObject !== remoteStream) {
         remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.play().catch(e => console.error('Remote audio play error:', e));
       }
-      remoteAudioRef.current.play().catch(e => console.error('Remote audio play error:', e));
     }
   }, [remoteStream, streamTick]);
 
@@ -306,6 +290,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     return (
       <div className="room-layout-clean">
         <VideoGrid
+          localStream={localStream}
           remoteStream={remoteStream}
           roomState={roomState}
           role={role}

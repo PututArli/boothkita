@@ -1,8 +1,9 @@
-import { RefObject, useState } from 'react';
+import { RefObject, useState, useEffect } from 'react';
 import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto, CAMERA_FILTER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 
 interface VideoGridProps {
+  localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   roomState: RoomState;
   role: 'host' | 'guest';
@@ -36,6 +37,7 @@ interface VideoGridProps {
 }
 
 export default function VideoGrid({
+  localStream,
   remoteStream,
   roomState,
   role,
@@ -70,6 +72,22 @@ export default function VideoGrid({
   const [showGrid, setShowGrid] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      if (localVideoRef.current.srcObject !== localStream) {
+        localVideoRef.current.srcObject = localStream;
+      }
+    }
+  }, [localStream, localVideoRef]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+    }
+  }, [remoteStream, remoteVideoRef]);
 
   return (
     <div className="video-area">
@@ -110,9 +128,9 @@ export default function VideoGrid({
 
           <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
             
-            {/* Timer controls at top left */}
+            {/* Timer controls at top center */}
             {!isCapturing && (
-              <div className="timer-controls" style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8, zIndex: 10 }}>
+              <div className="timer-controls" style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 10 }}>
                 {[3, 5, 10].map(t_val => (
                   <button
                     key={t_val}
