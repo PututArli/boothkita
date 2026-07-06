@@ -69,16 +69,16 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           display: flex;
           gap: 40px;
           width: 100%;
-          max-width: 900px;
+          max-width: 1000px;
           justify-content: center;
         }
         .arrange-pool {
-          flex: 1 1 300px;
-          max-width: 400px;
+          flex: 1 1 400px;
+          max-width: 480px;
         }
         .arrange-preview {
-          flex: 1 1 300px;
-          max-width: 400px;
+          flex: 1 1 360px;
+          max-width: 500px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -90,7 +90,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
         }
         .arrange-header {
           width: 100%;
-          max-width: 900px;
+          max-width: 1000px;
           display: grid;
           grid-template-columns: 1fr auto 1fr;
           align-items: center;

@@ -22,7 +22,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   const {
     roomState, phase, changePhase, setPhaseLocal, myPhotos, partnerPhotos,
     partnerInfo, countdown, photoIndex, role, isInitialized, roomIssue,
-    captureRunId, startSession, retakePhoto, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
+    captureRunId, startSession, retakePhoto, onPhotoCaptured, updateState, handleReset, broadcast, participantId, hostTimeOffset,
   } = useRoom(roomId, roomCode, roomExpiresAt);
   const { t } = useTranslation();
 
@@ -33,7 +33,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     const getRemaining = () => {
       const expiresAt = new Date(roomExpiresAt).getTime();
       if (!Number.isFinite(expiresAt)) return 0;
-      return Math.max(0, expiresAt - Date.now());
+      return Math.max(0, expiresAt - (Date.now() + hostTimeOffset));
     };
     setRoomTimeLeft(getRemaining());
     const interval = window.setInterval(() => {
@@ -41,7 +41,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [roomExpiresAt]);
+  }, [roomExpiresAt, hostTimeOffset]);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const premium = localStorage.getItem('use_premium_turn');

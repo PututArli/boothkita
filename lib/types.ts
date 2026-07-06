@@ -61,6 +61,7 @@ export interface RealtimeMessage {
     | 'sdp_answer'
     | 'ice_candidate'
     | 'sync_decorate'
+    | 'sync_time'
     | 'trigger_complete_decorate';
   senderId: string;
   payload?: unknown;

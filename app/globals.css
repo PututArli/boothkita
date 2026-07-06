@@ -2140,7 +2140,9 @@ input[type='range']::-webkit-slider-thumb {
 .decorate-history-row,
 .decorate-action-row,
 .decorate-text-actions,
-.decorate-draw-row {
+.decorate-draw-row,
+.decorate-tools,
+.decorate-tool-stack {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2149,6 +2151,18 @@ input[type='range']::-webkit-slider-thumb {
   max-width: 100%;
   margin: 0 auto;
   flex-shrink: 0;
+}
+
+.decorate-tools {
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+}
+
+.decorate-tool-stack {
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
 }
 
 .decorate-mode-row button,

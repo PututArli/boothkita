@@ -32,6 +32,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const [phase, setPhase] = useState<SessionPhase>('waiting_partner');
   const [myPhotos, setMyPhotos] = useState<CapturedPhoto[]>([]);
   const [partnerPhotos, setPartnerPhotos] = useState<CapturedPhoto[]>([]);
+  const [hostTimeOffset, setHostTimeOffset] = useState(0);
   const [partnerInfo, setPartnerInfo] = useState<ParticipantInfo | null>(null);
   const [partnerReady, setPartnerReady] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -234,9 +235,16 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             // If I am the host, sync my current room state to the newly joined partner!
             if (roleRef.current === 'host') {
               broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
+              broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
             }
           }
         }
+        break;
+      }
+      case 'sync_time': {
+        const payload = msg.payload as { hostTime: number };
+        const offset = payload.hostTime - Date.now();
+        setHostTimeOffset(offset);
         break;
       }
       case 'participant_ready': {
@@ -543,5 +551,6 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     updateState,
     handleReset,
     broadcast,
+    hostTimeOffset,
   };
 }
