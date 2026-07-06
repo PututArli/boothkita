@@ -281,8 +281,8 @@ function drawFooter(
   ctx.shadowColor = textColor === '#111' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)';
   ctx.shadowBlur = 4;
 
-  // The center of the footer area
-  const footerCenterY = h - (footerH / 2);
+  // The center of the footer area, shifted slightly up
+  const footerCenterY = h - (footerH / 2) - Math.round(footerH * 0.08);
 
   if (text) {
     ctx.font = `italic ${Math.round(footerH * 0.35)}px 'Playfair Display', serif`;
@@ -296,7 +296,7 @@ function drawFooter(
     ctx.fillText(
       new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       w / 2,
-      footerCenterY + (text ? Math.round(footerH * 0.25) : 0)
+      footerCenterY + (text ? Math.round(footerH * 0.22) : 0)
     );
     ctx.globalAlpha = 1.0;
   }

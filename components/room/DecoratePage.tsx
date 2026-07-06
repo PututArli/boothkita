@@ -648,7 +648,7 @@ export default function DecoratePage({
                     <img src={item.url} alt="sticker" />
                     {isSelected && (
                       <>
-                        <button className="decorate-handle delete" onClick={(event) => { event.stopPropagation(); deleteSelected(); }}>
+                        <button className="decorate-handle delete" onPointerDown={(event) => { event.stopPropagation(); deleteSelected(); }}>
                           <Trash2 size={13} />
                         </button>
                         <button className="decorate-handle scale" onPointerDown={(event) => startDrag(event, 'sticker', item.id, 'scale', item)}>
@@ -684,7 +684,7 @@ export default function DecoratePage({
                     {item.text}
                     {isSelected && (
                       <>
-                        <button className="decorate-handle delete" onClick={(event) => { event.stopPropagation(); deleteSelected(); }}>
+                        <button className="decorate-handle delete" onPointerDown={(event) => { event.stopPropagation(); deleteSelected(); }}>
                           <Trash2 size={13} />
                         </button>
                         <button className="decorate-handle scale" onPointerDown={(event) => startDrag(event, 'text', item.id, 'scale', item)}>

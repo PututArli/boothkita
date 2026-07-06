@@ -2,6 +2,53 @@ import React from 'react';
 import { LAYOUTS, LayoutKey, FRAME_BG_PRESETS, RoomState, THEME_PRESETS, BORDER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 
+const MiniLayout = ({ type }: { type: LayoutKey }) => {
+  if (type.startsWith('strip')) {
+    const count = parseInt(type.replace('strip', ''));
+    return (
+      <div style={{
+        width: 38, height: 120, background: '#fff', borderRadius: 2, padding: 3, display: 'flex', flexDirection: 'column', gap: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} style={{ flex: 1, background: 'var(--surface-light, #e2e8f0)', borderRadius: 1 }} />
+        ))}
+      </div>
+    );
+  }
+  if (type === 'grid2x2') {
+    return (
+      <div style={{
+        width: 80, height: 56, background: '#fff', borderRadius: 2, padding: 3, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} style={{ background: 'var(--surface-light, #e2e8f0)', borderRadius: 1 }} />
+        ))}
+      </div>
+    );
+  }
+  if (type === 'grid3x2') {
+    return (
+      <div style={{
+        width: 80, height: 80, background: '#fff', borderRadius: 2, padding: 3, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{ background: 'var(--surface-light, #e2e8f0)', borderRadius: 1 }} />
+        ))}
+      </div>
+    );
+  }
+  if (type === 'single') {
+    return (
+      <div style={{
+        width: 80, height: 64, background: '#fff', borderRadius: 2, padding: 3, display: 'flex', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ flex: 1, background: 'var(--surface-light, #e2e8f0)', borderRadius: 1 }} />
+      </div>
+    );
+  }
+  return null;
+};
+
 interface WizardProps {
   roomState: RoomState;
   updateState: (partial: Partial<RoomState>) => void;
@@ -45,62 +92,11 @@ export function SetupLayout({ roomState, updateState, nextStep, prevStep, role }
                   justifyContent: 'center',
                   cursor: 'pointer',
                   opacity: 1,
-                  transition: 'all 0.2s',
-                  transform: isActive ? 'translateY(-4px)' : 'none',
                   backdropFilter: 'blur(10px)'
                 }}
               >
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {key === 'strip2' && (
-                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="28" height="116" />
-                      <line x1="2" y1="60" x2="30" y2="60" />
-                    </svg>
-                  )}
-                  {key === 'strip3' && (
-                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="28" height="116" />
-                      <line x1="2" y1="40" x2="30" y2="40" />
-                      <line x1="2" y1="80" x2="30" y2="80" />
-                    </svg>
-                  )}
-                  {key === 'strip4' && (
-                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="28" height="116" />
-                      <line x1="2" y1="31" x2="30" y2="31" />
-                      <line x1="2" y1="60" x2="30" y2="60" />
-                      <line x1="2" y1="89" x2="30" y2="89" />
-                    </svg>
-                  )}
-                  {key === 'strip5' && (
-                    <svg width="32" height="120" viewBox="0 0 32 120" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="28" height="116" />
-                      <line x1="2" y1="25" x2="30" y2="25" />
-                      <line x1="2" y1="49" x2="30" y2="49" />
-                      <line x1="2" y1="73" x2="30" y2="73" />
-                      <line x1="2" y1="97" x2="30" y2="97" />
-                    </svg>
-                  )}
-                  {key === 'grid2x2' && (
-                    <svg width="80" height="54" viewBox="0 0 80 54" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="76" height="50" />
-                      <line x1="40" y1="2" x2="40" y2="52" />
-                      <line x1="2" y1="27" x2="78" y2="27" />
-                    </svg>
-                  )}
-                  {key === 'grid3x2' && (
-                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="76" height="76" />
-                      <line x1="40" y1="2" x2="40" y2="78" />
-                      <line x1="2" y1="28" x2="78" y2="28" />
-                      <line x1="2" y1="54" x2="78" y2="54" />
-                    </svg>
-                  )}
-                  {key === 'single' && (
-                    <svg width="80" height="60" viewBox="0 0 80 60" fill="none" stroke="var(--text)" strokeWidth="4">
-                      <rect x="2" y="2" width="76" height="56" />
-                    </svg>
-                  )}
+                  <MiniLayout type={key as LayoutKey} />
                 </div>
                 <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)' }}>
                   {key === 'strip2' ? t('layout.2_pics') : key === 'strip3' ? t('layout.3_pics') : key === 'strip4' ? t('layout.4_pics') : key === 'strip5' ? t('layout.5_pics') : key === 'grid2x2' ? t('layout.2x2_grid') : key === 'grid3x2' ? t('layout.3x2_grid') : t('layout.single')}
