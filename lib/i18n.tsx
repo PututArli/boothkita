@@ -57,6 +57,8 @@ const dictionary = {
     'room.expiredTitle': 'ROOM EXPIRED',
     'room.expiredHeading': 'This room has ended',
     'room.expiredDesc': 'Photo rooms are active for 30 minutes to keep the server light.',
+    'room.timeLeft': 'Room ends in',
+    'room.connectionIssue': 'Connection to the room is unstable. Please check your internet or refresh if it does not reconnect.',
     
     // VideoGrid
     'video.full': 'Room is Full',
@@ -246,6 +248,8 @@ const dictionary = {
     'room.expiredTitle': 'ROOM EXPIRED',
     'room.expiredHeading': 'Room ini sudah selesai',
     'room.expiredDesc': 'Room foto aktif selama 30 menit agar server tetap ringan.',
+    'room.timeLeft': 'Room berakhir dalam',
+    'room.connectionIssue': 'Koneksi ke room sedang tidak stabil. Cek internet kamu atau refresh kalau tidak tersambung lagi.',
     
     // VideoGrid
     'video.full': 'Ruangan Penuh',

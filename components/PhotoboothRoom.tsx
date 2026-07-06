@@ -21,12 +21,27 @@ interface Props {
 export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Props) {
   const {
     roomState, phase, changePhase, setPhaseLocal, myPhotos, partnerPhotos,
-    partnerInfo, countdown, photoIndex, role, isInitialized,
+    partnerInfo, countdown, photoIndex, role, isInitialized, roomIssue,
     captureRunId, startSession, retakePhoto, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
   } = useRoom(roomId, roomCode, roomExpiresAt);
   const { t } = useTranslation();
 
   const [usePremiumTurn, setUsePremiumTurn] = useState(false);
+  const [roomTimeLeft, setRoomTimeLeft] = useState(0);
+
+  useEffect(() => {
+    const getRemaining = () => {
+      const expiresAt = new Date(roomExpiresAt).getTime();
+      if (!Number.isFinite(expiresAt)) return 0;
+      return Math.max(0, expiresAt - Date.now());
+    };
+    setRoomTimeLeft(getRemaining());
+    const interval = window.setInterval(() => {
+      setRoomTimeLeft(getRemaining());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [roomExpiresAt]);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const premium = localStorage.getItem('use_premium_turn');
@@ -142,6 +157,10 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   const partnerConnected = !!partnerInfo || isConnected;
   const layoutCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
   const totalCount = Math.max(6, layoutCount + 2);
+  const roomMinutes = Math.floor(roomTimeLeft / 60000);
+  const roomSeconds = Math.floor((roomTimeLeft % 60000) / 1000);
+  const roomTimeLabel = `${roomMinutes}:${roomSeconds.toString().padStart(2, '0')}`;
+  const showRoomBadge = phase !== 'expired';
 
   const renderPhase = () => {
     if (phase === 'waiting_partner') {
@@ -320,8 +339,18 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
 
   return (
     <>
-      {/* Hidden audio element to keep voice chat alive across ALL phases */}
       <audio ref={remoteAudioRef} autoPlay style={{ width: 0, height: 0, position: 'absolute', opacity: 0 }} />
+      {showRoomBadge && (
+        <div className={roomTimeLeft <= 60000 ? 'room-expiry-badge danger' : 'room-expiry-badge'}>
+          <span>{t('room.timeLeft')}</span>
+          <strong>{roomTimeLabel}</strong>
+        </div>
+      )}
+      {roomIssue === 'connection' && phase !== 'expired' && (
+        <div className="room-issue-toast">
+          {t('room.connectionIssue')}
+        </div>
+      )}
       {renderPhase()}
     </>
   );

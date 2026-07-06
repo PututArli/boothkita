@@ -5,31 +5,35 @@ import { cleanupExpiredRooms, generateRoomCode, getRoomExpiresAt } from '@/lib/r
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
-  let roomCode = '';
-  let attempts = 0;
-  let created = false;
+  try {
+    let roomCode = '';
+    let attempts = 0;
+    let created = false;
 
-  await cleanupExpiredRooms().catch(() => undefined);
+    await cleanupExpiredRooms().catch(() => undefined);
 
-  while (attempts < 5) {
-    roomCode = generateRoomCode();
+    while (attempts < 5) {
+      roomCode = generateRoomCode();
 
-    const { error } = await supabase.from('rooms').insert({
-      room_code: roomCode,
-      status: 'waiting',
-      expires_at: getRoomExpiresAt(),
-    });
+      const { error } = await supabase.from('rooms').insert({
+        room_code: roomCode,
+        status: 'waiting',
+        expires_at: getRoomExpiresAt(),
+      });
 
-    if (!error) {
-      created = true;
-      break;
+      if (!error) {
+        created = true;
+        break;
+      }
+      attempts++;
     }
-    attempts++;
-  }
 
-  if (!created) {
+    if (!created) {
+      return NextResponse.json({ error: 'Failed to create room' }, { status: 500 });
+    }
+
+    return NextResponse.json({ roomCode });
+  } catch {
     return NextResponse.json({ error: 'Failed to create room' }, { status: 500 });
   }
-
-  return NextResponse.json({ roomCode });
 }

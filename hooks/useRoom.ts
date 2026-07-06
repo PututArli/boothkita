@@ -39,6 +39,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const [captureRunId, setCaptureRunId] = useState(0);
   const [role, setRole] = useState<'host' | 'guest'>('host');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [roomIssue, setRoomIssue] = useState<'connection' | null>(null);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,6 +124,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const expireRoom = useCallback(() => {
     clearCountdown();
     setCountdown(0);
+    setRoomIssue(null);
     setPhase('expired');
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
@@ -312,59 +314,56 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     mountedRef.current = true;
 
     async function setup() {
-      const { data: existing } = await supabase
-        .from('room_participants')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('participant_id', participantId)
-        .single();
-
-      const { data: anyHost } = await supabase
-        .from('room_participants')
-        .select('id, participant_id')
-        .eq('room_id', roomId)
-        .eq('role', 'host')
-        .limit(1)
-        .maybeSingle();
-
-      // Role assignment: existing host stays host, if no host exists we become host, otherwise guest
-      const assignedRole: 'host' | 'guest' = existing?.role === 'host' ? 'host'
-        : existing?.role === 'guest' ? 'guest'
-        : (!anyHost || anyHost.participant_id === participantId) ? 'host'
-        : 'guest';
-
-      // Use the database as the absolute source of truth
-      const participantRecord = await joinRoom(roomId, participantId, assignedRole).catch(() => null);
-
-      if (!participantRecord) {
-        expireRoom();
-        setIsInitialized(true);
-        return;
-      }
-      
-      if (mountedRef.current) {
-        setRole(participantRecord.role);
-        setIsInitialized(true);
-      }
-
-      if (!mountedRef.current) return;
-
-      const channelName = `room:${roomCode}`;
-      
-      // Cleanup any cached channel in strict mode
-      const existingChannels = supabase.getChannels().filter(c => c.topic.includes(channelName));
-      for (const c of existingChannels) {
-        await supabase.removeChannel(c);
-      }
-
-      const channel = supabase.channel(channelName, {
-        config: {
-          broadcast: { self: false },
-          presence: { key: participantId },
-        },
-      });
-
       try {
+        const { data: existing } = await supabase
+          .from('room_participants')
+          .select('*')
+          .eq('room_id', roomId)
+          .eq('participant_id', participantId)
+          .maybeSingle();
+
+        const { data: anyHost } = await supabase
+          .from('room_participants')
+          .select('id, participant_id')
+          .eq('room_id', roomId)
+          .eq('role', 'host')
+          .limit(1)
+          .maybeSingle();
+
+        const assignedRole: 'host' | 'guest' = existing?.role === 'host' ? 'host'
+          : existing?.role === 'guest' ? 'guest'
+          : (!anyHost || anyHost.participant_id === participantId) ? 'host'
+          : 'guest';
+
+        const participantRecord = await joinRoom(roomId, participantId, assignedRole);
+
+        if (!participantRecord) {
+          expireRoom();
+          setIsInitialized(true);
+          return;
+        }
+        
+        if (mountedRef.current) {
+          setRole(participantRecord.role);
+          setRoomIssue(null);
+          setIsInitialized(true);
+        }
+
+        if (!mountedRef.current) return;
+
+        const channelName = `room:${roomCode}`;
+        const existingChannels = supabase.getChannels().filter(c => c.topic.includes(channelName));
+        for (const c of existingChannels) {
+          await supabase.removeChannel(c);
+        }
+
+        const channel = supabase.channel(channelName, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: participantId },
+          },
+        });
+
         channel
           .on('presence', { event: 'sync' }, () => {
             if (!mountedRef.current) return;
@@ -403,15 +402,24 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
           })
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
+              setRoomIssue(null);
               await channel.track({ online_at: new Date().toISOString() });
               broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+              return;
+            }
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              setRoomIssue('connection');
             }
           });
+
+        channelRef.current = channel;
       } catch (err) {
         console.warn('Channel subscription error (likely strict mode race condition):', err);
+        if (mountedRef.current) {
+          setRoomIssue('connection');
+          setIsInitialized(true);
+        }
       }
-
-      channelRef.current = channel;
     }
 
     setup();
@@ -523,6 +531,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     participantId,
     role,
     isInitialized,
+    roomIssue,
     startSession,
     retakePhoto,
     onPhotoCaptured,
