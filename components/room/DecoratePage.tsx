@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { BringToFront, Brush, Copy, FlipHorizontal, Redo2, SendToBack, Sticker, Trash2, Type, Undo2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { CapturedPhoto, RoomState, RealtimeMessage } from '@/lib/types';
 import { composeDuoPhoto } from '@/lib/composition';
@@ -18,7 +19,11 @@ interface DecoratePageProps {
 
 interface Point { x: number; y: number }
 interface Line { color: string; width: number; points: Point[] }
-interface StickerItem { id: string; url: string; x: number; y: number; scale: number; rotation: number; isFlipped?: boolean }
+interface StickerItem { id: string; url: string; x: number; y: number; size: number; scale: number; rotation: number; z: number; isFlipped?: boolean }
+interface TextItem { id: string; text: string; x: number; y: number; color: string; fontSize: number; fontFamily: string; scale: number; rotation: number; z: number }
+interface Snapshot { lines: Line[]; stickers: StickerItem[]; textItems: TextItem[] }
+type Mode = 'stickers' | 'text' | 'draw';
+type SelectedItem = { type: 'sticker' | 'text'; id: string } | null;
 
 const STICKERS = [
   '/stickers/blue-cloud.png',
@@ -34,6 +39,27 @@ const STICKERS = [
 
 const COLORS = ['#ff6b6b', '#f06595', '#cc5de8', '#845ef7', '#5c7cfa', '#339af0', '#20c997', '#51cf66', '#fcc419', '#ff922b', '#ffffff', '#000000'];
 const WIDTHS = [4, 8, 12];
+const FONT_OPTIONS = ['Plus Jakarta Sans', 'Georgia', 'Arial', 'Courier New'];
+
+function cloneSnapshot(snapshot: Snapshot): Snapshot {
+  return {
+    lines: snapshot.lines.map(line => ({
+      ...line,
+      points: line.points.map(point => ({ ...point })),
+    })),
+    stickers: snapshot.stickers.map(sticker => ({ ...sticker })),
+    textItems: snapshot.textItems.map(item => ({ ...item })),
+  };
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(image);
+    image.src = src;
+  });
+}
 
 export default function DecoratePage({
   myPhotos,
@@ -49,51 +75,56 @@ export default function DecoratePage({
   const containerRef = useRef<HTMLDivElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  const [baseImgUrl, setBaseImgUrl] = useState<string>('');
-  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
-  const [mode, setMode] = useState<'stickers' | 'draw'>('stickers');
-
-  // State for Drawings
-  const [lines, setLines] = useState<Line[]>([]);
-  const [color, setColor] = useState(COLORS[0]);
-  const [lineWidth, setLineWidth] = useState(WIDTHS[1]);
   const isDrawing = useRef(false);
   const currentLine = useRef<Line | null>(null);
-
-  // State for Stickers
-  const [stickers, setStickers] = useState<StickerItem[]>([]);
-  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
-
-  // Interaction refs
-  const dragRef = useRef<{ id: string; type: 'move' | 'rotate' | 'scale'; startX: number; startY: number; initX: number; initY: number; initScale: number; initRot: number } | null>(null);
-
   const lastBroadcast = useRef(0);
+  const historyRef = useRef<Snapshot[]>([]);
+  const redoRef = useRef<Snapshot[]>([]);
+  const dragRef = useRef<{
+    type: 'sticker' | 'text';
+    id: string;
+    action: 'move' | 'rotate' | 'scale';
+    startX: number;
+    startY: number;
+    initX: number;
+    initY: number;
+    initScale: number;
+    initRot: number;
+  } | null>(null);
 
-  // 1. Generate Base Image
-  useEffect(() => {
-    if (!offscreenCanvasRef.current) return;
-    const orderedMyPhotos = selectedIndices.map(i => myPhotos[i]?.dataUrl || '');
-    const orderedPartnerPhotos = selectedIndices.map(i => partnerPhotos[i]?.dataUrl || '');
+  const [baseImgUrl, setBaseImgUrl] = useState('');
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+  const [mode, setMode] = useState<Mode>('stickers');
+  const [lines, setLines] = useState<Line[]>([]);
+  const [stickers, setStickers] = useState<StickerItem[]>([]);
+  const [textItems, setTextItems] = useState<TextItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem>(null);
+  const [color, setColor] = useState(COLORS[0]);
+  const [lineWidth, setLineWidth] = useState(WIDTHS[1]);
+  const [textDraft, setTextDraft] = useState('');
+  const [textColor, setTextColor] = useState('#ffffff');
+  const [textSize, setTextSize] = useState(64);
+  const [textFont, setTextFont] = useState(FONT_OPTIONS[0]);
+  const [historyCount, setHistoryCount] = useState(0);
+  const [redoCount, setRedoCount] = useState(0);
 
-    composeDuoPhoto({
-      myPhotos: orderedMyPhotos,
-      partnerPhotos: orderedPartnerPhotos,
-      state: roomState,
-      canvas: offscreenCanvasRef.current,
-    }).then(() => {
-      const url = offscreenCanvasRef.current!.toDataURL('image/png');
-      setBaseImgUrl(url);
-      setImgSize({ w: offscreenCanvasRef.current!.width, h: offscreenCanvasRef.current!.height });
-    });
-  }, [myPhotos, partnerPhotos, selectedIndices, roomState]);
+  const activeText = selectedItem?.type === 'text'
+    ? textItems.find(item => item.id === selectedItem.id)
+    : null;
 
-  // 3. Drawing Logic
+  const getSnapshot = useCallback((): Snapshot => cloneSnapshot({ lines, stickers, textItems }), [lines, stickers, textItems]);
+
+  const refreshHistoryState = () => {
+    setHistoryCount(historyRef.current.length);
+    setRedoCount(redoRef.current.length);
+  };
+
   const redrawCanvas = useCallback((linesToDraw: Line[]) => {
-    const cvs = drawCanvasRef.current;
-    if (!cvs || imgSize.w === 0) return;
-    const ctx = cvs.getContext('2d')!;
-    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    const canvas = drawCanvasRef.current;
+    if (!canvas || imgSize.w === 0) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -103,393 +134,679 @@ export default function DecoratePage({
       ctx.strokeStyle = line.color;
       ctx.lineWidth = line.width;
       ctx.moveTo(line.points[0].x, line.points[0].y);
-      for (let i = 1; i < line.points.length; i++) {
+      for (let i = 1; i < line.points.length; i += 1) {
         ctx.lineTo(line.points[i].x, line.points[i].y);
       }
       ctx.stroke();
     });
-  }, [imgSize]);
+  }, [imgSize.w]);
 
-  // 2. Realtime Listener
-  useEffect(() => {
-    const handleSync = (e: CustomEvent) => {
-      const data = e.detail;
-      if (data.lines) {
-        setLines(data.lines);
-        redrawCanvas(data.lines);
-      }
-      if (data.stickers) setStickers(data.stickers);
-    };
-    window.addEventListener('sync_decorate', handleSync as EventListener);
-    return () => window.removeEventListener('sync_decorate', handleSync as EventListener);
-  }, [redrawCanvas]);
-
-  // Listen for the complete trigger to generate local photo
-  useEffect(() => {
-    const handleTrigger = () => {
-      handleNext(false);
-    };
-    window.addEventListener('trigger_complete_decorate', handleTrigger as EventListener);
-    return () => window.removeEventListener('trigger_complete_decorate', handleTrigger as EventListener);
-  }, [baseImgUrl, lines, stickers]);
-
-  // Throttled Broadcast
-  const syncState = useCallback((newLines?: Line[], newStickers?: StickerItem[], force = false) => {
+  const syncState = useCallback((nextLines = lines, nextStickers = stickers, nextTextItems = textItems, force = false) => {
     const now = Date.now();
-    if (force || now - lastBroadcast.current > 250) {
-      broadcast({
-        type: 'sync_decorate',
-        senderId: participantId,
-        payload: {
-          lines: newLines || lines,
-          stickers: newStickers || stickers,
-        }
-      });
-      lastBroadcast.current = now;
+    if (!force && now - lastBroadcast.current <= 250) return;
+
+    broadcast({
+      type: 'sync_decorate',
+      senderId: participantId,
+      payload: {
+        lines: nextLines,
+        stickers: nextStickers,
+        textItems: nextTextItems,
+      },
+    });
+    lastBroadcast.current = now;
+  }, [broadcast, participantId, lines, stickers, textItems]);
+
+  const applySnapshot = useCallback((snapshot: Snapshot, shouldSync = true) => {
+    const next = cloneSnapshot(snapshot);
+    setLines(next.lines);
+    setStickers(next.stickers);
+    setTextItems(next.textItems);
+    redrawCanvas(next.lines);
+    if (shouldSync) syncState(next.lines, next.stickers, next.textItems, true);
+  }, [redrawCanvas, syncState]);
+
+  const pushHistory = useCallback(() => {
+    historyRef.current = [...historyRef.current.slice(-39), getSnapshot()];
+    redoRef.current = [];
+    refreshHistoryState();
+  }, [getSnapshot]);
+
+  const getCanvasPoint = (e: React.PointerEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect || imgSize.w === 0 || imgSize.h === 0) return { x: 0, y: 0 };
+    return {
+      x: (e.clientX - rect.left) * (imgSize.w / rect.width),
+      y: (e.clientY - rect.top) * (imgSize.h / rect.height),
+    };
+  };
+
+  const getDisplayScale = () => {
+    const width = containerRef.current?.clientWidth || imgSize.w || 1;
+    return width / (imgSize.w || 1);
+  };
+
+  const getNextZ = () => Math.max(0, ...stickers.map(item => item.z), ...textItems.map(item => item.z)) + 1;
+
+  const handleUndo = () => {
+    const previous = historyRef.current.pop();
+    if (!previous) return;
+    redoRef.current.push(getSnapshot());
+    applySnapshot(previous);
+    refreshHistoryState();
+  };
+
+  const handleRedo = () => {
+    const next = redoRef.current.pop();
+    if (!next) return;
+    historyRef.current.push(getSnapshot());
+    applySnapshot(next);
+    refreshHistoryState();
+  };
+
+  const addSticker = (url: string) => {
+    pushHistory();
+    const newSticker: StickerItem = {
+      id: Math.random().toString(36).slice(2, 11),
+      url,
+      x: imgSize.w / 2,
+      y: imgSize.h / 2,
+      size: Math.max(90, Math.round(imgSize.w * 0.16)),
+      scale: 1,
+      rotation: 0,
+      z: getNextZ(),
+    };
+    const next = [...stickers, newSticker];
+    setStickers(next);
+    setSelectedItem({ type: 'sticker', id: newSticker.id });
+    setMode('stickers');
+    syncState(lines, next, textItems, true);
+  };
+
+  const addOrUpdateText = () => {
+    const trimmed = textDraft.trim();
+    if (!trimmed) return;
+
+    pushHistory();
+    if (selectedItem?.type === 'text') {
+      const next = textItems.map(item => item.id === selectedItem.id
+        ? { ...item, text: trimmed, color: textColor, fontSize: textSize, fontFamily: textFont }
+        : item);
+      setTextItems(next);
+      syncState(lines, stickers, next, true);
+      return;
     }
-  }, [broadcast, participantId, lines, stickers]);
 
+    const newText: TextItem = {
+      id: Math.random().toString(36).slice(2, 11),
+      text: trimmed,
+      x: imgSize.w / 2,
+      y: imgSize.h / 2,
+      color: textColor,
+      fontSize: textSize,
+      fontFamily: textFont,
+      scale: 1,
+      rotation: 0,
+      z: getNextZ(),
+    };
+    const next = [...textItems, newText];
+    setTextItems(next);
+    setSelectedItem({ type: 'text', id: newText.id });
+    syncState(lines, stickers, next, true);
+  };
 
+  const startNewText = () => {
+    setSelectedItem(null);
+    setTextDraft('');
+    setTextColor('#ffffff');
+    setTextSize(64);
+    setTextFont(FONT_OPTIONS[0]);
+  };
+
+  const updateActiveText = (partial: Partial<TextItem>) => {
+    if (selectedItem?.type !== 'text') return;
+    const next = textItems.map(item => item.id === selectedItem.id ? { ...item, ...partial } : item);
+    setTextItems(next);
+    syncState(lines, stickers, next);
+  };
+
+  const duplicateSelected = () => {
+    if (!selectedItem) return;
+    pushHistory();
+
+    if (selectedItem.type === 'sticker') {
+      const source = stickers.find(item => item.id === selectedItem.id);
+      if (!source) return;
+      const copyItem = { ...source, id: Math.random().toString(36).slice(2, 11), x: source.x + 28, y: source.y + 28, z: getNextZ() };
+      const next = [...stickers, copyItem];
+      setStickers(next);
+      setSelectedItem({ type: 'sticker', id: copyItem.id });
+      syncState(lines, next, textItems, true);
+      return;
+    }
+
+    const source = textItems.find(item => item.id === selectedItem.id);
+    if (!source) return;
+    const copyItem = { ...source, id: Math.random().toString(36).slice(2, 11), x: source.x + 28, y: source.y + 28, z: getNextZ() };
+    const next = [...textItems, copyItem];
+    setTextItems(next);
+    setSelectedItem({ type: 'text', id: copyItem.id });
+    syncState(lines, stickers, next, true);
+  };
+
+  const deleteSelected = () => {
+    if (!selectedItem) return;
+    pushHistory();
+
+    if (selectedItem.type === 'sticker') {
+      const next = stickers.filter(item => item.id !== selectedItem.id);
+      setStickers(next);
+      setSelectedItem(null);
+      syncState(lines, next, textItems, true);
+      return;
+    }
+
+    const next = textItems.filter(item => item.id !== selectedItem.id);
+    setTextItems(next);
+    setSelectedItem(null);
+    syncState(lines, stickers, next, true);
+  };
+
+  const flipSelected = () => {
+    if (selectedItem?.type !== 'sticker') return;
+    pushHistory();
+    const next = stickers.map(item => item.id === selectedItem.id ? { ...item, isFlipped: !item.isFlipped } : item);
+    setStickers(next);
+    syncState(lines, next, textItems, true);
+  };
+
+  const moveLayer = (direction: 'front' | 'back') => {
+    if (!selectedItem) return;
+    pushHistory();
+    const minZ = Math.min(0, ...stickers.map(item => item.z), ...textItems.map(item => item.z));
+    const z = direction === 'front' ? getNextZ() : minZ - 1;
+
+    if (selectedItem.type === 'sticker') {
+      const next = stickers.map(item => item.id === selectedItem.id ? { ...item, z } : item);
+      setStickers(next);
+      syncState(lines, next, textItems, true);
+      return;
+    }
+
+    const next = textItems.map(item => item.id === selectedItem.id ? { ...item, z } : item);
+    setTextItems(next);
+    syncState(lines, stickers, next, true);
+  };
+
+  const clearDraw = () => {
+    if (lines.length === 0) return;
+    pushHistory();
+    setLines([]);
+    redrawCanvas([]);
+    syncState([], stickers, textItems, true);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (mode !== 'draw') return;
+    pushHistory();
+    isDrawing.current = true;
+    const point = getCanvasPoint(e);
+    currentLine.current = { color, width: lineWidth, points: [point] };
+  };
+
+  const startDrag = (e: React.PointerEvent, type: 'sticker' | 'text', id: string, action: 'move' | 'rotate' | 'scale', item: StickerItem | TextItem) => {
+    if (mode === 'draw') return;
+    e.stopPropagation();
+    pushHistory();
+    setSelectedItem({ type, id });
+    dragRef.current = {
+      type,
+      id,
+      action,
+      startX: e.clientX,
+      startY: e.clientY,
+      initX: item.x,
+      initY: item.y,
+      initScale: item.scale,
+      initRot: item.rotation,
+    };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (mode === 'draw' && isDrawing.current && currentLine.current) {
+      currentLine.current.points.push(getCanvasPoint(e));
+      redrawCanvas([...lines, currentLine.current]);
+      syncState([...lines, currentLine.current], stickers, textItems);
+      return;
+    }
+
+    if (!dragRef.current) return;
+
+    const drag = dragRef.current;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    const canvasDx = dx * (imgSize.w / rect.width);
+    const canvasDy = dy * (imgSize.h / rect.height);
+    const deltaScale = Math.max(0.2, drag.initScale + (dx + dy) * 0.005);
+    const rotation = drag.initRot + dx * 0.45;
+
+    if (drag.type === 'sticker') {
+      setStickers(prev => {
+        const next = prev.map(item => {
+          if (item.id !== drag.id) return item;
+          if (drag.action === 'move') return { ...item, x: drag.initX + canvasDx, y: drag.initY + canvasDy };
+          if (drag.action === 'scale') return { ...item, scale: deltaScale };
+          return { ...item, rotation };
+        });
+        syncState(lines, next, textItems);
+        return next;
+      });
+      return;
+    }
+
+    setTextItems(prev => {
+      const next = prev.map(item => {
+        if (item.id !== drag.id) return item;
+        if (drag.action === 'move') return { ...item, x: drag.initX + canvasDx, y: drag.initY + canvasDy };
+        if (drag.action === 'scale') return { ...item, scale: deltaScale };
+        return { ...item, rotation };
+      });
+      syncState(lines, stickers, next);
+      return next;
+    });
+  };
+
+  const handlePointerUp = () => {
+    if (mode === 'draw' && isDrawing.current && currentLine.current) {
+      const next = [...lines, currentLine.current];
+      isDrawing.current = false;
+      currentLine.current = null;
+      setLines(next);
+      syncState(next, stickers, textItems, true);
+    }
+
+    if (dragRef.current) {
+      dragRef.current = null;
+      syncState(lines, stickers, textItems, true);
+    }
+  };
+
+  const drawItems = useCallback(async (ctx: CanvasRenderingContext2D) => {
+    const items = [
+      ...stickers.map(item => ({ kind: 'sticker' as const, z: item.z, item })),
+      ...textItems.map(item => ({ kind: 'text' as const, z: item.z, item })),
+    ].sort((a, b) => a.z - b.z);
+
+    for (const entry of items) {
+      if (entry.kind === 'sticker') {
+        const stickerImage = await loadImage(entry.item.url);
+        const ratio = stickerImage.width && stickerImage.height ? stickerImage.height / stickerImage.width : 1;
+        const drawW = entry.item.size * entry.item.scale;
+        const drawH = drawW * ratio;
+        ctx.save();
+        ctx.translate(entry.item.x, entry.item.y);
+        ctx.rotate((entry.item.rotation * Math.PI) / 180);
+        ctx.scale(entry.item.isFlipped ? -1 : 1, 1);
+        ctx.drawImage(stickerImage, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.translate(entry.item.x, entry.item.y);
+        ctx.rotate((entry.item.rotation * Math.PI) / 180);
+        ctx.font = `800 ${Math.max(12, entry.item.fontSize * entry.item.scale)}px "${entry.item.fontFamily}", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = Math.max(4, entry.item.fontSize * entry.item.scale * 0.08);
+        ctx.strokeText(entry.item.text, 0, 0);
+        ctx.fillStyle = entry.item.color;
+        ctx.fillText(entry.item.text, 0, 0);
+        ctx.restore();
+      }
+    }
+  }, [stickers, textItems]);
+
+  const handleNext = useCallback(async (andBroadcast = true) => {
+    if (andBroadcast) {
+      broadcast({ type: 'trigger_complete_decorate', senderId: participantId });
+    }
+
+    if (!offscreenCanvasRef.current || !baseImgUrl) return;
+    const canvas = offscreenCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const baseImage = await loadImage(baseImgUrl);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(baseImage, 0, 0);
+    if (drawCanvasRef.current) {
+      ctx.drawImage(drawCanvasRef.current, 0, 0);
+    }
+    await drawItems(ctx);
+    const finalDataUrl = canvas.toDataURL('image/png');
+
+    const decorationsCanvas = document.createElement('canvas');
+    decorationsCanvas.width = canvas.width;
+    decorationsCanvas.height = canvas.height;
+    const decorationsCtx = decorationsCanvas.getContext('2d');
+    if (decorationsCtx && drawCanvasRef.current) {
+      decorationsCtx.drawImage(drawCanvasRef.current, 0, 0);
+      await drawItems(decorationsCtx);
+    }
+
+    onComplete(finalDataUrl, decorationsCanvas.toDataURL('image/png'));
+  }, [baseImgUrl, broadcast, drawItems, onComplete, participantId]);
+
+  useEffect(() => {
+    if (!offscreenCanvasRef.current) return;
+    const orderedMyPhotos = selectedIndices.map(index => myPhotos[index]?.dataUrl || '');
+    const orderedPartnerPhotos = selectedIndices.map(index => partnerPhotos[index]?.dataUrl || '');
+
+    composeDuoPhoto({
+      myPhotos: orderedMyPhotos,
+      partnerPhotos: orderedPartnerPhotos,
+      state: roomState,
+      canvas: offscreenCanvasRef.current,
+    }).then(() => {
+      const canvas = offscreenCanvasRef.current;
+      if (!canvas) return;
+      setBaseImgUrl(canvas.toDataURL('image/png'));
+      setImgSize({ w: canvas.width, h: canvas.height });
+    });
+  }, [myPhotos, partnerPhotos, selectedIndices, roomState]);
 
   useEffect(() => {
     redrawCanvas(lines);
   }, [lines, redrawCanvas]);
 
-  const getPos = (e: React.PointerEvent) => {
-    const rect = drawCanvasRef.current!.getBoundingClientRect();
-    const scaleX = imgSize.w / rect.width;
-    const scaleY = imgSize.h / rect.height;
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+  useEffect(() => {
+    const handleSync = (event: CustomEvent) => {
+      const data = event.detail as Partial<Snapshot>;
+      if (data.lines) {
+        setLines(data.lines);
+        redrawCanvas(data.lines);
+      }
+      if (data.stickers) setStickers(data.stickers);
+      if (data.textItems) setTextItems(data.textItems);
     };
-  };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (mode !== 'draw') return;
-    isDrawing.current = true;
-    const p = getPos(e);
-    currentLine.current = { color, width: lineWidth, points: [p] };
-  };
+    window.addEventListener('sync_decorate', handleSync as EventListener);
+    return () => window.removeEventListener('sync_decorate', handleSync as EventListener);
+  }, [redrawCanvas]);
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (mode === 'draw' && isDrawing.current && currentLine.current) {
-      currentLine.current.points.push(getPos(e));
-      redrawCanvas([...lines, currentLine.current]);
-      syncState([...lines, currentLine.current], stickers);
-    } else if (mode === 'stickers' && dragRef.current) {
-      const { id, type, startX, startY, initX, initY, initScale, initRot } = dragRef.current;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-
-      setStickers(prev => {
-        const next = prev.map(s => {
-          if (s.id !== id) return s;
-          if (type === 'move') {
-            // Very rough scale estimation for movement.
-            const rect = containerRef.current!.getBoundingClientRect();
-            const scale = imgSize.w / rect.width;
-            return { ...s, x: initX + dx * scale, y: initY + dy * scale };
-          }
-          if (type === 'scale') {
-            const delta = (dx + dy) * 0.005;
-            return { ...s, scale: Math.max(0.2, initScale + delta) };
-          }
-          if (type === 'rotate') {
-            return { ...s, rotation: initRot + dx * 0.5 };
-          }
-          return s;
-        });
-        syncState(lines, next);
-        return next;
-      });
-    }
-  };
-
-  const handlePointerUp = () => {
-    if (mode === 'draw' && isDrawing.current && currentLine.current) {
-      isDrawing.current = false;
-      const newLines = [...lines, currentLine.current];
-      setLines(newLines);
-      syncState(newLines, stickers, true);
-      currentLine.current = null;
-    }
-    if (mode === 'stickers' && dragRef.current) {
-      dragRef.current = null;
-    }
-  };
-
-  // 4. Sticker Logic
-  const addSticker = (url: string) => {
-    const newSticker: StickerItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      url,
-      x: imgSize.w / 2,
-      y: imgSize.h / 2,
-      scale: 1,
-      rotation: 0
+  useEffect(() => {
+    const handleTrigger = () => {
+      handleNext(false);
     };
-    const newStickers = [...stickers, newSticker];
-    setStickers(newStickers);
-    setSelectedSticker(newSticker.id);
-    setMode('stickers');
-    syncState(lines, newStickers, true);
-  };
 
-  const removeSticker = (id: string) => {
-    const next = stickers.filter(s => s.id !== id);
-    setStickers(next);
-    if (selectedSticker === id) setSelectedSticker(null);
-    syncState(lines, next, true);
-  };
+    window.addEventListener('trigger_complete_decorate', handleTrigger as EventListener);
+    return () => window.removeEventListener('trigger_complete_decorate', handleTrigger as EventListener);
+  }, [handleNext]);
 
-  const undoDraw = () => {
-    const next = lines.slice(0, -1);
-    setLines(next);
-    syncState(next, stickers, true);
-  };
+  useEffect(() => {
+    if (!activeText) return;
+    setTextDraft(activeText.text);
+    setTextColor(activeText.color);
+    setTextSize(activeText.fontSize);
+    setTextFont(activeText.fontFamily);
+  }, [activeText]);
 
-  const clearDraw = () => {
-    setLines([]);
-    syncState([], stickers, true);
-  };
-
-  // 5. Finalize Image
-  const handleNext = async (andBroadcast = true) => {
-    if (andBroadcast) {
-      broadcast({ type: 'trigger_complete_decorate', senderId: participantId });
-    }
-    
-    if (!offscreenCanvasRef.current || !baseImgUrl) return;
-    // 1. Generate full decorated image
-    const cvs = offscreenCanvasRef.current;
-    const ctx = cvs.getContext('2d')!;
-    const baseImg = new Image();
-    baseImg.src = baseImgUrl;
-    await new Promise(r => { baseImg.onload = r; baseImg.onerror = r; });
-    ctx.drawImage(baseImg, 0, 0);
-    ctx.drawImage(drawCanvasRef.current!, 0, 0);
-
-    for (const s of stickers) {
-      const sImg = new Image();
-      sImg.src = s.url;
-      await new Promise(r => { sImg.onload = r; sImg.onerror = r; });
-      ctx.save();
-      ctx.translate(s.x, s.y);
-      ctx.rotate((s.rotation * Math.PI) / 180);
-      ctx.scale(s.scale, s.scale);
-      ctx.drawImage(sImg, -sImg.width / 2, -sImg.height / 2);
-      ctx.restore();
-    }
-    const finalDataUrl = cvs.toDataURL('image/png');
-
-    // 2. Generate pure decorations image (transparent background)
-    const decCvs = document.createElement('canvas');
-    decCvs.width = cvs.width;
-    decCvs.height = cvs.height;
-    const decCtx = decCvs.getContext('2d')!;
-    
-    // Draw lines
-    decCtx.drawImage(drawCanvasRef.current!, 0, 0);
-    
-    // Draw stickers
-    for (const s of stickers) {
-      const sImg = new Image();
-      sImg.src = s.url;
-      await new Promise(r => { sImg.onload = r; sImg.onerror = r; });
-      decCtx.save();
-      decCtx.translate(s.x, s.y);
-      decCtx.rotate((s.rotation * Math.PI) / 180);
-      decCtx.scale(s.scale, s.scale);
-      decCtx.drawImage(sImg, -sImg.width / 2, -sImg.height / 2);
-      decCtx.restore();
-    }
-    const decorationsUrl = decCvs.toDataURL('image/png');
-
-    onComplete(finalDataUrl, decorationsUrl);
-  };
+  const renderSelectedActions = () => (
+    <div className="decorate-action-row">
+      <button onClick={duplicateSelected} disabled={!selectedItem} title={t('decorate.duplicate')}>
+        <Copy size={16} />
+      </button>
+      <button onClick={flipSelected} disabled={selectedItem?.type !== 'sticker'} title={t('decorate.flip')}>
+        <FlipHorizontal size={16} />
+      </button>
+      <button onClick={() => moveLayer('front')} disabled={!selectedItem} title={t('decorate.front')}>
+        <BringToFront size={16} />
+      </button>
+      <button onClick={() => moveLayer('back')} disabled={!selectedItem} title={t('decorate.backLayer')}>
+        <SendToBack size={16} />
+      </button>
+      <button onClick={deleteSelected} disabled={!selectedItem} title={t('decorate.delete')}>
+        <Trash2 size={16} />
+      </button>
+    </div>
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--surface)' }}
-      onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
-
-      {/* Header */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 20px',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--surface)'
-      }}>
-        <button
-          onClick={onBack}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    <div
+      className="decorate-page"
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <header className="decorate-header">
+        <button onClick={onBack}>
+          <span>←</span>
           {t('room.back')}
         </button>
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-          {t('decorate.title')}
-        </span>
-        <div style={{ width: 80 }} /> {/* spacer */}
-      </div>
+        <span>{t('decorate.title')}</span>
+        <div />
+      </header>
 
-      {/* Main Canvas Area */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface2)', padding: 8 }}>
+      <main className="decorate-stage">
         {baseImgUrl && imgSize.w > 0 ? (
-          <div 
+          <div
             ref={containerRef}
-            style={{ 
-              position: 'relative',
-              width: `min(100%, calc((100dvh - 200px) * ${imgSize.w / imgSize.h}))`,
+            className="decorate-canvas-wrap"
+            style={{
+              width: `min(100%, calc((100dvh - 230px) * ${imgSize.w / imgSize.h}))`,
               aspectRatio: `${imgSize.w}/${imgSize.h}`,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-              touchAction: 'none'
             }}
-            onPointerDown={() => setSelectedSticker(null)} // deselect on background click
+            onPointerDown={() => setSelectedItem(null)}
           >
-            {/* Base Image */}
-            <img src={baseImgUrl} alt="base" style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none', objectFit: 'contain' }} />
-
-            {/* Draw Canvas */}
+            <img src={baseImgUrl} alt="base" />
             <canvas
               ref={drawCanvasRef}
               width={imgSize.w}
               height={imgSize.h}
-              style={{
-                position: 'absolute', top: 0, left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: mode === 'draw' ? 'auto' : 'none',
-                touchAction: 'none'
-              }}
               onPointerDown={handlePointerDown}
+              className={mode === 'draw' ? 'active' : ''}
             />
 
-            {/* Stickers Layer */}
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-            {stickers.map(s => {
-              const isSelected = selectedSticker === s.id;
-              // Translate coordinate system from original image size to current display size
-              const scaleX = (containerRef.current?.clientWidth || imgSize.w) / imgSize.w;
+            <div className="decorate-item-layer">
+              {[...stickers].sort((a, b) => a.z - b.z).map(item => {
+                const isSelected = selectedItem?.type === 'sticker' && selectedItem.id === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className={isSelected ? 'decorate-sticker selected' : 'decorate-sticker'}
+                    style={{
+                      left: `${(item.x / imgSize.w) * 100}%`,
+                      top: `${(item.y / imgSize.h) * 100}%`,
+                      width: `${(item.size / imgSize.w) * 100}%`,
+                      transform: `translate(-50%, -50%) rotate(${item.rotation}deg) scale(${item.scale}) scaleX(${item.isFlipped ? -1 : 1})`,
+                      pointerEvents: mode === 'draw' ? 'none' : 'auto',
+                    }}
+                    onPointerDown={(event) => startDrag(event, 'sticker', item.id, 'move', item)}
+                  >
+                    <img src={item.url} alt="sticker" />
+                    {isSelected && (
+                      <>
+                        <button className="decorate-handle delete" onClick={(event) => { event.stopPropagation(); deleteSelected(); }}>
+                          <Trash2 size={13} />
+                        </button>
+                        <button className="decorate-handle scale" onPointerDown={(event) => startDrag(event, 'sticker', item.id, 'scale', item)}>
+                          ↕
+                        </button>
+                        <button className="decorate-handle rotate" onPointerDown={(event) => startDrag(event, 'sticker', item.id, 'rotate', item)}>
+                          ↻
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
 
-              return (
-                <div key={s.id}
-                  style={{
-                    position: 'absolute',
-                    left: s.x * scaleX,
-                    top: s.y * scaleX,
-                    transform: `translate(-50%, -50%) rotate(${s.rotation}deg) scale(${s.scale * scaleX})`,
-                    cursor: mode === 'stickers' ? 'grab' : 'default',
-                    pointerEvents: mode === 'stickers' ? 'auto' : 'none',
-                    border: isSelected ? '2px dashed var(--accent)' : 'none',
-                    padding: isSelected ? 4 : 0,
-                  }}
-                  onPointerDown={(e) => {
-                    if (mode !== 'stickers') return;
-                    e.stopPropagation();
-                    setSelectedSticker(s.id);
-                    dragRef.current = { id: s.id, type: 'move', startX: e.clientX, startY: e.clientY, initX: s.x, initY: s.y, initScale: s.scale, initRot: s.rotation };
-                  }}
-                >
-                  <img src={s.url} alt="sticker" style={{ display: 'block', pointerEvents: 'none', userSelect: 'none' }} />
-
-                  {isSelected && (
-                    <>
-                      {/* Delete Button */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); removeSticker(s.id); }}
-                        style={{ position: 'absolute', top: -15, left: -15, background: 'var(--danger)', color: 'var(--bg)', borderRadius: '50%', width: 26, height: 26, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', pointerEvents: 'auto' }}
-                      >✕</button>
-
-                      {/* Resize Handle */}
-                      <div
-                        style={{ position: 'absolute', bottom: -15, right: -15, background: 'var(--accent)', color: 'var(--bg)', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'nwse-resize', pointerEvents: 'auto' }}
-                        onPointerDown={(e) => {
-                          e.stopPropagation();
-                          dragRef.current = { id: s.id, type: 'scale', startX: e.clientX, startY: e.clientY, initX: s.x, initY: s.y, initScale: s.scale, initRot: s.rotation };
-                        }}
-                      >⤡</div>
-
-                      {/* Rotate Handle */}
-                      <div
-                        style={{ position: 'absolute', top: -15, right: -15, background: '#4dabf7', color: '#fff', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'ew-resize', pointerEvents: 'auto' }}
-                        onPointerDown={(e) => {
-                          e.stopPropagation();
-                          dragRef.current = { id: s.id, type: 'rotate', startX: e.clientX, startY: e.clientY, initX: s.x, initY: s.y, initScale: s.scale, initRot: s.rotation };
-                        }}
-                      >↻</div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+              {[...textItems].sort((a, b) => a.z - b.z).map(item => {
+                const isSelected = selectedItem?.type === 'text' && selectedItem.id === item.id;
+                const fontSize = Math.max(12, item.fontSize * item.scale * getDisplayScale());
+                return (
+                  <div
+                    key={item.id}
+                    className={isSelected ? 'decorate-text selected' : 'decorate-text'}
+                    style={{
+                      left: `${(item.x / imgSize.w) * 100}%`,
+                      top: `${(item.y / imgSize.h) * 100}%`,
+                      color: item.color,
+                      fontFamily: `"${item.fontFamily}", sans-serif`,
+                      fontSize,
+                      transform: `translate(-50%, -50%) rotate(${item.rotation}deg)`,
+                      pointerEvents: mode === 'draw' ? 'none' : 'auto',
+                    }}
+                    onPointerDown={(event) => startDrag(event, 'text', item.id, 'move', item)}
+                  >
+                    {item.text}
+                    {isSelected && (
+                      <>
+                        <button className="decorate-handle delete" onClick={(event) => { event.stopPropagation(); deleteSelected(); }}>
+                          <Trash2 size={13} />
+                        </button>
+                        <button className="decorate-handle scale" onPointerDown={(event) => startDrag(event, 'text', item.id, 'scale', item)}>
+                          ↕
+                        </button>
+                        <button className="decorate-handle rotate" onPointerDown={(event) => startDrag(event, 'text', item.id, 'rotate', item)}>
+                          ↻
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
           <div className="spinner" />
         )}
-      </div>
+      </main>
 
-      {/* Toolbar */}
-      <div style={{ padding: '12px 16px', background: 'var(--surface)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-        {/* Mode Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-          <button
-            onClick={() => setMode('stickers')}
-            style={{ padding: '8px 20px', borderRadius: 100, border: '1px solid var(--border)', background: mode === 'stickers' ? 'var(--text)' : 'transparent', color: mode === 'stickers' ? 'var(--bg)' : 'var(--text)', fontWeight: 600, transition: 'all 0.2s', fontSize: 14 }}
-          >✨ {t('decorate.stickers')}</button>
-          <button
-            onClick={() => { setMode('draw'); setSelectedSticker(null); }}
-            style={{ padding: '8px 20px', borderRadius: 100, border: '1px solid var(--border)', background: mode === 'draw' ? 'var(--text)' : 'transparent', color: mode === 'draw' ? 'var(--bg)' : 'var(--text)', fontWeight: 600, transition: 'all 0.2s', fontSize: 14 }}
-          >✏️ {t('decorate.draw')}</button>
+      <footer className="decorate-toolbar">
+        <div className="decorate-mode-row">
+          <button className={mode === 'stickers' ? 'active' : ''} onClick={() => setMode('stickers')}>
+            <Sticker size={16} />
+            {t('decorate.stickers')}
+          </button>
+          <button className={mode === 'text' ? 'active' : ''} onClick={() => { setMode('text'); setSelectedItem(selectedItem?.type === 'text' ? selectedItem : null); }}>
+            <Type size={16} />
+            {t('decorate.text')}
+          </button>
+          <button className={mode === 'draw' ? 'active' : ''} onClick={() => { setMode('draw'); setSelectedItem(null); }}>
+            <Brush size={16} />
+            {t('decorate.draw')}
+          </button>
         </div>
 
-        {/* Tools Panel */}
-        <div style={{ minHeight: 64, display: 'flex', alignItems: 'center', width: '100%' }}>
-          {mode === 'stickers' ? (
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div style={{ display: 'flex', gap: 8, padding: '4px', overflowX: 'auto', maxWidth: '100%' }}>
+        <div className="decorate-tools">
+          {mode === 'stickers' && (
+            <div className="decorate-tool-stack">
+              <div className="decorate-sticker-list">
                 {STICKERS.map(url => (
-                  <div key={url} onClick={() => addSticker(url)} style={{ width: 56, height: 56, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                    <img src={url} alt="sticker option" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
-                  </div>
+                  <button key={url} onClick={() => addSticker(url)}>
+                    <img src={url} alt="sticker option" />
+                  </button>
                 ))}
               </div>
+              {renderSelectedActions()}
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
-              {/* Colors */}
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', maxWidth: '100%', padding: '4px 0' }}>
-                  {COLORS.map(c => (
-                    <button key={c} onClick={() => setColor(c)} style={{ width: 28, height: 28, flexShrink: 0, borderRadius: '50%', background: c, border: color === c ? '3px solid var(--text)' : '1px solid var(--border)', transform: color === c ? 'scale(1.1)' : 'none', transition: 'all 0.2s' }} />
-                  ))}
-                </div>
+          )}
+
+          {mode === 'text' && (
+            <div className="decorate-tool-stack">
+              <div className="decorate-text-controls">
+                <input
+                  value={textDraft}
+                  placeholder={t('decorate.textPlaceholder')}
+                  onChange={(event) => {
+                    setTextDraft(event.target.value);
+                    if (selectedItem?.type === 'text') updateActiveText({ text: event.target.value });
+                  }}
+                  maxLength={42}
+                />
+                <select
+                  value={textFont}
+                  onChange={(event) => {
+                    setTextFont(event.target.value);
+                    updateActiveText({ fontFamily: event.target.value });
+                  }}
+                >
+                  {FONT_OPTIONS.map(font => <option key={font} value={font}>{font}</option>)}
+                </select>
+                <input
+                  type="range"
+                  min="32"
+                  max="120"
+                  value={textSize}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    setTextSize(value);
+                    updateActiveText({ fontSize: value });
+                  }}
+                />
               </div>
-              {/* Widths & Actions */}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {WIDTHS.map(w => (
-                    <button key={w} onClick={() => setLineWidth(w)} style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: lineWidth === w ? 'var(--surface3)' : 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: w, height: w, borderRadius: '50%', background: 'var(--text)' }} />
-                    </button>
-                  ))}
-                </div>
-                <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
-                <button onClick={undoDraw} disabled={lines.length === 0} style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', opacity: lines.length === 0 ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↩️</button>
-                <button onClick={clearDraw} disabled={lines.length === 0} style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', opacity: lines.length === 0 ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🗑️</button>
+              <div className="decorate-color-row">
+                {COLORS.map(item => (
+                  <button
+                    key={item}
+                    className={textColor === item ? 'active' : ''}
+                    style={{ background: item }}
+                    onClick={() => {
+                      setTextColor(item);
+                      updateActiveText({ color: item });
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="decorate-text-actions">
+                <button onClick={addOrUpdateText}>{selectedItem?.type === 'text' ? t('decorate.updateText') : t('decorate.addText')}</button>
+                <button onClick={startNewText}>{t('decorate.newText')}</button>
+              </div>
+              {renderSelectedActions()}
+            </div>
+          )}
+
+          {mode === 'draw' && (
+            <div className="decorate-tool-stack">
+              <div className="decorate-color-row">
+                {COLORS.map(item => (
+                  <button key={item} className={color === item ? 'active' : ''} style={{ background: item }} onClick={() => setColor(item)} />
+                ))}
+              </div>
+              <div className="decorate-draw-row">
+                {WIDTHS.map(width => (
+                  <button key={width} className={lineWidth === width ? 'active' : ''} onClick={() => setLineWidth(width)}>
+                    <span style={{ width, height: width }} />
+                  </button>
+                ))}
+                <button onClick={clearDraw} disabled={lines.length === 0}>
+                  <Trash2 size={16} />
+                  {t('decorate.clear')}
+                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Next Button */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
-          <button onClick={() => handleNext(true)} style={{ padding: '12px 24px', background: 'var(--text)', color: 'var(--bg)', borderRadius: 100, fontWeight: 700, fontSize: 16, width: '100%', maxWidth: 400 }}>{t('decorate.finish')} ▷</button>
+        <div className="decorate-bottom-row">
+          <div className="decorate-history-row">
+            <button onClick={handleUndo} disabled={historyCount === 0} title={t('decorate.undo')}>
+              <Undo2 size={16} />
+            </button>
+            <button onClick={handleRedo} disabled={redoCount === 0} title={t('decorate.redo')}>
+              <Redo2 size={16} />
+            </button>
+          </div>
+          <button className="decorate-finish-btn" onClick={() => handleNext(true)}>
+            {t('decorate.finish')}
+          </button>
         </div>
-      </div>
+      </footer>
 
       <canvas ref={offscreenCanvasRef} style={{ display: 'none' }} />
     </div>

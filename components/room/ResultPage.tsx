@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { CapturedPhoto, RoomState, LAYOUTS, LayoutKey } from '@/lib/types';
+import { CapturedPhoto, RoomState } from '@/lib/types';
 import { composeDuoPhoto } from '@/lib/composition';
 import { useTranslation } from '@/lib/i18n';
+import { downloadDataUrl, downloadJpeg, downloadPoster, printImage } from '@/lib/exportUtils';
+import { Download, FileImage, Film, Image as ImageIcon, Printer, RotateCcw } from 'lucide-react';
 
 interface ResultPageProps {
   myPhotos: CapturedPhoto[];
@@ -36,6 +38,13 @@ export default function ResultPage({
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [gifDone, setGifDone] = useState(false);
 
+  const markSaved = () => {
+    setDownloadDone(true);
+    setTimeout(() => setDownloadDone(false), 2000);
+  };
+
+  const getFileBase = () => `photoboothduo-${roomCode}-${Date.now()}`;
+
   useEffect(() => {
     if (decoratedImgUrl) {
       setImgUrl(decoratedImgUrl);
@@ -64,12 +73,31 @@ export default function ResultPage({
 
   const handleDownload = () => {
     if (!imgUrl) return;
-    const a = document.createElement('a');
-    a.href = imgUrl;
-    a.download = `photoboothduo-${roomCode}-${Date.now()}.png`;
-    a.click();
-    setDownloadDone(true);
-    setTimeout(() => setDownloadDone(false), 2000);
+    downloadDataUrl(imgUrl, `${getFileBase()}.png`);
+    markSaved();
+  };
+
+  const handleDownloadJpg = async () => {
+    if (!imgUrl) return;
+    await downloadJpeg(imgUrl, `${getFileBase()}.jpg`);
+    markSaved();
+  };
+
+  const handleDownloadStory = async () => {
+    if (!imgUrl) return;
+    await downloadPoster(imgUrl, `${getFileBase()}-story.png`, 1080, 1920);
+    markSaved();
+  };
+
+  const handleDownloadFeed = async () => {
+    if (!imgUrl) return;
+    await downloadPoster(imgUrl, `${getFileBase()}-feed.png`, 1080, 1350);
+    markSaved();
+  };
+
+  const handlePrintPdf = () => {
+    if (!imgUrl) return;
+    printImage(imgUrl, `photoboothduo-${roomCode}`);
   };
 
   const handleDownloadGif = async () => {
@@ -84,8 +112,6 @@ export default function ResultPage({
         quality: 10,
         workerScript: '/gif.worker.js'
       });
-
-      const layoutDef = LAYOUTS[roomState.layout as LayoutKey] || LAYOUTS.strip3;
 
       for (let f = 0; f < selectedIndices.length; f++) {
         const tempCanvas = document.createElement('canvas');
@@ -234,59 +260,68 @@ export default function ResultPage({
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+          <div className="result-export-panel">
+            <div className="result-export-grid">
               <button
                 onClick={handleDownload}
                 disabled={!composed}
-                style={{
-                  flex: 1, padding: '14px 16px', borderRadius: 100,
-                  fontSize: 14, fontWeight: 700,
-                  border: 'none', background: 'var(--text)', color: 'var(--bg)',
-                  cursor: composed ? 'pointer' : 'not-allowed',
-                  opacity: composed ? 1 : 0.5,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  transition: 'all 0.2s',
-                  boxShadow: composed ? 'var(--accent-glow)' : 'none',
-                }}
+                className="result-export-btn primary"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <Download size={16} />
                 {downloadDone ? t('result.saved') : t('result.downloadPng')}
+              </button>
+
+              <button
+                onClick={handleDownloadJpg}
+                disabled={!composed}
+                className="result-export-btn"
+              >
+                <FileImage size={16} />
+                {t('result.downloadJpg')}
               </button>
 
               <button
                 onClick={handleDownloadGif}
                 disabled={isGeneratingGif || !composed}
-                style={{
-                  flex: 1, padding: '14px 16px', borderRadius: 100,
-                  fontSize: 14, fontWeight: 700,
-                  border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
-                  cursor: (isGeneratingGif || !composed) ? 'not-allowed' : 'pointer',
-                  opacity: (isGeneratingGif || !composed) ? 0.5 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  transition: 'all 0.2s',
-                  backdropFilter: 'blur(10px)'
-                }}
+                className="result-export-btn"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <Film size={16} />
                 {gifDone ? t('result.saved') : isGeneratingGif ? t('result.processing') : t('result.downloadGif')}
+              </button>
+
+              <button
+                onClick={handleDownloadStory}
+                disabled={!composed}
+                className="result-export-btn"
+              >
+                <ImageIcon size={16} />
+                {t('result.downloadStory')}
+              </button>
+
+              <button
+                onClick={handleDownloadFeed}
+                disabled={!composed}
+                className="result-export-btn"
+              >
+                <ImageIcon size={16} />
+                {t('result.downloadFeed')}
+              </button>
+
+              <button
+                onClick={handlePrintPdf}
+                disabled={!composed}
+                className="result-export-btn"
+              >
+                <Printer size={16} />
+                {t('result.downloadPdf')}
               </button>
             </div>
 
             <button
               onClick={onRetake}
-              style={{
-                width: '100%', padding: '14px 24px', borderRadius: 100,
-                fontSize: 15, fontWeight: 600,
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.2s',
-              }}
+              className="result-retake-btn"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <RotateCcw size={16} />
               {t('result.retake')}
             </button>
           </div>

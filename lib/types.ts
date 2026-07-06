@@ -19,6 +19,23 @@ export interface RoomState {
   arrangeActiveSlot?: number;
 }
 
+export interface ThemePreset {
+  id: string;
+  name: string;
+  description: string;
+  frameBg: RoomState['frameBg'];
+  photoBorder: string;
+  customText: string;
+  showDate: boolean;
+  videoFilter: string;
+}
+
+export interface CameraFilterPreset {
+  id: string;
+  label: string;
+  style: string;
+}
+
 export interface CapturedPhoto {
   dataUrl: string;
   participantId: string;
@@ -37,6 +54,7 @@ export interface RealtimeMessage {
     | 'session_reset'
     | 'participant_ready'
     | 'partner_joined'
+    | 'retake_start'
     | 'ping'
     | 'pong'
     | 'sdp_offer'
@@ -62,9 +80,11 @@ export type SessionPhase =
   | 'ready_to_capture'
   | 'countdown'
   | 'capturing'
+  | 'review'
   | 'arrange'
   | 'decorate'
   | 'error_full'
+  | 'expired'
   | 'done';
 
 export const LAYOUTS: Record<LayoutKey, LayoutDef> = {
@@ -97,6 +117,82 @@ export const FRAME_BG_PRESETS = [
   { id: 'clouds', label: 'clouds', type: 'pattern' as const, val: 'clouds', textColor: '#111', style: { background: 'linear-gradient(#a1c4fd, #c2e9fb)' } },
   { id: 'polka pink', label: 'polka', type: 'pattern' as const, val: 'polka', textColor: '#111', style: { background: 'radial-gradient(#ff007f 15%, transparent 16%) 0 0, radial-gradient(#ff007f 15%, transparent 16%) 8px 8px', backgroundSize: '16px 16px', backgroundColor: '#fff' } },
   { id: 'classic check', label: 'check', type: 'pattern' as const, val: 'check', textColor: '#fff', style: { background: 'repeating-linear-gradient(45deg, #000 0, #000 10px, #fff 10px, #fff 20px)' } },
+];
+
+export const THEME_PRESETS: ThemePreset[] = [
+  {
+    id: 'wedding',
+    name: 'Wedding',
+    description: 'Putih bersih, lembut, dan elegan.',
+    frameBg: { type: 'gradient', val: '#fff7ed,#f8fafc', textColor: '#111' },
+    photoBorder: 'polaroid',
+    customText: 'Our Moment',
+    showDate: true,
+    videoFilter: 'brightness(1.06) contrast(0.96) saturate(1.05)',
+  },
+  {
+    id: 'birthday',
+    name: 'Birthday',
+    description: 'Ceria untuk pesta dan kejutan.',
+    frameBg: { type: 'gradient', val: '#ff9a9e,#fad0c4', textColor: '#111' },
+    photoBorder: 'birthday',
+    customText: 'Happy Day',
+    showDate: true,
+    videoFilter: 'brightness(1.08) contrast(1.05) saturate(1.25)',
+  },
+  {
+    id: 'couple',
+    name: 'Couple',
+    description: 'Romantis dengan warna hangat.',
+    frameBg: { type: 'solid', val: '#f8c8d8', textColor: '#111' },
+    photoBorder: 'romantic',
+    customText: 'Together',
+    showDate: true,
+    videoFilter: 'sepia(18%) brightness(1.05) saturate(1.18)',
+  },
+  {
+    id: 'graduation',
+    name: 'Graduation',
+    description: 'Rapi untuk momen kelulusan.',
+    frameBg: { type: 'solid', val: '#0a0a0a', textColor: '#fff' },
+    photoBorder: 'film',
+    customText: 'We Made It',
+    showDate: true,
+    videoFilter: 'contrast(1.08) brightness(1.04) saturate(0.95)',
+  },
+  {
+    id: 'retro',
+    name: 'Retro Film',
+    description: 'Nuansa analog dan nostalgia.',
+    frameBg: { type: 'gradient', val: '#f6d365,#fda085', textColor: '#111' },
+    photoBorder: 'film',
+    customText: 'Good Times',
+    showDate: true,
+    videoFilter: 'sepia(38%) contrast(1.08) saturate(1.22)',
+  },
+  {
+    id: 'studio',
+    name: 'Studio Clean',
+    description: 'Minimal, tajam, dan profesional.',
+    frameBg: { type: 'solid', val: '#ffffff', textColor: '#111' },
+    photoBorder: 'plain',
+    customText: 'BoothKita',
+    showDate: false,
+    videoFilter: 'brightness(1.04) contrast(1.08) saturate(1.02)',
+  },
+];
+
+export const CAMERA_FILTER_PRESETS: CameraFilterPreset[] = [
+  { id: 'none', label: 'Normal', style: 'none' },
+  { id: 'soft', label: 'Soft', style: 'brightness(1.08) contrast(0.94) saturate(1.08)' },
+  { id: 'studio', label: 'Studio', style: 'brightness(1.05) contrast(1.12) saturate(1.02)' },
+  { id: 'film', label: 'Film', style: 'sepia(35%) contrast(1.08) saturate(1.2)' },
+  { id: 'warm', label: 'Warm Skin', style: 'sepia(20%) brightness(1.06) saturate(1.16)' },
+  { id: 'cool', label: 'Cool Tone', style: 'hue-rotate(185deg) saturate(1.15) brightness(1.02)' },
+  { id: 'classic', label: 'B&W Classic', style: 'grayscale(100%) contrast(1.18)' },
+  { id: 'bright', label: 'Bright', style: 'brightness(1.16) contrast(1.02) saturate(1.06)' },
+  { id: 'vivid', label: 'Vivid', style: 'contrast(1.14) saturate(1.35)' },
+  { id: 'matte', label: 'Matte', style: 'contrast(0.9) brightness(1.06) saturate(0.9)' },
 ];
 
 export const BORDER_PRESETS = [

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LAYOUTS, LayoutKey, FRAME_BG_PRESETS, RoomState } from '@/lib/types';
+import { LAYOUTS, LayoutKey, FRAME_BG_PRESETS, RoomState, THEME_PRESETS, BORDER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 
 interface WizardProps {
@@ -133,6 +133,17 @@ export function SetupLayout({ roomState, updateState, nextStep, prevStep, role }
 
 export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }: WizardProps) {
   const { t } = useTranslation();
+
+  const applyThemePreset = (preset: (typeof THEME_PRESETS)[number]) => {
+    updateState({
+      frameBg: preset.frameBg,
+      photoBorder: preset.photoBorder,
+      customText: preset.customText,
+      showDate: preset.showDate,
+      videoFilter: preset.videoFilter,
+    });
+  };
+
   return (
     <div className="landing-page" style={{ justifyContent: 'center', position: 'relative' }}>
       <div className="landing-bg" aria-hidden="true">
@@ -144,6 +155,40 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
         <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 }}>
           {t('wizard.choose_theme')}
         </h2>
+
+        <div style={{ marginBottom: 36 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>{t('wizard.ready_templates')}</h3>
+          <div className="theme-preset-grid">
+            {THEME_PRESETS.map((preset) => {
+              const isActive = roomState.frameBg.type === preset.frameBg.type
+                && roomState.frameBg.val === preset.frameBg.val
+                && roomState.photoBorder === preset.photoBorder
+                && roomState.customText === preset.customText;
+              const previewBackground = preset.frameBg.type === 'gradient'
+                ? `linear-gradient(135deg, ${preset.frameBg.val.split(',').join(', ')})`
+                : preset.frameBg.val;
+
+              return (
+                <button
+                  type="button"
+                  key={preset.id}
+                  onClick={() => applyThemePreset(preset)}
+                  className={isActive ? 'theme-preset-card active' : 'theme-preset-card'}
+                >
+                  <span className="theme-preset-preview" style={{ background: previewBackground }}>
+                    <span />
+                    <span />
+                  </span>
+                  <span className="theme-preset-copy">
+                    <strong>{preset.name}</strong>
+                    <small>{preset.description}</small>
+                  </span>
+                  <span className="theme-preset-action">{t('wizard.use_template')}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         
         <div style={{ marginBottom: 40 }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>{t('wizard.pick_theme')}</h3>
@@ -197,6 +242,25 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
                     {t(('theme.bg.' + preset.id) as any)}
                   </span>
                 </div>
+              );
+            })} 
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 40 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>{t('wizard.frame_style')}</h3>
+          <div className="frame-style-grid">
+            {BORDER_PRESETS.map((preset) => {
+              const isActive = roomState.photoBorder === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => updateState({ photoBorder: preset.id })}
+                  className={isActive ? 'frame-style-chip active' : 'frame-style-chip'}
+                >
+                  {t(('theme.border.' + preset.id) as any)}
+                </button>
               );
             })}
           </div>

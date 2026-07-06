@@ -1,5 +1,5 @@
 import { RefObject, useState } from 'react';
-import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto } from '@/lib/types';
+import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto, CAMERA_FILTER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 
 interface VideoGridProps {
@@ -33,17 +33,6 @@ interface VideoGridProps {
   onBack?: () => void;
   updateState?: (state: Partial<RoomState>) => void;
 }
-
-const VIDEO_FILTERS = [
-  { id: 'none', label: 'Normal', style: 'none' },
-  { id: 'grayscale', label: 'B&W', style: 'grayscale(100%)' },
-  { id: 'sepia', label: 'Vintage', style: 'sepia(80%)' },
-  { id: 'contrast', label: 'Contrast', style: 'contrast(150%)' },
-  { id: 'cool', label: 'Cool', style: 'hue-rotate(180deg) saturate(1.5)' },
-  { id: 'warm', label: 'Warm', style: 'sepia(50%) hue-rotate(-30deg) saturate(1.5)' }
-];
-
-// Removed CountdownBubble to replace with a centralized overlay
 
 export default function VideoGrid({
   remoteStream,
@@ -173,14 +162,14 @@ export default function VideoGrid({
                   </button>
 
                   {showFilterMenu && (
-                    <div style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 180, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60 }}>
+                    <div className="filter-menu-panel" style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
                         <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
                       </div>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {VIDEO_FILTERS.map(f => (
+                        {CAMERA_FILTER_PRESETS.map(f => (
                           <button
                             key={f.id}
                             onClick={() => updateState && updateState({ videoFilter: f.style })}
@@ -190,6 +179,10 @@ export default function VideoGrid({
                               background: roomState.videoFilter === f.style ? 'rgba(255,255,255,0.1)' : 'transparent',
                               color: roomState.videoFilter === f.style ? 'var(--text)' : 'var(--text-muted)',
                               border: roomState.videoFilter === f.style ? '1px solid var(--border)' : '1px solid transparent',
+                              display: 'grid',
+                              gridTemplateColumns: '34px 1fr',
+                              alignItems: 'center',
+                              gap: 10,
                               textAlign: 'left',
                               fontSize: 14,
                               fontWeight: 500,
@@ -197,7 +190,8 @@ export default function VideoGrid({
                               transition: 'all 0.2s'
                             }}
                           >
-                            {f.label}
+                            <span style={{ width: 34, height: 24, borderRadius: 6, display: 'block', background: 'linear-gradient(135deg, #f8c8d8, #84fab0)', filter: f.style, border: '1px solid var(--border)' }} />
+                            <span>{f.label}</span>
                           </button>
                         ))}
                       </div>

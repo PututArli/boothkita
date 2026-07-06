@@ -1,6 +1,16 @@
 import { supabase } from './supabase';
 import { v4 as uuidv4 } from 'uuid';
 
+export const ROOM_TTL_MS = 30 * 60 * 1000;
+
+export function getRoomExpiresAt(from = Date.now()): string {
+  return new Date(from + ROOM_TTL_MS).toISOString();
+}
+
+export function getRoomCreatedAfter(now = Date.now()): string {
+  return new Date(now - ROOM_TTL_MS).toISOString();
+}
+
 export function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -26,13 +36,11 @@ export async function createRoom(): Promise<string> {
 
   while (attempts < 5) {
     roomCode = generateRoomCode();
-    // Room lasts for 10 years (effectively forever)
-    const expiresAt = new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString();
 
     const { error } = await supabase.from('rooms').insert({
       room_code: roomCode,
       status: 'waiting',
-      expires_at: expiresAt,
+      expires_at: getRoomExpiresAt(),
     });
 
     if (!error) break;
@@ -48,6 +56,7 @@ export async function getRoomByCode(code: string) {
     .select('*')
     .eq('room_code', code.toUpperCase())
     .gt('expires_at', new Date().toISOString())
+    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (error) return null;
@@ -55,6 +64,18 @@ export async function getRoomByCode(code: string) {
 }
 
 export async function joinRoom(roomId: string, participantId: string, role: 'host' | 'guest') {
+  const { data: room } = await supabase
+    .from('rooms')
+    .select('id')
+    .eq('id', roomId)
+    .gt('expires_at', new Date().toISOString())
+    .gt('created_at', getRoomCreatedAfter())
+    .single();
+
+  if (!room) {
+    throw new Error('Room expired');
+  }
+
   const { data: existing } = await supabase
     .from('room_participants')
     .select('*')

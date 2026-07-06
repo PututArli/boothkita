@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getRoomCreatedAfter } from '@/lib/roomUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ export async function GET(
     .select('*')
     .eq('room_code', code)
     .gt('expires_at', new Date().toISOString())
+    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (error || !data) {

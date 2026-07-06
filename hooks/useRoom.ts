@@ -25,7 +25,7 @@ const DEFAULT_STATE: RoomState = {
   videoFilter: 'none',
 };
 
-export function useRoom(roomId: string, roomCode: string) {
+export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string) {
   const participantId = getParticipantId();
 
   const [roomState, setRoomState] = useState<RoomState>(DEFAULT_STATE);
@@ -36,12 +36,14 @@ export function useRoom(roomId: string, roomCode: string) {
   const [partnerReady, setPartnerReady] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [captureRunId, setCaptureRunId] = useState(0);
   const [role, setRole] = useState<'host' | 'guest'>('host');
   const [isInitialized, setIsInitialized] = useState(false);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const captureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const roomExpiryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
 
   // Use refs to avoid stale closures in callbacks
@@ -50,6 +52,7 @@ export function useRoom(roomId: string, roomCode: string) {
   const roomIdRef = useRef(roomId);
   const partnerInfoRef = useRef<ParticipantInfo | null>(null);
   const roleRef = useRef<'host' | 'guest'>('host');
+  const captureModeRef = useRef<'session' | 'retake'>('session');
 
   // Keep refs in sync
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
@@ -85,6 +88,7 @@ export function useRoom(roomId: string, roomCode: string) {
         else if (currentPhase === 'ready_to_capture') prevPhase = 'setup_theme';
         else if (currentPhase === 'done') prevPhase = 'decorate';
         else if (currentPhase === 'decorate') prevPhase = 'arrange';
+        else if (currentPhase === 'review') prevPhase = 'ready_to_capture';
 
         if (prevPhase !== currentPhase) {
            // Synchronize back navigation with partner
@@ -116,8 +120,38 @@ export function useRoom(roomId: string, roomCode: string) {
     }
   }, []);
 
-  const scheduleCapture = useCallback((timerSeconds: number, totalCount: number, isHost: boolean) => {
+  const expireRoom = useCallback(() => {
     clearCountdown();
+    setCountdown(0);
+    setPhase('expired');
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+  }, [clearCountdown]);
+
+  useEffect(() => {
+    if (!roomExpiresAt) return;
+
+    const remaining = new Date(roomExpiresAt).getTime() - Date.now();
+    if (remaining <= 0) {
+      expireRoom();
+      return;
+    }
+
+    roomExpiryTimeoutRef.current = setTimeout(expireRoom, remaining);
+
+    return () => {
+      if (roomExpiryTimeoutRef.current) {
+        clearTimeout(roomExpiryTimeoutRef.current);
+        roomExpiryTimeoutRef.current = null;
+      }
+    };
+  }, [roomExpiresAt, expireRoom]);
+
+  const scheduleCapture = useCallback((timerSeconds: number, totalCount: number, isHost: boolean, mode: 'session' | 'retake' = captureModeRef.current) => {
+    clearCountdown();
+    captureModeRef.current = mode;
     setPhase('countdown');
 
     const localCaptureAt = Date.now() + timerSeconds * 1000;
@@ -131,20 +165,27 @@ export function useRoom(roomId: string, roomCode: string) {
         countdownRef.current = setTimeout(updateVisuals, 100);
       } else {
         setCountdown(0);
+        setCaptureRunId(prev => prev + 1);
         setPhase('capturing');
 
         if (isHost) {
           captureTimeoutRef.current = setTimeout(() => {
             if (!mountedRef.current) return;
             setPhotoIndex(prevIndex => {
+              if (captureModeRef.current === 'retake') {
+                setPhase('review');
+                broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'review' });
+                return prevIndex;
+              }
+
               const nextIndex = prevIndex + 1;
               if (nextIndex >= totalCount) {
-                setPhase('arrange');
-                broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'arrange' });
+                setPhase('review');
+                broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'review' });
               } else {
                 const nextTimer = roomStateRef.current.timer || 3;
                 broadcastRef.current?.({ type: 'photo_start', senderId: participantId, payload: { timer: nextTimer, captureAt: Date.now() + nextTimer * 1000, totalCount, nextIndex } });
-                scheduleCapture(nextTimer, totalCount, true);
+                scheduleCapture(nextTimer, totalCount, true, 'session');
               }
               return nextIndex;
             });
@@ -161,6 +202,8 @@ export function useRoom(roomId: string, roomCode: string) {
     setMyPhotos([]);
     setPartnerPhotos([]);
     setPhotoIndex(0);
+    setCaptureRunId(0);
+    captureModeRef.current = 'session';
     setPhase('setup_layout');
     setCountdown(0);
     clearCountdown();
@@ -200,7 +243,9 @@ export function useRoom(roomId: string, roomCode: string) {
         setMyPhotos([]);
         setPartnerPhotos([]);
         setPhotoIndex(0);
-        scheduleCapture(timer, payload.totalCount, false);
+        setCaptureRunId(0);
+        captureModeRef.current = 'session';
+        scheduleCapture(timer, payload.totalCount, false, 'session');
         break;
       }
       case 'photo_start': {
@@ -208,7 +253,15 @@ export function useRoom(roomId: string, roomCode: string) {
         const timer = payload.timer ?? (payload.captureAt ? Math.max(1, Math.ceil((payload.captureAt - Date.now()) / 1000)) : 3);
         clearCountdown();
         setPhotoIndex(payload.nextIndex);
-        scheduleCapture(timer, payload.totalCount, false);
+        scheduleCapture(timer, payload.totalCount, false, 'session');
+        break;
+      }
+      case 'retake_start': {
+        const payload = msg.payload as { index: number; timer?: number; captureAt?: number; totalCount: number };
+        const timer = payload.timer ?? (payload.captureAt ? Math.max(1, Math.ceil((payload.captureAt - Date.now()) / 1000)) : 3);
+        clearCountdown();
+        setPhotoIndex(payload.index);
+        scheduleCapture(timer, payload.totalCount, roleRef.current === 'host', 'retake');
         break;
       }
       case 'photo_captured': {
@@ -245,6 +298,8 @@ export function useRoom(roomId: string, roomCode: string) {
         setMyPhotos([]);
         setPartnerPhotos([]);
         setPhotoIndex(0);
+        setCaptureRunId(0);
+        captureModeRef.current = 'session';
         setPhase('setup_layout');
         setCountdown(0);
         clearCountdown();
@@ -279,7 +334,13 @@ export function useRoom(roomId: string, roomCode: string) {
         : 'guest';
 
       // Use the database as the absolute source of truth
-      const participantRecord = await joinRoom(roomId, participantId, assignedRole);
+      const participantRecord = await joinRoom(roomId, participantId, assignedRole).catch(() => null);
+
+      if (!participantRecord) {
+        expireRoom();
+        setIsInitialized(true);
+        return;
+      }
       
       if (mountedRef.current) {
         setRole(participantRecord.role);
@@ -360,6 +421,9 @@ export function useRoom(roomId: string, roomCode: string) {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
+      if (roomExpiryTimeoutRef.current) {
+        clearTimeout(roomExpiryTimeoutRef.current);
+      }
       clearCountdown();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,6 +438,13 @@ export function useRoom(roomId: string, roomCode: string) {
     setMyPhotos([]);
     setPartnerPhotos([]);
     setPhotoIndex(0);
+    setCaptureRunId(0);
+    captureModeRef.current = 'session';
+
+    const nextState = { ...roomStateRef.current, arrangeIndices: undefined, arrangeActiveSlot: 0 };
+    roomStateRef.current = nextState;
+    setRoomState(nextState);
+    broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: nextState });
 
     const timerSeconds = roomStateRef.current.timer || 3;
 
@@ -383,7 +454,28 @@ export function useRoom(roomId: string, roomCode: string) {
       payload: { timer: timerSeconds, captureAt: Date.now() + timerSeconds * 1000, totalCount: captureCount },
     });
 
-    scheduleCapture(timerSeconds, captureCount, true);
+    scheduleCapture(timerSeconds, captureCount, true, 'session');
+  }, [clearCountdown, participantId, scheduleCapture]);
+
+  const retakePhoto = useCallback((index: number) => {
+    if (index < 0) return;
+
+    const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
+    const layoutCount = layout?.count || 4;
+    const totalCount = Math.max(6, layoutCount + 2);
+    const timerSeconds = roomStateRef.current.timer || 3;
+
+    clearCountdown();
+    setPhotoIndex(index);
+    captureModeRef.current = 'retake';
+
+    broadcastRef.current?.({
+      type: 'retake_start',
+      senderId: participantId,
+      payload: { index, timer: timerSeconds, captureAt: Date.now() + timerSeconds * 1000, totalCount },
+    });
+
+    scheduleCapture(timerSeconds, totalCount, roleRef.current === 'host', 'retake');
   }, [clearCountdown, participantId, scheduleCapture]);
 
   const onPhotoCaptured = useCallback((myDataUrl: string, index: number) => {
@@ -427,10 +519,12 @@ export function useRoom(roomId: string, roomCode: string) {
     partnerReady,
     countdown,
     photoIndex,
+    captureRunId,
     participantId,
     role,
     isInitialized,
     startSession,
+    retakePhoto,
     onPhotoCaptured,
     updateState,
     handleReset,

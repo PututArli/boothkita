@@ -8,20 +8,22 @@ import { useTranslation } from '@/lib/i18n';
 import VideoGrid from './room/VideoGrid';
 import ResultPage from './room/ResultPage';
 import DecoratePage from './room/DecoratePage';
+import CaptureReviewPage from './room/CaptureReviewPage';
 import { SetupLayout, SetupTheme } from './room/WizardScreens';
 import { ArrangePage } from './room/ArrangePage';
 
 interface Props {
   roomId: string;
   roomCode: string;
+  roomExpiresAt: string;
 }
 
-export default function PhotoboothRoom({ roomId, roomCode }: Props) {
+export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Props) {
   const {
     roomState, phase, changePhase, setPhaseLocal, myPhotos, partnerPhotos,
     partnerInfo, countdown, photoIndex, role, isInitialized,
-    startSession, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
-  } = useRoom(roomId, roomCode);
+    captureRunId, startSession, retakePhoto, onPhotoCaptured, updateState, handleReset, broadcast, participantId,
+  } = useRoom(roomId, roomCode, roomExpiresAt);
   const { t } = useTranslation();
 
   const [usePremiumTurn, setUsePremiumTurn] = useState(false);
@@ -72,14 +74,13 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
   }, [remoteStream, streamTick, phase]);
 
   // Capture photo when phase transitions to 'capturing'
-  const lastCapturedIndexRef = useRef(-1);
+  const lastCapturedRunRef = useRef(-1);
   useEffect(() => {
     if (phase !== 'capturing') {
       return;
     }
-    // Guard: only capture once per capture event
-    if (lastCapturedIndexRef.current === photoIndex) return;
-    lastCapturedIndexRef.current = photoIndex;
+    if (lastCapturedRunRef.current === captureRunId) return;
+    lastCapturedRunRef.current = captureRunId;
 
     // Flash effect
     if (flashRef.current) {
@@ -105,7 +106,7 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
       }
       let width = vid.videoWidth;
       let height = vid.videoHeight;
-      const MAX_WIDTH = 480; // Restored to high quality
+      const MAX_WIDTH = 480;
       if (width > MAX_WIDTH) {
         height = Math.floor(height * (MAX_WIDTH / width));
         width = MAX_WIDTH;
@@ -124,14 +125,13 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
         ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
       }
       ctx.restore();
-      return canvas.toDataURL('image/jpeg', 0.8); // High quality for pristine photo strip
+      return canvas.toDataURL('image/jpeg', 0.8);
     };
 
     const myDataUrl = captureVideo(localVideoRef.current, isMirrored);
     
     onPhotoCaptured(myDataUrl, photoIndex);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, photoIndex, roomState.videoFilter]);
+  }, [phase, photoIndex, captureRunId, roomState.videoFilter, isMirrored, onPhotoCaptured, t]);
 
   const copyLink = useCallback(() => {
     navigator.clipboard.writeText(`${window.location.origin}/room/${roomCode}`);
@@ -197,6 +197,39 @@ export default function PhotoboothRoom({ roomId, roomCode }: Props) {
 
   if (phase === 'setup_theme') {
     return <SetupTheme roomState={roomState} updateState={updateState} nextStep={() => changePhase('ready_to_capture')} prevStep={() => changePhase('setup_layout')} role={role} />;
+  }
+
+  if (phase === 'expired') {
+    return (
+      <div className="landing-page" style={{ justifyContent: 'center', position: 'relative' }}>
+        <div className="landing-bg" aria-hidden="true">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+          <div className="orb orb-3" />
+        </div>
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420, textAlign: 'center', background: 'var(--glass-bg)', border: '1px solid var(--border)', borderRadius: 24, padding: 32, boxShadow: 'var(--shadow-lg)' }}>
+          <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 12 }}>{t('room.expiredTitle')}</p>
+          <h1 style={{ fontSize: 24, lineHeight: 1.25, marginBottom: 12 }}>{t('room.expiredHeading')}</h1>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>{t('room.expiredDesc')}</p>
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: '0 20px', borderRadius: 999, background: 'var(--text)', color: 'var(--bg)', fontWeight: 800 }}>
+            {t('room.back')}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'review') {
+    return (
+      <CaptureReviewPage
+        myPhotos={myPhotos}
+        partnerPhotos={partnerPhotos}
+        totalCount={totalCount}
+        onRetake={retakePhoto}
+        onContinue={() => changePhase('arrange')}
+        onBack={() => changePhase('ready_to_capture')}
+      />
+    );
   }
 
   if (phase === 'arrange') {

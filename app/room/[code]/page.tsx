@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PhotoboothRoom from '@/components/PhotoboothRoom';
 import { supabase } from '@/lib/supabase';
+import { getRoomCreatedAfter, ROOM_TTL_MS } from '@/lib/roomUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +25,15 @@ export default async function RoomPage({ params }: Props) {
     .select('*')
     .eq('room_code', code)
     .gt('expires_at', new Date().toISOString())
+    .gt('created_at', getRoomCreatedAfter())
     .single();
 
   if (!room) {
     notFound();
   }
 
-  return <PhotoboothRoom roomId={room.id} roomCode={code} />;
+  const createdExpiry = new Date(new Date(room.created_at).getTime() + ROOM_TTL_MS).toISOString();
+  const roomExpiresAt = new Date(Math.min(new Date(room.expires_at).getTime(), new Date(createdExpiry).getTime())).toISOString();
+
+  return <PhotoboothRoom roomId={room.id} roomCode={code} roomExpiresAt={roomExpiresAt} />;
 }
