@@ -73,6 +73,7 @@ export default function DecoratePage({
 }: DecoratePageProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -347,8 +348,10 @@ export default function DecoratePage({
     syncState([], stickers, textItems, true);
   };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (mode !== 'draw') return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     pushHistory();
     isDrawing.current = true;
     const point = getCanvasPoint(e);
@@ -357,7 +360,9 @@ export default function DecoratePage({
 
   const startDrag = (e: React.PointerEvent, type: 'sticker' | 'text', id: string, action: 'move' | 'rotate' | 'scale', item: StickerItem | TextItem) => {
     if (mode === 'draw') return;
+    e.preventDefault();
     e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
     pushHistory();
     setSelectedItem({ type, id });
     dragRef.current = {
@@ -375,6 +380,7 @@ export default function DecoratePage({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (mode === 'draw' && isDrawing.current && currentLine.current) {
+      e.preventDefault();
       currentLine.current.points.push(getCanvasPoint(e));
       redrawCanvas([...lines, currentLine.current]);
       syncState([...lines, currentLine.current], stickers, textItems);
@@ -382,6 +388,7 @@ export default function DecoratePage({
     }
 
     if (!dragRef.current) return;
+    e.preventDefault();
 
     const drag = dragRef.current;
     const rect = containerRef.current?.getBoundingClientRect();
@@ -540,7 +547,7 @@ export default function DecoratePage({
   }, [redrawCanvas]);
 
   useEffect(() => {
-    const stage = document.querySelector('.decorate-stage');
+    const stage = stageRef.current;
     if (!stage) return;
     const observer = new ResizeObserver((entries) => {
       setStageSize({ w: entries[0].contentRect.width, h: entries[0].contentRect.height });
@@ -602,7 +609,7 @@ export default function DecoratePage({
         <div />
       </header>
 
-      <main className="decorate-stage">
+      <main ref={stageRef} className="decorate-stage">
         {baseImgUrl && imgSize.w > 0 ? (
           <div
             ref={containerRef}
@@ -732,6 +739,7 @@ export default function DecoratePage({
             <div className="decorate-tool-stack">
               <div className="decorate-text-controls">
                 <input
+                  type="text"
                   value={textDraft}
                   placeholder={t('decorate.textPlaceholder')}
                   onChange={(event) => {

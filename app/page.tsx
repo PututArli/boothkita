@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 
+const tailscaleDownloads = [
+  { label: 'Windows', href: 'https://tailscale.com/download/windows' },
+  { label: 'macOS', href: 'https://tailscale.com/download/mac' },
+  { label: 'iPhone / iPad', href: 'https://tailscale.com/download/ios' },
+  { label: 'Android', href: 'https://tailscale.com/download/android' },
+  { label: 'Linux', href: 'https://tailscale.com/download/linux' },
+];
+
 export default function HomePage() {
   const router = useRouter();
   const { lang, setLang, t } = useTranslation();
@@ -170,6 +178,26 @@ export default function HomePage() {
                 {t('tutor.desc')}
               </p>
 
+              <div style={{ marginBottom: 24, padding: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 16 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 8 }}>{t('tutor.downloadTitle')}</h3>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 12 }}>
+                  {t('tutor.downloadDesc')}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                  {tailscaleDownloads.map(item => (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '9px 10px', borderRadius: 12, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text)', fontSize: 13, fontWeight: 800, textAlign: 'center' }}
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div style={{ display: 'flex', gap: 16 }}>
                   <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>1</div>
@@ -201,7 +229,18 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Contact Person Section */}
+              <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: 15, marginBottom: 10 }}>{t('tutor.checkTitle')}</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[t('tutor.check1'), t('tutor.check2'), t('tutor.check3'), t('tutor.check4')].map(item => (
+                    <p key={item} style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, display: 'flex', gap: 8 }}>
+                      <span style={{ color: 'var(--text)', fontWeight: 900 }}>✓</span>
+                      <span>{item}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 600 }}>{t('tutor.help')}</p>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
