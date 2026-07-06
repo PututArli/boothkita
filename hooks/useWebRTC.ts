@@ -140,20 +140,8 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
       }
     };
 
-    pc.onnegotiationneeded = async () => {
-      if (!isHostRef.current || isNegotiating.current) return;
-      
-      try {
-        isNegotiating.current = true;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        sendSignal('sdp_offer', offer);
-      } catch (err) {
-        // ignore
-      } finally {
-        isNegotiating.current = false;
-      }
-    };
+    // We rely entirely on manual signaling (host_joined -> peer_joined -> sdp_offer)
+    // instead of onnegotiationneeded to avoid race conditions with multiple offers.
 
     pcRef.current = pc;
     return pc;
@@ -182,9 +170,13 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
         if (type === 'host_joined' && !isHostRef.current) {
           sendSignal('peer_joined', {});
         } else if (type === 'peer_joined' && isHostRef.current) {
-          const offer = await pc.createOffer({ iceRestart: true });
-          await pc.setLocalDescription(offer);
-          sendSignal('sdp_offer', offer);
+          try {
+            const offer = await pc.createOffer({ iceRestart: true });
+            await pc.setLocalDescription(offer);
+            sendSignal('sdp_offer', offer);
+          } catch (err) {
+            console.error('Failed to create offer on peer_joined:', err);
+          }
         } else if (type === 'sdp_offer') {
           const offer = data as RTCSessionDescriptionInit;
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -236,11 +228,11 @@ export function useWebRTC(roomCode: string, isHost: boolean, usePremiumTURN: boo
           
           if (isHostRef.current) {
             sendSignal('host_joined', {});
-            // Fallback: send offer if no peer_joined received after a while
+            // Fallback: send offer if no peer_joined received and not connected
             setTimeout(async () => {
               if (!mountedRef.current) return;
               const pc = getOrCreatePC();
-              if (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') {
+              if (pc.connectionState !== 'connected' && (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer')) {
                 try {
                   const offer = await pc.createOffer();
                   await pc.setLocalDescription(offer);
