@@ -162,13 +162,13 @@ export default function VideoGrid({
                   </button>
 
                   {showFilterMenu && (
-                    <div className="filter-menu-panel" style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60 }}>
+                    <div className="filter-menu-panel" style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60, maxHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
                       <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
                         <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
                       </div>
                       
-                      <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', paddingRight: 4 }}>
                         {CAMERA_FILTER_PRESETS.map(f => (
                           <button
                             key={f.id}

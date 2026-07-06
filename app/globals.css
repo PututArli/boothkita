@@ -2105,8 +2105,32 @@ input[type='range']::-webkit-slider-thumb {
     bottom: 92px !important;
     width: auto !important;
     margin-left: 0 !important;
-    max-height: 45dvh;
-    overflow-y: auto;
+  }
+
+  .filter-options-list {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding-bottom: 8px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-options-list button {
+    flex-direction: column !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 8px !important;
+    text-align: center !important;
+    font-size: 11px !important;
+  }
+
+  .filter-options-list button > span:first-child {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    margin-bottom: 6px;
   }
 
   .decorate-header {
