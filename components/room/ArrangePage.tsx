@@ -9,9 +9,10 @@ interface ArrangePageProps {
   roomState: RoomState;
   updateState: (partial: Partial<RoomState>) => void;
   onComplete: () => void;
+  onBack: () => void;
 }
 
-export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, updateState, onComplete }: ArrangePageProps) {
+export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, updateState, onComplete, onBack }: ArrangePageProps) {
   const { t } = useTranslation();
   const layout = LAYOUTS[layoutKey as LayoutKey] || LAYOUTS.strip3;
   const count = layout.count;
@@ -87,7 +88,28 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           grid-template-columns: 1fr 1fr;
           gap: 12px;
         }
+        .arrange-header {
+          width: 100%;
+          max-width: 900px;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
         @media (max-width: 768px) {
+          .arrange-header {
+            grid-template-columns: 1fr;
+            justify-items: stretch;
+            gap: 12px;
+          }
+          .arrange-header h2 {
+            order: -1;
+          }
+          .arrange-header button {
+            width: 100%;
+            justify-content: center;
+          }
           .arrange-container {
             flex-direction: column-reverse;
             gap: 24px;
@@ -113,9 +135,18 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           }
         }
       `}</style>
-      <h2 style={{ fontSize: 14, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 24 }}>
-        {t('arrange.title')}
-      </h2>
+      <div className="arrange-header">
+        <button
+          onClick={onBack}
+          style={{ justifySelf: 'start', display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 14, fontWeight: 700, padding: '10px 14px', borderRadius: 100, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer' }}
+        >
+          ← {t('room.back')}
+        </button>
+        <h2 style={{ fontSize: 14, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>
+          {t('arrange.title')}
+        </h2>
+        <div />
+      </div>
 
       <div className="arrange-container">
         {/* Left: Pool of captured photos */}

@@ -243,6 +243,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
         onComplete={() => {
           changePhase('decorate');
         }}
+        onBack={() => changePhase('review')}
       />
     );
   }

@@ -139,7 +139,7 @@ export default function VideoGrid({
 
             {/* Left sidebar for Grid & Filter */}
             {!isCapturing && (
-              <div style={{ position: 'absolute', top: '50%', left: 16, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 50, background: 'rgba(255,255,255,0.1)', padding: '12px 8px', borderRadius: 24, backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+              <div className="camera-tools-panel" style={{ position: 'absolute', top: '50%', left: 16, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 50, background: 'rgba(255,255,255,0.1)', padding: '12px 8px', borderRadius: 24, backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
                 <button
                   onClick={() => setShowGrid(!showGrid)}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showGrid ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
@@ -151,7 +151,7 @@ export default function VideoGrid({
                 
                 <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
                 
-                <div style={{ position: 'relative' }}>
+                <div className="filter-popover-anchor" style={{ position: 'relative' }}>
                   <button
                     onClick={() => setShowFilterMenu(!showFilterMenu)}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: roomState.videoFilter !== 'none' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
@@ -163,12 +163,12 @@ export default function VideoGrid({
 
                   {showFilterMenu && (
                     <div className="filter-menu-panel" style={{ position: 'absolute', top: 0, left: '100%', marginLeft: 16, width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
                         <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
                       </div>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {CAMERA_FILTER_PRESETS.map(f => (
                           <button
                             key={f.id}
@@ -310,7 +310,7 @@ export default function VideoGrid({
 
           {/* Captured Photos Preview Strip */}
           {(myPhotos.length > 0 || partnerPhotos.length > 0) && (
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16, flexWrap: 'wrap', padding: '0 16px' }}>
+            <div className="capture-preview-strip" style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16, flexWrap: 'wrap', padding: '0 16px' }}>
               {Array.from({ length: totalCount }).map((_, i) => {
                 const p = myPhotos[i];
                 const p2 = partnerPhotos[i];
@@ -334,6 +334,7 @@ export default function VideoGrid({
           <div className="video-bottom" style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 20 }}>
             {!isCapturing && onBack && (
               <button
+                className="video-secondary-action"
                 onClick={onBack}
                 style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
               >
@@ -342,6 +343,7 @@ export default function VideoGrid({
             )}
             <button
               id="btn-start"
+              className="video-primary-action"
               onClick={startSession}
               disabled={isCapturing}
               style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: isCapturing ? 'not-allowed' : 'pointer', opacity: isCapturing ? 0.7 : 1, transition: 'all 0.2s', boxShadow: isCapturing ? 'none' : 'var(--accent-glow)' }}

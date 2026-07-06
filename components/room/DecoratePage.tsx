@@ -107,6 +107,7 @@ export default function DecoratePage({
   const [textFont, setTextFont] = useState(FONT_OPTIONS[0]);
   const [historyCount, setHistoryCount] = useState(0);
   const [redoCount, setRedoCount] = useState(0);
+  const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
 
   const activeText = selectedItem?.type === 'text'
     ? textItems.find(item => item.id === selectedItem.id)
@@ -539,6 +540,16 @@ export default function DecoratePage({
   }, [redrawCanvas]);
 
   useEffect(() => {
+    const stage = document.querySelector('.decorate-stage');
+    if (!stage) return;
+    const observer = new ResizeObserver((entries) => {
+      setStageSize({ w: entries[0].contentRect.width, h: entries[0].contentRect.height });
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const handleTrigger = () => {
       handleNext(false);
     };
@@ -597,7 +608,7 @@ export default function DecoratePage({
             ref={containerRef}
             className="decorate-canvas-wrap"
             style={{
-              width: `min(100%, calc((100dvh - 230px) * ${imgSize.w / imgSize.h}))`,
+              width: stageSize.h > 0 ? Math.min(stageSize.w, stageSize.h * (imgSize.w / imgSize.h)) : '100%',
               aspectRatio: `${imgSize.w}/${imgSize.h}`,
             }}
             onPointerDown={() => setSelectedItem(null)}
