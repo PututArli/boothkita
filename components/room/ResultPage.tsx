@@ -85,13 +85,13 @@ export default function ResultPage({
 
   const handleDownloadStory = async () => {
     if (!imgUrl) return;
-    await downloadPoster(imgUrl, `${getFileBase()}-story.png`, 1080, 1920);
+    await downloadPoster(imgUrl, `${getFileBase()}-story.png`, 1080, 1920, roomState.frameBg);
     markSaved();
   };
 
   const handleDownloadFeed = async () => {
     if (!imgUrl) return;
-    await downloadPoster(imgUrl, `${getFileBase()}-feed.png`, 1080, 1350);
+    await downloadPoster(imgUrl, `${getFileBase()}-feed.png`, 1080, 1350, roomState.frameBg);
     markSaved();
   };
 

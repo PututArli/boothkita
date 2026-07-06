@@ -1,3 +1,5 @@
+import { RoomState, FRAME_BG_PRESETS } from './types';
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -46,7 +48,7 @@ export async function downloadJpeg(dataUrl: string, fileName: string) {
   saveBlob(blob, fileName);
 }
 
-export async function downloadPoster(dataUrl: string, fileName: string, width: number, height: number) {
+export async function downloadPoster(dataUrl: string, fileName: string, width: number, height: number, frameBg?: RoomState['frameBg']) {
   const image = await loadImage(dataUrl);
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -54,10 +56,30 @@ export async function downloadPoster(dataUrl: string, fileName: string, width: n
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, '#101116');
-  gradient.addColorStop(1, '#2b2d35');
-  ctx.fillStyle = gradient;
+  if (frameBg) {
+    const preset = FRAME_BG_PRESETS.find(p => p.val === frameBg.val && p.type === frameBg.type);
+    if (preset) {
+      if (preset.type === 'solid') {
+        ctx.fillStyle = preset.val;
+      } else if (preset.type === 'gradient') {
+        const colors = preset.val.split(',');
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, colors[0]);
+        grad.addColorStop(1, colors[1]);
+        ctx.fillStyle = grad;
+      } else if (preset.type === 'pattern') {
+        // Fallback for pattern in poster export
+        ctx.fillStyle = '#ffffff'; 
+      }
+    } else {
+      ctx.fillStyle = '#ffffff';
+    }
+  } else {
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#101116');
+    gradient.addColorStop(1, '#2b2d35');
+    ctx.fillStyle = gradient;
+  }
   ctx.fillRect(0, 0, width, height);
 
   const padding = Math.round(Math.min(width, height) * 0.08);
@@ -108,9 +130,21 @@ export function printImage(dataUrl: string, title: string) {
         <img src="${dataUrl}" alt="${title}" />
         <script>
           const image = document.querySelector('img');
-          image.onload = () => {
-            window.focus();
-            window.print();
+          const doPrint = () => {
+            setTimeout(() => {
+              window.focus();
+              window.print();
+            }, 250);
+          };
+          
+          if (image.complete) {
+            doPrint();
+          } else {
+            image.onload = doPrint;
+          }
+          
+          window.onafterprint = () => {
+            window.close();
           };
         </script>
       </body>
