@@ -265,7 +265,7 @@ export default function ResultPage({
               <button
                 onClick={handleDownload}
                 disabled={!composed}
-                className="result-export-btn primary"
+                className="result-export-btn"
               >
                 <Download size={16} />
                 {downloadDone ? t('result.saved') : t('result.downloadPng')}

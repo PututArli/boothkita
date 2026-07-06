@@ -230,6 +230,11 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
           if (isNewPartner) {
             // Reply so they know we're here too
             broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+            
+            // If I am the host, sync my current room state to the newly joined partner!
+            if (roleRef.current === 'host') {
+              broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
+            }
           }
         }
         break;

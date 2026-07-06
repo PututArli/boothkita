@@ -128,9 +128,9 @@ export default function VideoGrid({
 
           <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
             
-            {/* Timer controls at top center */}
+            {/* Timer controls at top left */}
             {!isCapturing && (
-              <div className="timer-controls" style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 10 }}>
+              <div className="timer-controls" style={{ position: 'absolute', top: 16, left: 16, display: 'flex', gap: 8, zIndex: 10 }}>
                 {[3, 5, 10].map(t_val => (
                   <button
                     key={t_val}
