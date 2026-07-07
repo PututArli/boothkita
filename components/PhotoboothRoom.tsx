@@ -51,7 +51,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     }
   }, []);
 
-  const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host', usePremiumTurn);
+  const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, cameraError, retryCamera, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host', usePremiumTurn);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -337,6 +337,18 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
           {t('room.connectionIssue')}
         </div>
       )}
+      
+      {cameraError && (
+        <div className="camera-error-modal">
+          <div className="camera-error-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+            <h3>Izin Kamera/Mic Diperlukan</h3>
+            <p>Photobooth tidak dapat mengakses kamera atau mikrofon. Pastikan kamu sudah memberikan izin akses pada browser, lalu coba lagi.</p>
+            <button onClick={retryCamera}>Coba Lagi</button>
+          </div>
+        </div>
+      )}
+      
       {renderPhase()}
     </>
   );
