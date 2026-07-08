@@ -21,7 +21,7 @@ export default function TermsContent() {
         <span style={{ fontSize: 15, fontWeight: 700, background: 'linear-gradient(to right, #ff7e5f, #feb47b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BoothKita</span>
       </div>
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
         <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 8 }}>{isEN ? 'Terms & Conditions' : 'Syarat & Ketentuan'}</h1>
         <p style={{ color: 'var(--text-muted, #8b8b9a)', fontSize: 14, marginBottom: 48 }}>
           {isEN ? 'Last updated: July 1, 2026' : 'Terakhir diperbarui: 1 Juli 2026'}
@@ -148,7 +148,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <section style={{ marginBottom: 40 }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{title}</h2>
       <div style={{ fontSize: 15, lineHeight: 1.8, color: 'rgba(255,255,255,0.75)' }}>
-        {children}
+        <style>{`
+          .legal-section ul { padding-left: 20px; margin: 8px 0; }
+          .legal-section li { margin-bottom: 8px; line-height: 1.7; }
+          .legal-section ul ul { margin-top: 8px; }
+          .legal-section p { margin: 0 0 12px; }
+        `}</style>
+        <div className="legal-section">{children}</div>
       </div>
     </section>
   );
