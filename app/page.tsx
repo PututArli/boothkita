@@ -181,6 +181,58 @@ export default function HomePage() {
         </p>
       </div>
 
+      {/* Footer */}
+      <footer style={{ 
+        borderTop: '1px solid rgba(255,255,255,0.06)', 
+        padding: '32px 24px 24px', 
+        marginTop: 48,
+        textAlign: 'center',
+      }}>
+        <div style={{ marginBottom: 16 }}>
+          <span style={{ 
+            fontSize: 14, 
+            fontWeight: 800, 
+            background: 'linear-gradient(to right, #ff7e5f, #feb47b)', 
+            WebkitBackgroundClip: 'text', 
+            WebkitTextFillColor: 'transparent' 
+          }}>BoothKita</span>
+        </div>
+
+        {/* Privacy statement */}
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', maxWidth: 380, margin: '0 auto 16px', lineHeight: 1.6 }}>
+          {t('footer.privacy')}
+        </p>
+
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+          <a href="/privacy" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
+            onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+          >{t('footer.privacyLink')}</a>
+          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>·</span>
+          <a href="/terms" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
+            onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+          >{t('footer.termsLink')}</a>
+          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>·</span>
+          <a href="mailto:rafaelpututarli@gmail.com" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.2s' }}
+            onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
+            onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+          >{t('footer.contact')}</a>
+          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>·</span>
+          <a href="https://github.com/PututArli/photobooth-duo" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.2s', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
+            onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.015 2.898-.015 3.293 0 .322.216.694.825.576C20.565 21.795 24 17.298 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+          </a>
+        </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: 0 }}>
+          © {new Date().getFullYear()} BoothKita. {t('footer.copyright')}
+        </p>
+      </footer>
+
       {showTutor && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 24, width: '100%', maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>

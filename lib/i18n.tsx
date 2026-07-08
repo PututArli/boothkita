@@ -194,7 +194,20 @@ const dictionary = {
     'theme.border.sakura': 'Sakura',
     'theme.border.galaxy': 'Galaxy',
     'theme.border.summer': 'Summer',
-    'theme.border.christmas': 'Christmas'
+    'theme.border.christmas': 'Christmas',
+
+    // Camera error
+    'camera.errorTitle': 'Camera / Mic Access Blocked',
+    'camera.errorDesc': 'Photobooth cannot access your camera. If you previously denied permission, the browser will not prompt again automatically.',
+    'camera.errorInstructions': 'How to fix: Click the 🔒 (lock/settings) icon at the top left of your browser URL bar, then allow Camera and Microphone. Then click the button below.',
+    'camera.errorBtn': 'I Have Allowed Access',
+
+    // Footer
+    'footer.privacy': '🔒 We do not store your photos, videos, or biometric data. All sessions are peer-to-peer and encrypted.',
+    'footer.privacyLink': 'Privacy Policy',
+    'footer.termsLink': 'Terms & Conditions',
+    'footer.contact': 'Contact',
+    'footer.copyright': 'Made with ♥ by Rafael. All rights reserved.'
   },
   id: {
     // Lobby
@@ -385,7 +398,20 @@ const dictionary = {
     'theme.border.sakura': 'Sakura',
     'theme.border.galaxy': 'Galaksi',
     'theme.border.summer': 'Musim Panas',
-    'theme.border.christmas': 'Natal'
+    'theme.border.christmas': 'Natal',
+
+    // Camera error
+    'camera.errorTitle': 'Izin Kamera/Mic Diblokir',
+    'camera.errorDesc': 'Photobooth tidak dapat mengakses kamera. Jika kamu sebelumnya menolak izin, browser tidak akan memunculkan pop-up izin lagi secara otomatis.',
+    'camera.errorInstructions': 'Cara mengatasi: Klik ikon 🔒 (gembok/settings) di kiri atas (URL bar) browser-mu, lalu izinkan Kamera dan Mikrofon. Setelah itu, klik tombol di bawah.',
+    'camera.errorBtn': 'Saya Sudah Mengizinkan',
+
+    // Footer
+    'footer.privacy': '🔒 Kami tidak menyimpan foto, video, atau data biometrik kamu. Semua sesi bersifat peer-to-peer dan terenkripsi.',
+    'footer.privacyLink': 'Kebijakan Privasi',
+    'footer.termsLink': 'Syarat & Ketentuan',
+    'footer.contact': 'Kontak',
+    'footer.copyright': 'Made with ♥ by Rafael. All rights reserved.'
   }
 };
 
