@@ -1,3 +1,5 @@
+'use client';
+
 import { RefObject, useState, useEffect } from 'react';
 import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto, CAMERA_FILTER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
@@ -21,7 +23,6 @@ interface VideoGridProps {
   myPhotos: CapturedPhoto[];
   partnerPhotos: CapturedPhoto[];
   startSession: () => void;
-
   partnerConnected: boolean;
   facingMode: 'user' | 'environment';
   isMirrored: boolean;
@@ -55,7 +56,7 @@ export default function VideoGrid({
   myPhotos,
   partnerPhotos,
   startSession,
-
+  partnerConnected,
   facingMode,
   isMirrored,
   partnerMirrored,
@@ -101,37 +102,31 @@ export default function VideoGrid({
         </div>
       ) : (
         <>
-          {/* Global Countdown Overlay */}
+          {/* Countdown overlay */}
           {isCapturing && countdown > 0 && (
             <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
+              position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              zIndex: 50,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              pointerEvents: 'none',
+              zIndex: 50, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', pointerEvents: 'none',
             }}>
               <div key={countdown} style={{
-                fontSize: 'clamp(140px, 35vw, 240px)',
-                fontWeight: 900,
-                color: '#fff',
-                lineHeight: 1,
-                textShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                animation: 'countdownPop 0.3s ease-out'
+                fontSize: 'clamp(140px, 35vw, 240px)', fontWeight: 900,
+                color: '#fff', lineHeight: 1,
+                textShadow: '0 0 60px rgba(255,255,255,0.4)',
+                animation: 'countdownPop 0.3s ease-out',
               }}>
                 {countdown}
               </div>
             </div>
           )}
 
-          <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
+          <div className="video-grid-container">
+
+            {/* Section guide */}
             {!isCapturing && (
               <SectionGuide
                 variant="floating"
-                className="camera-guide-trigger"
                 title={t('guide.camera.title')}
                 steps={[
                   t('guide.camera.step1'),
@@ -142,6 +137,8 @@ export default function VideoGrid({
                 ]}
               />
             )}
+
+            {/* Timer selector */}
             {!isCapturing && (
               <div className="timer-controls" style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', justifyContent: 'center', gap: 8, zIndex: 80 }}>
                 {[3, 5, 10].map(t_val => (
@@ -152,16 +149,10 @@ export default function VideoGrid({
                       padding: '8px 16px',
                       background: roomState.timer === t_val ? 'var(--text)' : 'rgba(255,255,255,0.2)',
                       color: roomState.timer === t_val ? 'var(--bg)' : '#fff',
-                      border: '1px solid var(--border)',
-                      borderRadius: 100,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      backdropFilter: 'blur(10px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      transition: 'all 0.2s'
+                      border: '1px solid var(--border)', borderRadius: 100,
+                      fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                      backdropFilter: 'blur(10px)', display: 'flex',
+                      alignItems: 'center', gap: 6, transition: 'all 0.2s',
                     }}
                   >
                     ⏱ {t_val}s
@@ -170,21 +161,31 @@ export default function VideoGrid({
               </div>
             )}
 
-            {/* Left sidebar for Grid & Filter */}
+            {/* Left sidebar: Grid & Filter */}
             {!isCapturing && (
               <>
-                <div className="camera-tools-panel" style={{ position: 'absolute', top: '50%', left: 16, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 50, background: 'rgba(255,255,255,0.1)', padding: '12px 8px', borderRadius: 24, backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
-                <button
-                  onClick={() => setShowGrid(!showGrid)}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showGrid ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
-                  title={t('video.grid')}
+                <div
+                  className="camera-tools-panel"
+                  style={{
+                    position: 'absolute', top: '50%', left: 16,
+                    transform: 'translateY(-50%)', display: 'flex',
+                    flexDirection: 'column', gap: 8, zIndex: 50,
+                    background: 'rgba(255,255,255,0.1)', padding: '12px 8px',
+                    borderRadius: 24, backdropFilter: 'blur(10px)',
+                    border: '1px solid var(--border)',
+                  }}
                 >
-                  <div style={{ fontSize: 20 }}>⊞</div>
-                  <span style={{ fontSize: 10, fontWeight: 600 }}>{t('video.grid')}</span>
-                </button>
-                
-                <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                
+                  <button
+                    onClick={() => setShowGrid(!showGrid)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showGrid ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
+                    title={t('video.grid')}
+                  >
+                    <div style={{ fontSize: 20 }}>⊞</div>
+                    <span style={{ fontSize: 10, fontWeight: 600 }}>{t('video.grid')}</span>
+                  </button>
+
+                  <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
+
                   <button
                     onClick={() => setShowFilterMenu(!showFilterMenu)}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: roomState.videoFilter !== 'none' ? 'var(--text)' : 'var(--text-muted)', cursor: 'pointer', padding: 8 }}
@@ -196,39 +197,41 @@ export default function VideoGrid({
                 </div>
 
                 {showFilterMenu && (
-                  <div className="filter-menu-panel" style={{ position: 'absolute', top: '50%', left: 72, transform: 'translateY(-50%)', width: 230, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)', zIndex: 60, maxHeight: 'min(320px, calc(100% - 32px))', display: 'flex', flexDirection: 'column' }}>
-                      <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
-                        <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
-                      </div>
-                      
-                      <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', paddingRight: 4 }}>
-                        {CAMERA_FILTER_PRESETS.map(f => (
-                          <button
-                            key={f.id}
-                            onClick={() => updateState && updateState({ videoFilter: f.style })}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              background: roomState.videoFilter === f.style ? 'rgba(255,255,255,0.1)' : 'transparent',
-                              color: roomState.videoFilter === f.style ? 'var(--text)' : 'var(--text-muted)',
-                              border: roomState.videoFilter === f.style ? '1px solid var(--border)' : '1px solid transparent',
-                              display: 'grid',
-                              gridTemplateColumns: '34px 1fr',
-                              alignItems: 'center',
-                              gap: 10,
-                              textAlign: 'left',
-                              fontSize: 14,
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            <span style={{ width: 34, height: 24, borderRadius: 6, display: 'block', background: 'linear-gradient(135deg, #f8c8d8, #84fab0)', filter: f.style, border: '1px solid var(--border)' }} />
-                            <span>{f.label}</span>
-                          </button>
-                        ))}
-                      </div>
+                  <div
+                    className="filter-menu-panel"
+                    style={{
+                      position: 'absolute', top: '50%', left: 72,
+                      transform: 'translateY(-50%)', width: 230,
+                      background: 'var(--surface)', border: '1px solid var(--border)',
+                      borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)',
+                      zIndex: 60, maxHeight: 'min(320px, calc(100% - 32px))',
+                      display: 'flex', flexDirection: 'column',
+                    }}
+                  >
+                    <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
+                      <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
+                    </div>
+                    <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', paddingRight: 4 }}>
+                      {CAMERA_FILTER_PRESETS.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => updateState && updateState({ videoFilter: f.style })}
+                          style={{
+                            padding: '8px 12px', borderRadius: 8,
+                            background: roomState.videoFilter === f.style ? 'rgba(255,255,255,0.1)' : 'transparent',
+                            color: roomState.videoFilter === f.style ? 'var(--text)' : 'var(--text-muted)',
+                            border: roomState.videoFilter === f.style ? '1px solid var(--border)' : '1px solid transparent',
+                            display: 'grid', gridTemplateColumns: '34px 1fr',
+                            alignItems: 'center', gap: 10, textAlign: 'left',
+                            fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
+                          }}
+                        >
+                          <span style={{ width: 34, height: 24, borderRadius: 6, display: 'block', background: 'linear-gradient(135deg, #f8c8d8, #84fab0)', filter: f.style, border: '1px solid var(--border)' }} />
+                          <span>{f.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
@@ -239,14 +242,8 @@ export default function VideoGrid({
               <video
                 id="local-video"
                 ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  transform: isMirrored ? 'scaleX(-1)' : 'none',
-                  width: '100%', height: '100%', objectFit: 'cover',
-                  filter: roomState.videoFilter
-                }}
+                autoPlay playsInline muted
+                style={{ transform: isMirrored ? 'scaleX(-1)' : 'none', width: '100%', height: '100%', objectFit: 'cover', filter: roomState.videoFilter }}
               />
 
               {showGrid && (
@@ -260,30 +257,18 @@ export default function VideoGrid({
 
               {/* Camera controls */}
               <div className="camera-controls" style={{ position: 'absolute', bottom: 16, left: 16, display: 'flex', gap: 8, zIndex: 10 }}>
-                <button
-                  onClick={toggleMic}
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }}
-                  title={isMicOn ? t('video.micOff') : t('video.micOn')}
-                >
+                <button onClick={toggleMic} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={isMicOn ? t('video.micOff') : t('video.micOn')}>
                   {isMicOn ? '🎤' : '🔇'}
                 </button>
-                <button
-                  onClick={toggleMirror}
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }}
-                  title={t('video.mirror')}
-                >
+                <button onClick={toggleMirror} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={t('video.mirror')}>
                   🪞
                 </button>
-                <button
-                  onClick={toggleCamera}
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }}
-                  title={t('video.switchCamera')}
-                >
+                <button onClick={toggleCamera} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={t('video.switchCamera')}>
                   🔄
                 </button>
               </div>
 
-              {/* Camera Error State */}
+              {/* Camera error overlay */}
               {cameraError && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', zIndex: 20, padding: 20, textAlign: 'center' }}>
                   <span style={{ fontSize: 32, marginBottom: 12 }}>📷</span>
@@ -302,16 +287,10 @@ export default function VideoGrid({
                   <video
                     id="remote-video"
                     ref={remoteVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    style={{ 
-                      width: '100%', height: '100%', objectFit: 'cover',
-                      transform: partnerMirrored ? 'scaleX(-1)' : 'none',
-                      filter: roomState.videoFilter
-                    }}
+                    autoPlay playsInline muted
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: partnerMirrored ? 'scaleX(-1)' : 'none', filter: roomState.videoFilter }}
                   />
-                  
+
                   {showGrid && (
                     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
                       <div style={{ position: 'absolute', top: '33.33%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.3)' }} />
@@ -320,18 +299,45 @@ export default function VideoGrid({
                       <div style={{ position: 'absolute', top: 0, bottom: 0, left: '66.66%', width: 1, background: 'rgba(255,255,255,0.3)' }} />
                     </div>
                   )}
+
+                  {/* Disconnect overlay — stream alive but partner left presence */}
+                  {!partnerInfo && (
+                    <div style={{
+                      position: 'absolute', inset: 0, zIndex: 20,
+                      background: 'rgba(10,10,15,0.88)', backdropFilter: 'blur(12px)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: 12, padding: 20, textAlign: 'center',
+                    }}>
+                      <div style={{
+                        width: 56, height: 56, borderRadius: '50%',
+                        background: 'rgba(250,82,82,0.15)', border: '2px solid rgba(250,82,82,0.5)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 26, animation: 'pulse 1.8s ease-in-out infinite',
+                      }}>
+                        📡
+                      </div>
+                      <p style={{ color: '#fa5252', fontWeight: 700, fontSize: 14, margin: 0 }}>
+                        {t('video.partnerDisconnected')}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
+                        {t('video.partnerReconnecting')}
+                      </p>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="video-cell-waiting">
-                  <div className="waiting-avatar">👤</div>
+                  <div className="waiting-avatar">{!partnerInfo && partnerConnected ? '📡' : '👤'}</div>
                   <p className="waiting-text">
-                    {isConnected
-                      ? t('video.waitingVideo')
-                      : partnerInfo
-                        ? t('video.partnerWaitingVideo')
-                        : t('video.waitingPartner')}
+                    {!partnerInfo && partnerConnected
+                      ? t('video.partnerReconnecting')
+                      : isConnected
+                        ? t('video.waitingVideo')
+                        : partnerInfo
+                          ? t('video.partnerWaitingVideo')
+                          : t('video.waitingPartner')}
                   </p>
-                  {!partnerInfo && !isConnected && (
+                  {!partnerInfo && !partnerConnected && (
                     <p className="waiting-text" style={{ fontSize: 11, marginTop: 4 }}>
                       {t('video.shareCode')} <strong style={{ color: 'var(--accent)' }}>{roomCode}</strong>
                     </p>
@@ -380,7 +386,7 @@ export default function VideoGrid({
                 onClick={onSkipToLayout}
                 style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid var(--accent)', background: 'rgba(255,255,255,0.1)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
               >
-                {t('video.skipToLayout') || 'Skip to Layout'} ⏭
+                {t('video.skipToLayout')} ⏭
               </button>
             )}
             <button
@@ -392,7 +398,7 @@ export default function VideoGrid({
             >
               {isCapturing
                 ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
-                : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture') || 'Retake All'}` : `📸 ${t('video.startCapture')}`}
+                : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture')}` : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>

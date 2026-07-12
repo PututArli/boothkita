@@ -3207,11 +3207,11 @@ input[type='range']::-webkit-slider-thumb {
 
   .room-expiry-badge.camera {
     top: 10px;
-    left: 10px;
-    transform: none;
+    left: 50%;
+    transform: translateX(-50%);
     min-height: 30px;
-    padding: 6px 9px;
-    gap: 0;
+    padding: 6px 10px;
+    gap: 5px;
   }
 
   .room-expiry-badge.camera span {
@@ -3220,6 +3220,10 @@ input[type='range']::-webkit-slider-thumb {
 
   .room-expiry-badge.camera strong {
     font-size: 12px;
+  }
+
+  .timer-controls {
+    top: 52px !important;
   }
 
   .room-issue-toast {

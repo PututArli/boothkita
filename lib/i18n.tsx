@@ -136,6 +136,8 @@ const dictionary = {
     'video.startCapture': 'START CAPTURE',
     'video.skipToLayout': 'Skip to Layout',
     'video.retakeCapture': 'Retake All',
+    'video.partnerDisconnected': 'Partner disconnected',
+    'video.partnerReconnecting': 'Waiting for partner to reconnect...',
     
     // Wizard
     'wizard.layoutTitle': 'Select Photo Layout',
@@ -396,6 +398,8 @@ const dictionary = {
     'video.startCapture': 'MULAI MEMOTRET',
     'video.skipToLayout': 'Lewati ke Layout',
     'video.retakeCapture': 'Foto Ulang',
+    'video.partnerDisconnected': 'Partner terputus',
+    'video.partnerReconnecting': 'Menunggu partner tersambung kembali...',
     
     // Wizard
     'wizard.layoutTitle': 'Pilih Tata Letak Foto',

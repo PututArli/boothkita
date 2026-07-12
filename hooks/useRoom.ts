@@ -73,6 +73,16 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   // Keep broadcastRef in sync
   useEffect(() => { broadcastRef.current = broadcast; }, [broadcast]);
 
+  useEffect(() => {
+    if (role !== 'host') return;
+    const interval = setInterval(() => {
+      if (partnerInfoRef.current && broadcastRef.current) {
+        broadcastRef.current({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [role, participantId]);
+
   // Handle native back button to navigate wizard instead of exiting room
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -425,6 +435,9 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
               setRoomIssue(null);
               await channel.track({ online_at: new Date().toISOString() });
               broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+              if (roleRef.current === 'host' && partnerInfoRef.current) {
+                broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
+              }
               return;
             }
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
