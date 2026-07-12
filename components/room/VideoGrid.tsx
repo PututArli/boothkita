@@ -393,12 +393,14 @@ export default function VideoGrid({
               id="btn-start"
               className="video-primary-action"
               onClick={startSession}
-              disabled={isCapturing}
-              style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: isCapturing ? 'not-allowed' : 'pointer', opacity: isCapturing ? 0.7 : 1, transition: 'all 0.2s', boxShadow: isCapturing ? 'none' : 'var(--accent-glow)' }}
+              disabled={isCapturing || (role === 'host' && !partnerConnected)}
+              style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: (isCapturing || (role === 'host' && !partnerConnected)) ? 'not-allowed' : 'pointer', opacity: (isCapturing || (role === 'host' && !partnerConnected)) ? 0.7 : 1, transition: 'all 0.2s', boxShadow: (isCapturing || (role === 'host' && !partnerConnected)) ? 'none' : 'var(--accent-glow)' }}
             >
               {isCapturing
                 ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
-                : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture')}` : `📸 ${t('video.startCapture')}`}
+                : (role === 'host' && !partnerConnected) 
+                  ? `⌛ ${t('room.waiting')}` 
+                  : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture')}` : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>
