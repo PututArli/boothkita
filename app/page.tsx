@@ -104,6 +104,18 @@ export default function HomePage() {
                 </a>
               ))}
             </div>
+            <div className="guide-subsection">
+              <h3>{t('guide.tailscale.title')}</h3>
+              <p>{t('guide.tailscale.intro')}</p>
+              <ol className="guide-list guide-list-compact">
+                <li>{t('guide.tailscale.step1')}</li>
+                <li>{t('guide.tailscale.step2')}</li>
+                <li>{t('guide.tailscale.step3')}</li>
+                <li>{t('guide.tailscale.step4')}</li>
+                <li>{t('guide.tailscale.step5')}</li>
+                <li>{t('guide.tailscale.step6')}</li>
+              </ol>
+            </div>
           </div>
         </SectionGuide>
         <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.1)', padding: 4, borderRadius: 100, backdropFilter: 'blur(10px)' }}>
