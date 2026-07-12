@@ -42,6 +42,43 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const [isInitialized, setIsInitialized] = useState(false);
   const [roomIssue, setRoomIssue] = useState<'connection' | null>(null);
 
+  // Load state from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = sessionStorage.getItem(`boothkita_room_${roomCode}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.roomState) setRoomState(parsed.roomState);
+        if (parsed.phase && parsed.phase !== 'waiting_partner') setPhase(parsed.phase);
+        if (parsed.myPhotos) setMyPhotos(parsed.myPhotos);
+        if (parsed.partnerPhotos) setPartnerPhotos(parsed.partnerPhotos);
+        if (parsed.photoIndex !== undefined) setPhotoIndex(parsed.photoIndex);
+        if (parsed.captureMode) captureModeRef.current = parsed.captureMode;
+      }
+    } catch (e) {
+      console.error('Failed to restore session state', e);
+    }
+  }, [roomCode]);
+
+  // Save state to sessionStorage when it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stateToSave = {
+        roomState,
+        phase,
+        myPhotos,
+        partnerPhotos,
+        photoIndex,
+        captureMode: captureModeRef.current
+      };
+      sessionStorage.setItem(`boothkita_room_${roomCode}`, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.error('Failed to save session state (might exceed storage limit)', e);
+    }
+  }, [roomState, phase, myPhotos, partnerPhotos, photoIndex, roomCode]);
+
   const channelRef = useRef<RealtimeChannel | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const captureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -266,7 +303,32 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             if (roleRef.current === 'host') {
               broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
             }
-            broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
+            
+            if (phaseRef.current === 'countdown' || phaseRef.current === 'capturing') {
+              // If we are mid-capture, we must forcefully restart the loop for both of us!
+              // Otherwise if the Host refreshed, the Host's timer loop is dead and the session gets stuck.
+              const timer = roomStateRef.current.timer || 3;
+              const layoutCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
+              const totalCount = Math.max(6, layoutCount + 2);
+              const mode = captureModeRef.current;
+              
+              if (mode === 'retake') {
+                broadcastRef.current?.({ 
+                  type: 'retake_start', 
+                  senderId: participantId, 
+                  payload: { index: photoIndexRef.current, timer, totalCount } 
+                });
+              } else {
+                broadcastRef.current?.({ 
+                  type: 'photo_start', 
+                  senderId: participantId, 
+                  payload: { timer, totalCount, nextIndex: photoIndexRef.current } 
+                });
+              }
+              scheduleCapture(timer, totalCount, roleRef.current === 'host', mode);
+            } else {
+              broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
+            }
             
             // Restore their photo arrays so they don't get stuck with a blank UI
             // Our myPhotos is their partnerPhotos, and vice versa!
