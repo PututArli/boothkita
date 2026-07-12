@@ -1636,8 +1636,8 @@ input[type='range']::-webkit-slider-thumb {
 .room-expiry-badge {
   position: fixed;
   top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  transform: none;
   z-index: 300;
   min-height: 38px;
   display: inline-flex;

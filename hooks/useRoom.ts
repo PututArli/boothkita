@@ -55,12 +55,14 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const partnerInfoRef = useRef<ParticipantInfo | null>(null);
   const roleRef = useRef<'host' | 'guest'>('host');
   const captureModeRef = useRef<'session' | 'retake'>('session');
+  const phaseRef = useRef<SessionPhase>('waiting_partner');
 
   // Keep refs in sync
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { roomIdRef.current = roomId; }, [roomId]);
   useEffect(() => { partnerInfoRef.current = partnerInfo; }, [partnerInfo]);
   useEffect(() => { roleRef.current = role; }, [role]);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   const broadcast = useCallback((msg: RealtimeMessage) => {
     channelRef.current?.send({
@@ -253,6 +255,12 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             if (roleRef.current === 'host') {
               broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
               broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
+            }
+            
+            // Important logic fix: if someone reconnects/refreshes, don't let them drag us back to the start!
+            // If we are already in an advanced phase, tell them to catch up!
+            if (phaseRef.current !== 'waiting_partner' && phaseRef.current !== 'setup_layout') {
+              broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
             }
           }
         }
