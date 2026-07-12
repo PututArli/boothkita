@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { BringToFront, Brush, Copy, FlipHorizontal, Redo2, SendToBack, Sticker, Trash2, Type, Undo2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 import { CapturedPhoto, RoomState, RealtimeMessage } from '@/lib/types';
 import { composeDuoPhoto } from '@/lib/composition';
 
@@ -606,7 +607,18 @@ export default function DecoratePage({
           {t('room.back')}
         </button>
         <span>{t('decorate.title')}</span>
-        <div />
+        <div className="guide-header-action">
+          <SectionGuide
+            title={t('guide.decorate.title')}
+            steps={[
+              t('guide.decorate.step1'),
+              t('guide.decorate.step2'),
+              t('guide.decorate.step3'),
+              t('guide.decorate.step4'),
+              t('guide.decorate.step5'),
+            ]}
+          />
+        </div>
       </header>
 
       <main ref={stageRef} className="decorate-stage">

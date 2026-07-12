@@ -31,7 +31,7 @@ export default function PrivacyContent() {
         {isEN ? (
           <>
             <Section title="1. Introduction">
-              <p>Welcome to <strong>BoothKita</strong>. We deeply respect your privacy and are committed to protecting it. This policy explains what information we collect (or do not collect) when you use BoothKita's services.</p>
+              <p>Welcome to <strong>BoothKita</strong>. We deeply respect your privacy and are committed to protecting it. This policy explains what information we collect (or do not collect) when you use BoothKita&apos;s services.</p>
             </Section>
 
             <Section title="2. Data We DO NOT Collect">
@@ -74,7 +74,7 @@ export default function PrivacyContent() {
                   <strong>Important about Tailscale &amp; Privacy:</strong>
                   <ul style={{ marginTop: 8 }}>
                     <li>Tailscale is a <strong>separate, independent app</strong> developed by Tailscale Inc. and governed by their own <a href="https://tailscale.com/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#ff7e5f' }}>Privacy Policy →</a></li>
-                    <li>When using Tailscale, both users must log in to the <strong>same Tailscale account</strong>. This is managed entirely by you through Tailscale's own app — BoothKita has no access to your Tailscale account credentials or data.</li>
+                    <li>When using Tailscale, both users must log in to the <strong>same Tailscale account</strong>. This is managed entirely by you through Tailscale&apos;s own app — BoothKita has no access to your Tailscale account credentials or data.</li>
                     <li>Tailscale may log connection metadata (IP addresses, timestamps) according to their own policy. BoothKita does not receive this data.</li>
                     <li>Using Tailscale is <strong>optional</strong> for users on the same WiFi network. It is only needed when video fails to connect across different networks.</li>
                   </ul>
@@ -87,7 +87,7 @@ export default function PrivacyContent() {
             </Section>
 
             <Section title="7. Policy Changes">
-              <p>We may update this policy from time to time. Changes will be reflected in the "Last updated" date at the top of this page.</p>
+              <p>We may update this policy from time to time. Changes will be reflected in the &quot;Last updated&quot; date at the top of this page.</p>
             </Section>
 
             <Section title="8. Contact Us">
@@ -154,7 +154,7 @@ export default function PrivacyContent() {
             </Section>
 
             <Section title="7. Perubahan Kebijakan">
-              <p>Kami dapat memperbarui kebijakan ini dari waktu ke waktu. Perubahan akan tercermin pada tanggal "Terakhir diperbarui" di bagian atas halaman ini.</p>
+              <p>Kami dapat memperbarui kebijakan ini dari waktu ke waktu. Perubahan akan tercermin pada tanggal &quot;Terakhir diperbarui&quot; di bagian atas halaman ini.</p>
             </Section>
 
             <Section title="8. Hubungi Kami">

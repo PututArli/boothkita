@@ -11,6 +11,7 @@ import DecoratePage from './room/DecoratePage';
 import CaptureReviewPage from './room/CaptureReviewPage';
 import { SetupLayout, SetupTheme } from './room/WizardScreens';
 import { ArrangePage } from './room/ArrangePage';
+import SectionGuide from './SectionGuide';
 
 interface Props {
   roomId: string;
@@ -157,6 +158,16 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
           <div className="orb orb-3" />
         </div>
 
+        <SectionGuide
+          variant="floating"
+          title={t('guide.waiting.title')}
+          steps={[
+            t('guide.waiting.step1'),
+            t('guide.waiting.step2'),
+            t('guide.waiting.step3'),
+            t('guide.waiting.step4'),
+          ]}
+        />
 
         <div style={{ textAlign: 'center', width: '100%', maxWidth: 500, zIndex: 1 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>{t('room.yourCode')}</p>

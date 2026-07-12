@@ -1,6 +1,7 @@
 import React from 'react';
 import { CapturedPhoto, LayoutKey, LAYOUTS, RoomState } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 
 interface ArrangePageProps {
   myPhotos: CapturedPhoto[];
@@ -145,7 +146,17 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
         <h2 style={{ fontSize: 14, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>
           {t('arrange.title')}
         </h2>
-        <div />
+        <div className="guide-header-action">
+          <SectionGuide
+            title={t('guide.arrange.title')}
+            steps={[
+              t('guide.arrange.step1'),
+              t('guide.arrange.step2'),
+              t('guide.arrange.step3'),
+              t('guide.arrange.step4'),
+            ]}
+          />
+        </div>
       </div>
 
       <div className="arrange-container">

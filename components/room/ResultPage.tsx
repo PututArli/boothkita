@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { CapturedPhoto, RoomState } from '@/lib/types';
 import { composeDuoPhoto } from '@/lib/composition';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 import { downloadDataUrl, downloadJpeg, downloadPoster, printImage } from '@/lib/exportUtils';
 import { Download, FileImage, Film, Image as ImageIcon, Printer, RotateCcw } from 'lucide-react';
 
@@ -182,7 +183,17 @@ export default function ResultPage({
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>
           {t('result.title')}
         </span>
-        <div /> {/* spacer for grid */}
+        <div className="guide-header-action">
+          <SectionGuide
+            title={t('guide.result.title')}
+            steps={[
+              t('guide.result.step1'),
+              t('guide.result.step2'),
+              t('guide.result.step3'),
+              t('guide.result.step4'),
+            ]}
+          />
+        </div>
       </div>
 
       {/* Main content */}

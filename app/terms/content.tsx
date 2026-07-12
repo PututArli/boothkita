@@ -45,7 +45,7 @@ export default function TermsContent() {
                 <li>Not attempting to hack, disrupt, or interfere with the service infrastructure.</li>
                 <li>Not using bots or automated tools to create rooms in large quantities.</li>
               </ul>
-              <p style={{ marginTop: 16 }}><strong>Connection Requirement (Tailscale):</strong> Because BoothKita connects you directly peer-to-peer over the internet, users on different networks (e.g., mobile data vs WiFi) <strong>must</strong> use a third-party application called <strong>Tailscale</strong> to establish a connection. You agree to comply with Tailscale's own terms of service when using their application.</p>
+              <p style={{ marginTop: 16 }}><strong>Connection Requirement (Tailscale):</strong> Because BoothKita connects you directly peer-to-peer over the internet, users on different networks (e.g., mobile data vs WiFi) <strong>must</strong> use a third-party application called <strong>Tailscale</strong> to establish a connection. You agree to comply with Tailscale&apos;s own terms of service when using their application.</p>
             </Section>
 
             <Section title="4. Content & Copyright">
@@ -54,7 +54,7 @@ export default function TermsContent() {
             </Section>
 
             <Section title="5. Limitation of Liability">
-              <p>BoothKita is provided "<em>as-is</em>" without any warranties. We are not responsible for:</p>
+              <p>BoothKita is provided &quot;<em>as-is</em>&quot; without any warranties. We are not responsible for:</p>
               <ul>
                 <li>Service interruptions or temporary downtime.</li>
                 <li>Loss of session data due to unstable internet connections.</li>
@@ -107,7 +107,7 @@ export default function TermsContent() {
             </Section>
 
             <Section title="5. Batasan Tanggung Jawab">
-              <p>BoothKita disediakan "<em>sebagaimana adanya</em>" (<em>as-is</em>) tanpa jaminan apapun. Kami tidak bertanggung jawab atas:</p>
+              <p>BoothKita disediakan &quot;<em>sebagaimana adanya</em>&quot; (<em>as-is</em>) tanpa jaminan apapun. Kami tidak bertanggung jawab atas:</p>
               <ul>
                 <li>Gangguan layanan atau downtime sementara.</li>
                 <li>Kehilangan data sesi akibat koneksi internet yang tidak stabil.</li>

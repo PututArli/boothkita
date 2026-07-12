@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, RotateCcw } from 'lucide-react';
 import { CapturedPhoto } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 
 interface CaptureReviewPageProps {
   myPhotos: CapturedPhoto[];
@@ -32,9 +33,20 @@ export default function CaptureReviewPage({
           <ArrowLeft size={16} />
           {t('review.backCamera')}
         </button>
-        <div>
-          <p className="capture-review-eyebrow">{t('review.title')}</p>
-          <h1>{t('review.subtitle')}</h1>
+        <div className="capture-review-title">
+          <div>
+            <p className="capture-review-eyebrow">{t('review.title')}</p>
+            <h1>{t('review.subtitle')}</h1>
+          </div>
+          <SectionGuide
+            title={t('guide.review.title')}
+            steps={[
+              t('guide.review.step1'),
+              t('guide.review.step2'),
+              t('guide.review.step3'),
+              t('guide.review.step4'),
+            ]}
+          />
         </div>
         <button className="capture-review-primary-btn" onClick={onContinue} disabled={!isComplete}>
           {t('review.continue')}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { LAYOUTS, LayoutKey, FRAME_BG_PRESETS, RoomState, THEME_PRESETS, BORDER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 
 const MiniLayout = ({ type }: { type: LayoutKey }) => {
   if (type.startsWith('strip')) {
@@ -68,9 +69,20 @@ export function SetupLayout({ roomState, updateState, nextStep, prevStep, role }
       </div>
 
       <div className="wizard-container" style={{ textAlign: 'center', width: '100%', maxWidth: 700, zIndex: 1 }}>
-        <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 }}>
-          {t('wizard.choose_layout')}
-        </h2>
+        <div className="guide-title-row" style={{ marginBottom: 40 }}>
+          <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', margin: 0 }}>
+            {t('wizard.choose_layout')}
+          </h2>
+          <SectionGuide
+            title={t('guide.layout.title')}
+            steps={[
+              t('guide.layout.step1'),
+              t('guide.layout.step2'),
+              t('guide.layout.step3'),
+              t('guide.layout.step4'),
+            ]}
+          />
+        </div>
         
         <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginBottom: 40, flexWrap: 'wrap' }}>
           {(Object.keys(LAYOUTS) as LayoutKey[]).map((key) => {
@@ -148,9 +160,20 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
         <div className="orb orb-3" />
       </div>
       <div className="wizard-container" style={{ textAlign: 'center', width: '100%', maxWidth: 700, zIndex: 1 }}>
-        <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 40 }}>
-          {t('wizard.choose_theme')}
-        </h2>
+        <div className="guide-title-row" style={{ marginBottom: 40 }}>
+          <h2 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: 2, textTransform: 'uppercase', margin: 0 }}>
+            {t('wizard.choose_theme')}
+          </h2>
+          <SectionGuide
+            title={t('guide.theme.title')}
+            steps={[
+              t('guide.theme.step1'),
+              t('guide.theme.step2'),
+              t('guide.theme.step3'),
+              t('guide.theme.step4'),
+            ]}
+          />
+        </div>
 
         <div style={{ marginBottom: 36 }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>{t('wizard.ready_templates')}</h3>

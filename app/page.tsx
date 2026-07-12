@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 
 const tailscaleDownloads = [
   { label: 'Windows', href: 'https://tailscale.com/download/windows' },
@@ -20,7 +21,6 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [recentRoom, setRecentRoom] = useState<string | null>(null);
-  const [showTutor, setShowTutor] = useState(false);
   
   // promo code (hidden easter egg)
   const [titleClicks, setTitleClicks] = useState(0);
@@ -84,9 +84,32 @@ export default function HomePage() {
       </div>
 
 
-      <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50, display: 'flex', gap: 4, background: 'rgba(255,255,255,0.1)', padding: 4, borderRadius: 100, backdropFilter: 'blur(10px)' }}>
-        <button onClick={() => setLang('id')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'id' ? 'var(--text)' : 'transparent', color: lang === 'id' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>ID</button>
-        <button onClick={() => setLang('en')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'en' ? 'var(--text)' : 'transparent', color: lang === 'en' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>EN</button>
+      <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <SectionGuide
+          title={t('guide.lobby.title')}
+          steps={[
+            t('guide.lobby.step1'),
+            t('guide.lobby.step2'),
+            t('guide.lobby.step3'),
+            t('guide.lobby.step4'),
+          ]}
+        >
+          <div className="guide-extra">
+            <h3>{t('tutor.downloadTitle')}</h3>
+            <p>{t('tutor.downloadDesc')}</p>
+            <div className="guide-link-grid">
+              {tailscaleDownloads.map(item => (
+                <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer">
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </SectionGuide>
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.1)', padding: 4, borderRadius: 100, backdropFilter: 'blur(10px)' }}>
+          <button onClick={() => setLang('id')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'id' ? 'var(--text)' : 'transparent', color: lang === 'id' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>ID</button>
+          <button onClick={() => setLang('en')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'en' ? 'var(--text)' : 'transparent', color: lang === 'en' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>EN</button>
+        </div>
       </div>
 
       <div className="landing-hero">
@@ -160,18 +183,6 @@ export default function HomePage() {
           </p>
         )}
 
-        <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <button 
-            onClick={() => setShowTutor(true)}
-            style={{ 
-              background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 100, 
-              padding: '12px 24px', color: 'var(--text)', fontSize: 14, fontWeight: 700, 
-              cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 8 
-            }}
-          >
-            {t('tutor.button')}
-          </button>
-        </div>
 
         <p style={{ marginTop: 32, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 300, margin: '32px auto 0' }}>
           {t('lobby.recommendation')}
@@ -227,108 +238,6 @@ export default function HomePage() {
           © {new Date().getFullYear()} BoothKita. {t('footer.copyright')}
         </p>
       </footer>
-
-      {showTutor && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 24, width: '100%', maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
-            
-            <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: 20, color: 'var(--text)', margin: 0 }}>{t('tutor.title')}</h2>
-              <button onClick={() => setShowTutor(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 24, padding: 4 }}>×</button>
-            </div>
-
-            <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
-                {t('tutor.desc')}
-              </p>
-
-              <div style={{ marginBottom: 24, padding: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 16 }}>
-                <h3 style={{ fontSize: 15, marginBottom: 8 }}>{t('tutor.downloadTitle')}</h3>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 12 }}>
-                  {t('tutor.downloadDesc')}
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-                  {tailscaleDownloads.map(item => (
-                    <a
-                      key={item.href}
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ minHeight: 42, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '9px 10px', borderRadius: 12, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text)', fontSize: 13, fontWeight: 800, textAlign: 'center' }}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>1</div>
-                  <div>
-                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step1.title')}</h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step1.desc')}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>2</div>
-                  <div>
-                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step2.title')}</h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step2.desc')}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>3</div>
-                  <div>
-                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step3.title')}</h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step3.desc')}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700 }}>4</div>
-                  <div>
-                    <h3 style={{ fontSize: 16, marginBottom: 4 }}>{t('tutor.step4.title')}</h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{t('tutor.step4.desc')}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
-                <h3 style={{ fontSize: 15, marginBottom: 10 }}>{t('tutor.checkTitle')}</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[t('tutor.check1'), t('tutor.check2'), t('tutor.check3'), t('tutor.check4')].map(item => (
-                    <p key={item} style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, display: 'flex', gap: 8 }}>
-                      <span style={{ color: 'var(--text)', fontWeight: 900 }}>✓</span>
-                      <span>{item}</span>
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginTop: 24, padding: 16, background: 'rgba(255,255,255,0.05)', borderRadius: 16, border: '1px solid var(--border)' }}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, fontWeight: 600 }}>{t('tutor.help')}</p>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  <a href="mailto:rafaelpututarli@gmail.com" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
-                    📧 Email
-                  </a>
-                  <a href="https://www.instagram.com/ar__lii?igsh=ZWhsZWZqZ21vcnEx" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: 100, textDecoration: 'none', color: 'var(--text)', fontSize: 13, fontWeight: 600, transition: 'background 0.2s' }}>
-                    📸 Instagram (@ar__lii)
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <button 
-                onClick={() => setShowTutor(false)}
-                style={{ width: '100%', padding: '16px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}
-              >
-                {t('tutor.close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

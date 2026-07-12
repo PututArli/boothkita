@@ -1,6 +1,7 @@
 import { RefObject, useState, useEffect } from 'react';
 import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto, CAMERA_FILTER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
+import SectionGuide from '@/components/SectionGuide';
 
 interface VideoGridProps {
   localStream: MediaStream | null;
@@ -127,6 +128,20 @@ export default function VideoGrid({
           )}
 
           <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
+            {!isCapturing && (
+              <SectionGuide
+                variant="floating"
+                className="camera-guide-trigger"
+                title={t('guide.camera.title')}
+                steps={[
+                  t('guide.camera.step1'),
+                  t('guide.camera.step2'),
+                  t('guide.camera.step3'),
+                  t('guide.camera.step4'),
+                  t('guide.camera.step5'),
+                ]}
+              />
+            )}
             
             {/* Timer controls at top left */}
             {!isCapturing && (

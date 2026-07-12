@@ -3292,3 +3292,206 @@ input[type='range']::-webkit-slider-thumb {
   transform: scale(1.05);
   box-shadow: 0 8px 16px rgba(255,255,255,0.1);
 }
+
+.guide-trigger {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.guide-trigger:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.14);
+  border-color: var(--border-hover);
+}
+
+.guide-trigger-floating {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 90;
+}
+
+.guide-header-action {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.guide-title-row,
+.capture-review-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.guide-dialog {
+  width: min(460px, 100%);
+  max-height: min(680px, calc(100dvh - 36px));
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
+}
+
+.guide-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.guide-dialog-head h2 {
+  font-size: 18px;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.guide-dialog-head button {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.06);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.guide-list li {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  padding-left: 4px;
+}
+
+.guide-extra {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.guide-extra h3 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.guide-extra p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.guide-link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.guide-link-grid a {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.decorate-header .guide-header-action .guide-trigger,
+.capture-review-header .guide-trigger {
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .guide-trigger-floating {
+    top: 12px;
+    right: 12px;
+  }
+
+  .guide-dialog {
+    border-radius: 16px;
+    padding: 18px;
+  }
+
+  .guide-link-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guide-header-action .guide-trigger,
+.decorate-header .guide-header-action .guide-trigger,
+.capture-review-header .guide-trigger {
+  padding: 0;
+  color: var(--text);
+  gap: 0;
+  font-weight: 700;
+}
+
+.arrange-header .guide-trigger,
+.decorate-header .guide-header-action .guide-trigger {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.camera-guide-trigger {
+  top: 16px !important;
+  right: 16px !important;
+}
+
+@media (max-width: 768px) {
+  .camera-guide-trigger {
+    top: 58px !important;
+    right: 10px !important;
+  }
+}
