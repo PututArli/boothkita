@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { promoCode } = body;
-    const isUnlimited = promoCode === 'akuselaludi-sini';
+    const { secretCode } = body;
+    const isUnlimited = secretCode === 'akuselaludi-sini';
 
     let roomCode = '';
     let attempts = 0;

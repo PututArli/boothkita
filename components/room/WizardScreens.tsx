@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { LAYOUTS, LayoutKey, FRAME_BG_PRESETS, RoomState, THEME_PRESETS, BORDER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 import SectionGuide from '@/components/SectionGuide';
@@ -141,6 +141,14 @@ export function SetupLayout({ roomState, updateState, nextStep, prevStep, role }
 
 export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }: WizardProps) {
   const { t } = useTranslation();
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  const scrollStrip = (dir: 'left' | 'right') => {
+    if (stripRef.current) {
+      const amount = 200;
+      stripRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+    }
+  };
 
   const applyThemePreset = (preset: (typeof THEME_PRESETS)[number]) => {
     updateState({
@@ -209,13 +217,27 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
           </div>
         </div>
         
-        <div style={{ marginBottom: 40 }}>
+        <div style={{ marginBottom: 40, position: 'relative' }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>{t('wizard.pick_theme')}</h3>
-          <div style={{ 
-            display: 'flex', gap: 16, overflowX: 'auto', padding: '16px 20px', 
-            margin: '0 auto', maxWidth: '100%', scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none'
-          }}>
+          
+          <button 
+            type="button" 
+            onClick={() => scrollStrip('left')}
+            style={{ position: 'absolute', left: 0, top: '55%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
+            aria-label="Scroll left"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          
+          <div 
+            ref={stripRef}
+            style={{ 
+              display: 'flex', gap: 16, overflowX: 'auto', padding: '16px 20px', 
+              margin: '0 auto', maxWidth: '100%', scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', position: 'relative'
+            }}
+            className="hide-scrollbar"
+          >
             {FRAME_BG_PRESETS.map((preset, i) => {
               const isActive = roomState.frameBg.val === preset.val && roomState.frameBg.type === preset.type;
               return (
@@ -264,6 +286,15 @@ export function SetupTheme({ roomState, updateState, nextStep, prevStep, role }:
               );
             })} 
           </div>
+
+          <button 
+            type="button" 
+            onClick={() => scrollStrip('right')}
+            style={{ position: 'absolute', right: 0, top: '55%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
+            aria-label="Scroll right"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
 
         <div style={{ marginBottom: 40 }}>

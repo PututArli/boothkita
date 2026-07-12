@@ -22,9 +22,9 @@ export default function HomePage() {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [recentRoom, setRecentRoom] = useState<string | null>(null);
   
-  // promo code (hidden easter egg)
+  // secret code (hidden easter egg)
   const [titleClicks, setTitleClicks] = useState(0);
-  const [promoCode, setPromoCode] = useState('');
+  const [secretCode, setSecretCode] = useState('');
   
   const [forceGuide, setForceGuide] = useState(false);
 
@@ -45,7 +45,7 @@ export default function HomePage() {
       const res = await fetch('/api/rooms', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ promoCode })
+        body: JSON.stringify({ secretCode })
       });
       const data = await res.json();
       if (data.roomCode) {
@@ -152,9 +152,9 @@ export default function HomePage() {
           {titleClicks >= 5 && (
             <input 
               type="text" 
-              placeholder="Promo Code" 
-              value={promoCode} 
-              onChange={e => setPromoCode(e.target.value)} 
+              placeholder="Secret Code" 
+              value={secretCode} 
+              onChange={e => setSecretCode(e.target.value)} 
               style={{ marginTop: 8, padding: '4px 12px', borderRadius: 100, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.1)', color: 'var(--text)', textAlign: 'center', fontSize: 12 }}
             />
           )}
