@@ -497,7 +497,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
         </div>
       )}
       
-      <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50, display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ position: 'fixed', top: 16, left: 16, zIndex: 90, display: 'flex', gap: 8, alignItems: 'center' }}>
         <button onClick={toggleFullscreen} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--border)', backdropFilter: 'blur(10px)', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: isFullscreen ? 'var(--accent-glow)' : 'none' }} title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
           {isFullscreen ? (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
