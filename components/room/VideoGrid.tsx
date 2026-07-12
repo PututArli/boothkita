@@ -121,7 +121,7 @@ export default function VideoGrid({
             </div>
           )}
 
-          <div className="video-grid-container">
+          <div className="video-grid" style={{ padding: 0, gap: 4, background: '#000', borderRadius: 0, border: 'none', height: '100%' }}>
 
             {/* Section guide */}
             {!isCapturing && (
@@ -237,9 +237,7 @@ export default function VideoGrid({
               </>
             )}
 
-            {/* Local & Remote Videos Grid */}
-            <div className="video-grid">
-              {/* Local video */}
+            {/* Local video */}
               <div className="video-cell local" style={{ position: 'relative', borderRadius: 0 }}>
               <video
                 id="local-video"
@@ -346,7 +344,6 @@ export default function VideoGrid({
                   )}
                 </div>
               )}
-            </div>
             </div>
           </div>
 
