@@ -53,6 +53,17 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     }
   }, []);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, cameraError, retryCamera, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host', usePremiumTurn);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
