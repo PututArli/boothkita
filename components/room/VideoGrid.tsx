@@ -237,8 +237,10 @@ export default function VideoGrid({
               </>
             )}
 
-            {/* Local video */}
-            <div className="video-cell local" style={{ position: 'relative', borderRadius: 0 }}>
+            {/* Local & Remote Videos Grid */}
+            <div className="video-grid">
+              {/* Local video */}
+              <div className="video-cell local" style={{ position: 'relative', borderRadius: 0 }}>
               <video
                 id="local-video"
                 ref={localVideoRef}
@@ -344,6 +346,7 @@ export default function VideoGrid({
                   )}
                 </div>
               )}
+            </div>
             </div>
           </div>
 
