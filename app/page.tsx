@@ -25,10 +25,16 @@ export default function HomePage() {
   // promo code (hidden easter egg)
   const [titleClicks, setTitleClicks] = useState(0);
   const [promoCode, setPromoCode] = useState('');
+  
+  const [forceGuide, setForceGuide] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('recent_photobooth_room');
     if (saved) setRecentRoom(saved);
+    
+    if (window.location.search.includes('guide=tailscale')) {
+      setForceGuide(true);
+    }
   }, []);
 
   async function handleCreate() {
@@ -89,6 +95,7 @@ export default function HomePage() {
           title={t('guide.lobby.title')}
           steps={[]}
           autoOpen={true}
+          forceOpen={forceGuide}
         >
           <div className="guide-extra">
             <div style={{ marginBottom: 24, padding: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid var(--border)' }}>

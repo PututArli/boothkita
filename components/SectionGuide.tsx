@@ -12,6 +12,7 @@ interface SectionGuideProps {
   className?: string;
   variant?: 'inline' | 'floating';
   autoOpen?: boolean;
+  forceOpen?: boolean;
 }
 
 export default function SectionGuide({
@@ -21,6 +22,7 @@ export default function SectionGuide({
   className = '',
   variant = 'inline',
   autoOpen = false,
+  forceOpen = false,
 }: SectionGuideProps) {
   const { t, lang, setLang } = useTranslation();
   const titleId = useId();
@@ -35,15 +37,19 @@ export default function SectionGuide({
   }, []);
 
   useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
+
+  useEffect(() => {
     setMounted(true);
-    if (autoOpen) {
+    if (autoOpen && !forceOpen) {
       const hasSeenGuide = localStorage.getItem('boothkita_seen_guide');
       if (!hasSeenGuide) {
         setOpen(true);
         localStorage.setItem('boothkita_seen_guide', 'true');
       }
     }
-  }, [autoOpen]);
+  }, [autoOpen, forceOpen]);
 
   useEffect(() => {
     const handleOpenEvent = () => setOpen(true);

@@ -577,6 +577,13 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             if (presentKeys.length < 2) {
               setPartnerInfo(null);
               setPartnerReady(false);
+              
+              if (phaseRef.current === 'countdown' || phaseRef.current === 'capturing') {
+                clearCountdown();
+                setCountdown(0);
+                setCaptureRunId(0);
+                setPhase('ready_to_capture');
+              }
             } else {
               // Partner is present — detect their ID from presence and update partnerInfo
               const partnerKey = presentKeys.find(k => k !== participantId);
@@ -629,11 +636,27 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, roomCode, participantId]);
 
-  const startSession = useCallback(() => {
+  const startSession = useCallback((forceReset = false) => {
     const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
     const layoutCount = layout?.count || 4;
     const captureCount = Math.max(6, layoutCount + 2); // E.g., for 4-slot layout, capture 6.
     
+    if (forceReset !== true && myPhotosRef.current.length > 0 && photoIndexRef.current > 0 && photoIndexRef.current < captureCount) {
+      // Resume interrupted session
+      clearCountdown();
+      captureModeRef.current = 'session';
+      const timerSeconds = roomStateRef.current.timer || 3;
+      
+      broadcastRef.current?.({
+        type: 'photo_start',
+        senderId: participantId,
+        payload: { timer: timerSeconds, captureAt: Date.now() + timerSeconds * 1000, totalCount: captureCount, nextIndex: photoIndexRef.current }
+      });
+      
+      scheduleCapture(timerSeconds, captureCount, true, 'session');
+      return;
+    }
+
     clearCountdown();
     setMyPhotos([]);
     setPartnerPhotos([]);

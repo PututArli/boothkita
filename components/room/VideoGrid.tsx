@@ -427,7 +427,7 @@ export default function VideoGrid({
                 ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
                 : (role === 'host' && !partnerConnected) 
                   ? `⌛ ${t('room.waiting')}` 
-                  : myPhotos.length > 0 ? `🔄 ${t('video.retakeCapture')}` : `📸 ${t('video.startCapture')}`}
+                  : myPhotos.length > 0 ? `▶️ ${t('video.resumeCapture')}` : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>

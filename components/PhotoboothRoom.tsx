@@ -31,6 +31,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   const [roomTimeLeft, setRoomTimeLeft] = useState(0);
   const [isTimerExpanded, setIsTimerExpanded] = useState(false);
   const [showTailscaleWarning, setShowTailscaleWarning] = useState(false);
+  const [warningDismissed, setWarningDismissed] = useState(0);
   const [flash, setFlash] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -71,16 +72,18 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    // If the partner is joined (signaling works) but WebRTC hasn't connected for 12 seconds
+    // If the partner is joined (signaling works) but WebRTC hasn't connected
     if (partnerInfo && !isConnected) {
+      // Initial wait 12s. If they close it, wait 5s to pop back up.
+      const delay = warningDismissed > 0 ? 5000 : 12000;
       timeout = setTimeout(() => {
         setShowTailscaleWarning(true);
-      }, 12000);
+      }, delay);
     } else {
       setShowTailscaleWarning(false);
     }
     return () => clearTimeout(timeout);
-  }, [partnerInfo, isConnected]);
+  }, [partnerInfo, isConnected, warningDismissed]);
 
   useEffect(() => {
     if (phase === 'capturing') {
@@ -452,33 +455,27 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
       
       {showTailscaleWarning && (
         <div className="camera-error-modal" style={{ zIndex: 100 }}>
-          <div className="camera-error-content" style={{ maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff7e5f" strokeWidth="2" style={{ marginBottom: 16 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <div className="camera-error-content" style={{ position: 'relative', maxWidth: 420 }}>
+            <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 4, background: 'var(--surface-hover)', padding: 4, borderRadius: 100, border: '1px solid var(--border)' }}>
+              <button onClick={() => setLang('id')} style={{ padding: '4px 10px', border: 'none', borderRadius: 100, background: lang === 'id' ? 'var(--text)' : 'transparent', color: lang === 'id' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s' }}>ID</button>
+              <button onClick={() => setLang('en')} style={{ padding: '4px 10px', border: 'none', borderRadius: 100, background: lang === 'en' ? 'var(--text)' : 'transparent', color: lang === 'en' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s' }}>EN</button>
+            </div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff7e5f" strokeWidth="2" style={{ marginBottom: 16, marginTop: 12 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <h3 style={{ color: '#ff7e5f', marginBottom: 12 }}>{t('room.webrtcFailedTitle')}</h3>
             <p style={{ lineHeight: 1.5 }}>{t('room.webrtcFailedDesc')}</p>
             
-            <div style={{ marginTop: 24, textAlign: 'left', background: 'rgba(255,126,95,0.1)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,126,95,0.2)' }}>
-              <h4 style={{ color: '#ff7e5f', marginBottom: 8, fontSize: 14 }}>{t('guide.tailscale.title')}</h4>
-              <p style={{ fontSize: 13, marginBottom: 12 }}>{t('guide.tailscale.intro')}</p>
-              <ol className="guide-list guide-list-compact" style={{ fontSize: 13 }}>
-                <li>{t('guide.tailscale.step1')}</li>
-                <li>{t('guide.tailscale.step2')}</li>
-                <li>{t('guide.tailscale.step3')}</li>
-                <li>{t('guide.tailscale.step4')}</li>
-                <li>{t('guide.tailscale.step5')}</li>
-                <li>{t('guide.tailscale.step6')}</li>
-              </ol>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, marginTop: 24, width: '100%' }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 32, width: '100%' }}>
               <button 
-                onClick={() => window.open('https://tailscale.com/download', '_blank')} 
+                onClick={() => window.location.href = '/?guide=tailscale'} 
                 style={{ padding: '12px 16px', borderRadius: 100, border: 'none', background: '#ff7e5f', color: 'var(--bg)', fontWeight: 700, cursor: 'pointer', flex: 1, fontSize: 13 }}
               >
-                Download Tailscale
+                {t('guide.openShortcut')}
               </button>
               <button 
-                onClick={() => setShowTailscaleWarning(false)} 
+                onClick={() => {
+                  setShowTailscaleWarning(false);
+                  setWarningDismissed(Date.now());
+                }} 
                 style={{ padding: '12px 24px', borderRadius: 100, border: 'none', background: 'var(--surface-hover)', color: 'var(--text)', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
               >
                 {t('guide.close')}
