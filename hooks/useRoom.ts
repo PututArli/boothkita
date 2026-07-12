@@ -14,6 +14,58 @@ import {
 } from '@/lib/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+const playBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+};
+
+const playShutter = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+    gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+
+    const bufferSize = ctx.sampleRate * 0.1; 
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 1000;
+    const gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+    noise.connect(filter);
+    filter.connect(gain2);
+    gain2.connect(ctx.destination);
+    noise.start();
+  } catch(e) {}
+};
+
 const DEFAULT_STATE: RoomState = {
   layout: 'strip4',
   sessionCount: 4,
@@ -84,6 +136,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const captureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const roomExpiryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
+  const lastBeepRef = useRef(-1);
 
   // Use refs to avoid stale closures in callbacks
   const broadcastRef = useRef<((msg: RealtimeMessage) => void) | null>(null);
@@ -227,9 +280,17 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
 
       if (remaining > 0) {
         setCountdown(remaining);
+        
+        if (lastBeepRef.current !== remaining) {
+          playBeep();
+          lastBeepRef.current = remaining;
+        }
+
         countdownRef.current = setTimeout(updateVisuals, 100);
       } else {
         setCountdown(0);
+        lastBeepRef.current = -1;
+        playShutter();
         setCaptureRunId(prev => prev + 1);
         setPhase('capturing');
 

@@ -44,6 +44,7 @@ const dictionary = {
     'tutor.help': 'Need help? Contact me:',
     'tutor.close': 'Close Guide',
     'guide.close': 'Close',
+    'guide.openShortcut': 'Open Tailscale Guide',
     'guide.lobby.title': 'How to Use BoothKita',
     'guide.lobby.intro1': 'BoothKita is a real-time virtual photobooth strictly for two people.',
     'guide.lobby.intro2': 'You can take photos, arrange, and decorate them together. Important: All of your actions, choices, and inputs on the screen are fully synchronized with your partner in real-time!',
@@ -118,6 +119,9 @@ const dictionary = {
     'room.expiredDesc': 'The room session time has expired. Please create a new room to take more photos!',
     'room.timeLeft': 'Room ends in',
     'room.connectionIssue': 'Connection to the room is unstable. Please check your internet or refresh if it does not reconnect.',
+    
+    'room.webrtcFailedTitle': 'Connection Blocked',
+    'room.webrtcFailedDesc': 'Camera failed to connect! Because this is a direct P2P connection, you MUST use Tailscale VPN or be on the exact same WiFi network. Please turn on Tailscale and refresh the page.',
     
     // VideoGrid
     'video.full': 'Room is Full',
@@ -309,6 +313,7 @@ const dictionary = {
     'tutor.help': 'Butuh bantuan? Hubungi saya:',
     'tutor.close': 'Tutup Cara Menggunakan',
     'guide.close': 'Tutup',
+    'guide.openShortcut': 'Buka Panduan Tailscale',
     'guide.lobby.title': 'Cara Pakai BoothKita',
     'guide.lobby.intro1': 'BoothKita adalah photobooth virtual real-time khusus untuk 2 orang.',
     'guide.lobby.intro2': 'Kalian bisa berfoto, menyusun layout, dan menghias bersama. Perhatian: Segala aksi, pilihan, dan input yang kamu lakukan di layar akan langsung saling tersambung dan tersinkronisasi dengan partnermu!',
@@ -383,6 +388,8 @@ const dictionary = {
     'room.expiredDesc': 'Waktu sesi room ini sudah habis. Silakan buat room baru untuk berfoto lagi!',
     'room.timeLeft': 'Room berakhir dalam',
     'room.connectionIssue': 'Koneksi ke room sedang tidak stabil. Cek internet kamu atau refresh kalau tidak tersambung lagi.',
+    'room.webrtcFailedTitle': 'Koneksi Terblokir',
+    'room.webrtcFailedDesc': 'Kamera gagal terhubung! Karena ini adalah koneksi P2P langsung, kamu WAJIB menggunakan VPN Tailscale atau berada di jaringan WiFi yang sama persis. Harap aktifkan Tailscale dan segarkan halaman.',
     
     // VideoGrid
     'video.full': 'Ruangan Penuh',

@@ -39,6 +39,12 @@ export default function SectionGuide({
   }, [autoOpen]);
 
   useEffect(() => {
+    const handleOpenEvent = () => setOpen(true);
+    window.addEventListener('open-boothkita-guide', handleOpenEvent);
+    return () => window.removeEventListener('open-boothkita-guide', handleOpenEvent);
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {

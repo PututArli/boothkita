@@ -25,11 +25,14 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     partnerInfo, countdown, photoIndex, role, isInitialized, roomIssue,
     captureRunId, startSession, retakePhoto, onPhotoCaptured, updateState, handleReset, broadcast, participantId, hostTimeOffset,
   } = useRoom(roomId, roomCode, roomExpiresAt);
-  const { t } = useTranslation();
+  const { t, lang, setLang } = useTranslation();
 
   const [usePremiumTurn, setUsePremiumTurn] = useState(false);
   const [roomTimeLeft, setRoomTimeLeft] = useState(0);
   const [isTimerExpanded, setIsTimerExpanded] = useState(false);
+  const [showTailscaleWarning, setShowTailscaleWarning] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const getRemaining = () => {
@@ -65,6 +68,43 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
   }, []);
 
   const { localStream, remoteStream, streamTick, isConnected, facingMode, isMirrored, partnerMirrored, isMicOn, cameraError, retryCamera, toggleCamera, toggleMirror, toggleMic } = useWebRTC(roomCode, role === 'host', usePremiumTurn);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    // If the partner is joined (signaling works) but WebRTC hasn't connected for 12 seconds
+    if (partnerInfo && !isConnected) {
+      timeout = setTimeout(() => {
+        setShowTailscaleWarning(true);
+      }, 12000);
+    } else {
+      setShowTailscaleWarning(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [partnerInfo, isConnected]);
+
+  useEffect(() => {
+    if (phase === 'capturing') {
+      setFlash(true);
+      const timer = setTimeout(() => setFlash(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, captureRunId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -102,43 +142,58 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     }
 
     const captureVideo = (vid: HTMLVideoElement | null, mirrored: boolean) => {
+      const targetWidth = 800;
+      const targetHeight = 600;
+      const targetRatio = targetWidth / targetHeight;
+      
       const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 480;
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       const ctx = canvas.getContext('2d')!;
+      
       if (!vid || vid.readyState < 2 || !vid.videoWidth) {
         // No video ready — return a dark placeholder
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.font = 'bold 20px sans-serif';
+        ctx.font = 'bold 32px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('📷 ' + t('video.cameraUnavailable'), 320, 240);
+        ctx.fillText('📷 ' + t('video.cameraUnavailable'), canvas.width/2, canvas.height/2);
         return canvas.toDataURL('image/jpeg', 0.9);
       }
-      let width = vid.videoWidth;
-      let height = vid.videoHeight;
-      const MAX_WIDTH = 480;
-      if (width > MAX_WIDTH) {
-        height = Math.floor(height * (MAX_WIDTH / width));
-        width = MAX_WIDTH;
+      
+      const vWidth = vid.videoWidth;
+      const vHeight = vid.videoHeight;
+      const vRatio = vWidth / vHeight;
+      
+      let sourceWidth = vWidth;
+      let sourceHeight = vHeight;
+      let sourceX = 0;
+      let sourceY = 0;
+      
+      // Crop center to match exactly 4:3 (mimicking object-fit: cover)
+      if (vRatio > targetRatio) {
+        sourceWidth = vHeight * targetRatio;
+        sourceX = (vWidth - sourceWidth) / 2;
+      } else {
+        sourceHeight = vWidth / targetRatio;
+        sourceY = (vHeight - sourceHeight) / 2;
       }
-      canvas.width = width;
-      canvas.height = height;
-
+      
       ctx.save();
       if (roomState.videoFilter && roomState.videoFilter !== 'none') {
         ctx.filter = roomState.videoFilter;
       }
       if (mirrored) {
         ctx.scale(-1, 1);
-        ctx.drawImage(vid, -canvas.width, 0, canvas.width, canvas.height);
+        ctx.drawImage(vid, sourceX, sourceY, sourceWidth, sourceHeight, -canvas.width, 0, canvas.width, canvas.height);
       } else {
-        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(vid, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
       }
       ctx.restore();
-      return canvas.toDataURL('image/jpeg', 0.8);
+      
+      return canvas.toDataURL('image/jpeg', 0.9);
     };
 
     const myDataUrl = captureVideo(localVideoRef.current, isMirrored);
@@ -198,13 +253,26 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
             ))}
           </div>
 
-          <button onClick={copyLink} style={{ padding: '8px 16px', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid var(--border)', borderRadius: 100, fontSize: 14, fontWeight: 600, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 40, cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+          <button onClick={copyLink} style={{ padding: '12px 24px', background: copyDone ? '#4ade80' : 'var(--text)', border: 'none', borderRadius: 100, fontSize: 16, fontWeight: 700, color: copyDone ? '#000' : 'var(--bg)', display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 12, cursor: 'pointer', transition: 'all 0.3s', boxShadow: 'var(--accent-glow)' }}>
             {copyDone ? t('room.copied') : t('room.copyLink')}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            {copyDone ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            )}
           </button>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 40, padding: '0 20px', lineHeight: 1.5 }}>
+            Cara paling mudah: Tekan tombol <strong>Salin Link</strong> di atas, lalu kirim ke WhatsApp / DM / LINE partnermu!
+          </p>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, fontSize: 14, color: 'var(--text-muted)' }}>
-            <span style={{ width: 8, height: 8, border: '2px solid var(--text-muted)', borderRadius: '50%' }}></span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, fontSize: 14, color: partnerConnected ? '#4ade80' : 'var(--text-muted)', fontWeight: partnerConnected ? 700 : 500 }}>
+            {partnerConnected ? (
+              <span style={{ width: 10, height: 10, background: '#4ade80', borderRadius: '50%', boxShadow: '0 0 10px #4ade80' }}></span>
+            ) : (
+              <span style={{ width: 10, height: 10, border: '2px solid var(--text-muted)', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}>
+                <style>{`@keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.8); opacity: 0.5; } }`}</style>
+              </span>
+            )}
             {partnerConnected ? t('room.connected') : t('room.waiting')}
           </div>
 
@@ -382,6 +450,33 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
         </div>
       )}
       
+      {showTailscaleWarning && (
+        <div className="camera-error-modal" style={{ zIndex: 100 }}>
+          <div className="camera-error-content" style={{ maxWidth: 420 }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff7e5f" strokeWidth="2" style={{ marginBottom: 16 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <h3 style={{ color: '#ff7e5f', marginBottom: 12 }}>{t('room.webrtcFailedTitle')}</h3>
+            <p style={{ lineHeight: 1.5 }}>{t('room.webrtcFailedDesc')}</p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 24, width: '100%' }}>
+              <button 
+                onClick={() => {
+                  setShowTailscaleWarning(false);
+                  window.dispatchEvent(new Event('open-boothkita-guide'));
+                }} 
+                style={{ padding: '12px 16px', borderRadius: 100, border: 'none', background: '#ff7e5f', color: 'var(--bg)', fontWeight: 700, cursor: 'pointer', flex: 1, fontSize: 13 }}
+              >
+                {t('guide.openShortcut')}
+              </button>
+              <button 
+                onClick={() => setShowTailscaleWarning(false)} 
+                style={{ padding: '12px 24px', borderRadius: 100, border: 'none', background: 'var(--surface-hover)', color: 'var(--text)', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}
+              >
+                {t('guide.close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {cameraError && (
         <div className="camera-error-modal">
           <div className="camera-error-content">
@@ -395,6 +490,26 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
       )}
       
       {renderPhase()}
+      
+      {flash && (
+        <div style={{ position: 'fixed', inset: 0, background: 'white', zIndex: 9999, animation: 'flash-fade 0.5s ease-out forwards', pointerEvents: 'none' }}>
+          <style>{`@keyframes flash-fade { from { opacity: 1; } to { opacity: 0; } }`}</style>
+        </div>
+      )}
+      
+      <div style={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button onClick={toggleFullscreen} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--border)', backdropFilter: 'blur(10px)', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: isFullscreen ? 'var(--accent-glow)' : 'none' }} title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+          {isFullscreen ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          )}
+        </button>
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.1)', padding: 4, borderRadius: 100, backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+          <button onClick={() => setLang('id')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'id' ? 'var(--text)' : 'transparent', color: lang === 'id' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>ID</button>
+          <button onClick={() => setLang('en')} style={{ padding: '4px 12px', border: 'none', borderRadius: 100, background: lang === 'en' ? 'var(--text)' : 'transparent', color: lang === 'en' ? 'var(--bg)' : 'var(--text)', fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s' }}>EN</button>
+        </div>
+      </div>
     </>
   );
 }
