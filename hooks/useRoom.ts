@@ -244,7 +244,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     if (!mountedRef.current) return;
     switch (msg.type) {
       case 'partner_joined': {
-        const p = msg.payload as { role: 'host' | 'guest' };
+        const p = msg.payload as { role: 'host' | 'guest', phase?: SessionPhase };
         
         // Prevent infinite ping-pong! Only reply if this is a NEW partner joining.
         if (partnerInfoRef.current?.id !== msg.senderId || partnerInfoRef.current?.role !== p.role) {
@@ -254,18 +254,18 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
           setPartnerInfo(newInfo);
           
           if (isNewPartner) {
-            // Reply so they know we're here too
-            broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+            const partnerPhase = p.phase || 'waiting_partner';
+            const isPartnerAdvanced = partnerPhase !== 'waiting_partner' && partnerPhase !== 'setup_layout';
+
+            // Reply so they know we're here too, and tell them our phase
+            broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current, phase: phaseRef.current } });
             
-            // If I am the host, sync my current room state to the newly joined partner!
-            if (roleRef.current === 'host') {
-              broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
-              broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
-            }
-            
-            // Important logic fix: if someone reconnects/refreshes, don't let them drag us back to the start!
-            // If we are already in an advanced phase, tell them to catch up!
             if (phaseRef.current !== 'waiting_partner' && phaseRef.current !== 'setup_layout') {
+              // I am advanced! I dictate the state, phase, and photos to the newcomer!
+              broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
+              if (roleRef.current === 'host') {
+                broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
+              }
               broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
               
               // Restore their photo arrays so they don't get stuck with a blank UI
@@ -279,6 +279,10 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
                   photoIndex: photoIndexRef.current,
                 }
               });
+            } else if (roleRef.current === 'host' && !isPartnerAdvanced) {
+              // I am the host, and neither of us is advanced. I sync my state.
+              broadcastRef.current?.({ type: 'state_update', senderId: participantId, payload: roomStateRef.current });
+              broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
             }
           }
         }
@@ -467,7 +471,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             if (status === 'SUBSCRIBED') {
               setRoomIssue(null);
               await channel.track({ online_at: new Date().toISOString() });
-              broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current } });
+              broadcastRef.current?.({ type: 'partner_joined', senderId: participantId, payload: { role: roleRef.current, phase: phaseRef.current } });
               if (roleRef.current === 'host' && partnerInfoRef.current) {
                 broadcastRef.current?.({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
               }

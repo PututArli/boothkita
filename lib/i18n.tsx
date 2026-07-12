@@ -112,7 +112,7 @@ const dictionary = {
     'room.unmutePartner': '🔊 Tap to Hear Partner!',
     'room.expiredTitle': 'ROOM EXPIRED',
     'room.expiredHeading': 'This room has ended',
-    'room.expiredDesc': 'Photo rooms are active for 30 minutes to keep the server light.',
+    'room.expiredDesc': 'The room session time has expired. Please create a new room to take more photos!',
     'room.timeLeft': 'Room ends in',
     'room.connectionIssue': 'Connection to the room is unstable. Please check your internet or refresh if it does not reconnect.',
     
@@ -374,7 +374,7 @@ const dictionary = {
     'room.unmutePartner': '🔊 Nyalakan Suara Partner!',
     'room.expiredTitle': 'ROOM EXPIRED',
     'room.expiredHeading': 'Room ini sudah selesai',
-    'room.expiredDesc': 'Room foto aktif selama 30 menit agar server tetap ringan.',
+    'room.expiredDesc': 'Waktu sesi room ini sudah habis. Silakan buat room baru untuk berfoto lagi!',
     'room.timeLeft': 'Room berakhir dalam',
     'room.connectionIssue': 'Koneksi ke room sedang tidak stabil. Cek internet kamu atau refresh kalau tidak tersambung lagi.',
     
