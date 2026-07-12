@@ -11,6 +11,7 @@ interface SectionGuideProps {
   children?: ReactNode;
   className?: string;
   variant?: 'inline' | 'floating';
+  autoOpen?: boolean;
 }
 
 export default function SectionGuide({
@@ -19,6 +20,7 @@ export default function SectionGuide({
   children,
   className = '',
   variant = 'inline',
+  autoOpen = false,
 }: SectionGuideProps) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -27,7 +29,14 @@ export default function SectionGuide({
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (autoOpen) {
+      const hasSeenGuide = localStorage.getItem('boothkita_seen_guide');
+      if (!hasSeenGuide) {
+        setOpen(true);
+        localStorage.setItem('boothkita_seen_guide', 'true');
+      }
+    }
+  }, [autoOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,11 +64,13 @@ export default function SectionGuide({
             <X size={18} />
           </button>
         </div>
-        <ol className="guide-list">
-          {steps.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
+        {steps.length > 0 && (
+          <ol className="guide-list">
+            {steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        )}
         {children}
       </section>
     </div>

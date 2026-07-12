@@ -87,30 +87,19 @@ export default function HomePage() {
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50, display: 'flex', alignItems: 'center', gap: 8 }}>
         <SectionGuide
           title={t('guide.lobby.title')}
-          steps={[
-            t('guide.lobby.step1'),
-            t('guide.lobby.step2'),
-            t('guide.lobby.step3'),
-            t('guide.lobby.step4'),
-          ]}
+          steps={[]}
+          autoOpen={true}
         >
           <div className="guide-extra">
             <div style={{ marginBottom: 24, padding: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid var(--border)' }}>
               <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: 'var(--text)' }}>{t('guide.lobby.intro1')}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('guide.lobby.intro2')}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{t('guide.lobby.intro2')}</p>
+              <p style={{ fontSize: 13, color: '#ff7e5f', fontWeight: 600 }}>{t('guide.lobby.intro3')}</p>
             </div>
-            <h3>{t('tutor.downloadTitle')}</h3>
-            <p>{t('tutor.downloadDesc')}</p>
-            <div className="guide-link-grid">
-              {tailscaleDownloads.map(item => (
-                <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer">
-                  {item.label}
-                </a>
-              ))}
-            </div>
-            <div className="guide-subsection">
-              <h3>{t('guide.tailscale.title')}</h3>
-              <p>{t('guide.tailscale.intro')}</p>
+            
+            <div className="guide-subsection" style={{ marginBottom: 32 }}>
+              <h3 style={{ color: '#ff7e5f' }}>{t('guide.tailscale.title')}</h3>
+              <p style={{ fontWeight: 600 }}>{t('guide.tailscale.intro')}</p>
               <ol className="guide-list guide-list-compact">
                 <li>{t('guide.tailscale.step1')}</li>
                 <li>{t('guide.tailscale.step2')}</li>
@@ -118,6 +107,26 @@ export default function HomePage() {
                 <li>{t('guide.tailscale.step4')}</li>
                 <li>{t('guide.tailscale.step5')}</li>
                 <li>{t('guide.tailscale.step6')}</li>
+              </ol>
+              
+              <h4 style={{ marginTop: 16, marginBottom: 8, fontSize: 14 }}>{t('tutor.downloadTitle')}</h4>
+              <p style={{ fontSize: 12, marginBottom: 12, color: 'var(--text-muted)' }}>{t('tutor.downloadDesc')}</p>
+              <div className="guide-link-grid">
+                {tailscaleDownloads.map(item => (
+                  <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer">
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div className="guide-subsection">
+              <h3>{t('guide.waiting.title')}</h3>
+              <ol className="guide-list">
+                <li>{t('guide.lobby.step1')}</li>
+                <li>{t('guide.lobby.step2')}</li>
+                <li>{t('guide.lobby.step3')}</li>
+                <li>{t('guide.lobby.step4')}</li>
               </ol>
             </div>
           </div>
