@@ -29,6 +29,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
 
   const [usePremiumTurn, setUsePremiumTurn] = useState(false);
   const [roomTimeLeft, setRoomTimeLeft] = useState(0);
+  const [isTimerExpanded, setIsTimerExpanded] = useState(false);
 
   useEffect(() => {
     const getRemaining = () => {
@@ -344,9 +345,20 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
     <>
       <audio ref={remoteAudioRef} autoPlay style={{ width: 0, height: 0, position: 'absolute', opacity: 0 }} />
       {showRoomBadge && roomTimeLeft < 31536000000 && (
-        <div className={roomBadgeClass}>
-          <span>{t('room.timeLeft')}</span>
-          <strong>{roomTimeLabel}</strong>
+        <div 
+          className={roomBadgeClass}
+          style={{ cursor: 'pointer', pointerEvents: 'auto', padding: isTimerExpanded ? '8px 12px' : '8px', minWidth: isTimerExpanded ? 'auto' : '38px', justifyContent: 'center' }}
+          onClick={() => setIsTimerExpanded(!isTimerExpanded)}
+          title={isTimerExpanded ? '' : `${t('room.timeLeft')} ${roomTimeLabel}`}
+        >
+          {isTimerExpanded ? (
+            <>
+              <span>{t('room.timeLeft')}</span>
+              <strong>{roomTimeLabel}</strong>
+            </>
+          ) : (
+            <span style={{ fontSize: 16, margin: 0, padding: 0 }}>⏱️</span>
+          )}
         </div>
       )}
       {roomIssue === 'connection' && phase !== 'expired' && (
