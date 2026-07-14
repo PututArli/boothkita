@@ -214,6 +214,7 @@ const dictionary = {
     'decorate.undo': 'Undo',
     'decorate.redo': 'Redo',
     'decorate.delete': 'Delete',
+    'decorate.customColor': 'Custom Color',
 
     // Result
     'result.title': 'Final Result',
@@ -488,9 +489,10 @@ const dictionary = {
     'decorate.flip': 'Balik',
     'decorate.front': 'Depan',
     'decorate.backLayer': 'Belakang',
-    'decorate.undo': 'Undo',
-    'decorate.redo': 'Redo',
+    'decorate.undo': 'Batal',
+    'decorate.redo': 'Ulangi',
     'decorate.delete': 'Hapus',
+    'decorate.customColor': 'Warna Kustom',
 
     // Result
     'result.title': 'Hasil Akhir',

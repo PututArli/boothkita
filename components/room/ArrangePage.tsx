@@ -72,7 +72,6 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
       display: 'flex', flexDirection: 'column',
       alignItems: 'center',
       overflowY: 'auto',
-      padding: '40px 20px',
     }}>
       <style>{`
         .arrange-container {
@@ -81,6 +80,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           width: 100%;
           max-width: 1000px;
           justify-content: center;
+          padding: 0 20px 40px 20px;
         }
         .arrange-pool {
           flex: 1 1 400px;

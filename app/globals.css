@@ -1800,7 +1800,6 @@ input[type='range']::-webkit-slider-thumb {
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
-  padding: 24px;
   overflow-y: auto;
 }
 
@@ -2288,7 +2287,7 @@ input[type='range']::-webkit-slider-thumb {
   margin: 0 auto;
 }
 
-.decorate-text-controls input,
+.decorate-text-controls input:not([type='range']),
 .decorate-text-controls select {
   min-height: 40px;
   border-radius: 10px;
@@ -2399,7 +2398,7 @@ input[type='range']::-webkit-slider-thumb {
     margin: 0;
   }
 
-  .decorate-text-controls input,
+  .decorate-text-controls input:not([type='range']),
   .decorate-text-controls select {
     min-height: 46px;
   }
@@ -2687,7 +2686,7 @@ input[type='range']::-webkit-slider-thumb {
     gap: 8px;
   }
 
-  .decorate-text-controls input,
+  .decorate-text-controls input:not([type='range']),
   .decorate-text-controls select {
     min-height: 40px;
   }
@@ -2698,6 +2697,7 @@ input[type='range']::-webkit-slider-thumb {
     width: 100%;
     max-width: 100%;
     margin: 0;
+    padding-right: 16px;
   }
 
   .decorate-sticker-list button {

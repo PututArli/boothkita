@@ -40,7 +40,7 @@ const STICKERS = [
 
 const COLORS = ['#ff6b6b', '#f06595', '#cc5de8', '#845ef7', '#5c7cfa', '#339af0', '#20c997', '#51cf66', '#fcc419', '#ff922b', '#ffffff', '#000000'];
 const WIDTHS = [4, 8, 12];
-const FONT_OPTIONS = ['Plus Jakarta Sans', 'Georgia', 'Arial', 'Courier New'];
+const FONT_OPTIONS = ['Plus Jakarta Sans', 'Poppins', 'Inter', 'Roboto', 'Outfit', 'Caveat', 'Pacifico', 'Comic Neue', 'Georgia', 'Arial', 'Courier New'];
 
 function cloneSnapshot(snapshot: Snapshot): Snapshot {
   return {
@@ -817,6 +817,24 @@ export default function DecoratePage({
                     }}
                   />
                 ))}
+                <label
+                  className={!COLORS.includes(textColor) ? 'active' : ''}
+                  style={{
+                    background: !COLORS.includes(textColor) ? textColor : 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                    width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', flex: '0 0 auto', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  title={t('decorate.customColor')}
+                >
+                  <input
+                    type="color"
+                    value={COLORS.includes(textColor) ? '#ffffff' : textColor}
+                    onChange={(e) => {
+                      setTextColor(e.target.value);
+                      updateActiveText({ color: e.target.value });
+                    }}
+                    style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                  />
+                </label>
               </div>
               <div className="decorate-text-actions">
                 <button onClick={addOrUpdateText}>{selectedItem?.type === 'text' ? t('decorate.updateText') : t('decorate.addText')}</button>
@@ -832,6 +850,21 @@ export default function DecoratePage({
                 {COLORS.map(item => (
                   <button key={item} className={color === item ? 'active' : ''} style={{ background: item }} onClick={() => setColor(item)} />
                 ))}
+                <label
+                  className={!COLORS.includes(color) ? 'active' : ''}
+                  style={{
+                    background: !COLORS.includes(color) ? color : 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                    width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--border)', flex: '0 0 auto', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  title={t('decorate.customColor')}
+                >
+                  <input
+                    type="color"
+                    value={COLORS.includes(color) ? '#ffffff' : color}
+                    onChange={(e) => setColor(e.target.value)}
+                    style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                  />
+                </label>
               </div>
               <div className="decorate-draw-row">
                 {WIDTHS.map(width => (
