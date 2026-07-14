@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CapturedPhoto, LayoutKey, LAYOUTS, RoomState } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 import SectionGuide from '@/components/SectionGuide';
@@ -20,6 +20,15 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
   
   const selectedIndices = roomState.arrangeIndices || Array(count).fill(null);
   const activeSlot = roomState.arrangeActiveSlot || 0;
+  
+  const poolRef = useRef<HTMLDivElement>(null);
+
+  const scrollPool = (dir: 'left' | 'right') => {
+    if (poolRef.current) {
+      const amount = 200;
+      poolRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+    }
+  };
 
   const handleSelectPhoto = (photoIndex: number) => {
     const next = [...selectedIndices];
@@ -97,6 +106,8 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           align-items: center;
           gap: 12px;
           margin-bottom: 24px;
+        .pool-scroll-btn {
+          display: none !important;
         }
         @media (max-width: 768px) {
           .arrange-header {
@@ -122,9 +133,16 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           .pool-grid {
             display: flex;
             overflow-x: auto;
-            padding-bottom: 16px;
+            padding-bottom: 8px; /* reduced since scrollbar is hidden */
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .pool-grid::-webkit-scrollbar {
+            display: none;
+          }
+          .pool-scroll-btn {
+            display: flex !important;
           }
           .pool-grid > button {
             flex: 0 0 180px;
@@ -161,8 +179,19 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
 
       <div className="arrange-container">
         {/* Left: Pool of captured photos */}
-        <div className="arrange-pool">
-          <div className="pool-grid">
+        <div className="arrange-pool" style={{ position: 'relative' }}>
+          {/* Scroll Left Button (Mobile only) */}
+          <button 
+            type="button" 
+            onClick={() => scrollPool('left')}
+            className="pool-scroll-btn"
+            style={{ position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
+            aria-label="Scroll left"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+
+          <div className="pool-grid" ref={poolRef}>
             {myPhotos.map((p, i) => {
               const partnerP = partnerPhotos[i];
               const isUsed = selectedIndices.includes(i);
@@ -199,6 +228,17 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
               );
             })}
           </div>
+          
+          {/* Scroll Right Button (Mobile only) */}
+          <button 
+            type="button" 
+            onClick={() => scrollPool('right')}
+            className="pool-scroll-btn"
+            style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
+            aria-label="Scroll right"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
 
         {/* Right: Layout slots */}

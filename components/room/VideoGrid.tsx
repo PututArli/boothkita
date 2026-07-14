@@ -23,7 +23,7 @@ interface VideoGridProps {
   remoteVideoRef: RefObject<HTMLVideoElement>;
   myPhotos: CapturedPhoto[];
   partnerPhotos: CapturedPhoto[];
-  startSession: () => void;
+  startSession: (forceReset?: boolean) => void;
   partnerConnected: boolean;
   facingMode: 'user' | 'environment';
   isMirrored: boolean;
@@ -411,6 +411,17 @@ export default function VideoGrid({
                 ← {t('room.back')}
               </button>
             )}
+            {/* If midway, show Ulangi dari Awal (Retake) as secondary option */}
+            {!isCapturing && myPhotos.length > 0 && photoIndex < totalCount && (
+              <button
+                className="video-secondary-action"
+                onClick={() => startSession(true)}
+                style={{ padding: '16px 24px', fontSize: 16, borderRadius: 100, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
+              >
+                🔄 {t('video.retakeCapture')}
+              </button>
+            )}
+            
             {!isCapturing && myPhotos.length > 0 && onSkipToLayout && (
               <button
                 className="video-secondary-action"
@@ -423,7 +434,13 @@ export default function VideoGrid({
             <button
               id="btn-start"
               className="video-primary-action"
-              onClick={startSession}
+              onClick={() => {
+                if (myPhotos.length > 0 && photoIndex >= totalCount) {
+                  startSession(true); // Force reset if all photos are already taken
+                } else {
+                  startSession(false); // Otherwise resume or start
+                }
+              }}
               disabled={isCapturing || (role === 'host' && !partnerConnected)}
               style={{ padding: '16px 40px', fontSize: 18, borderRadius: 100, border: 'none', background: 'var(--text)', color: 'var(--bg)', fontWeight: 800, cursor: (isCapturing || (role === 'host' && !partnerConnected)) ? 'not-allowed' : 'pointer', opacity: (isCapturing || (role === 'host' && !partnerConnected)) ? 0.7 : 1, transition: 'all 0.2s', boxShadow: (isCapturing || (role === 'host' && !partnerConnected)) ? 'none' : 'var(--accent-glow)' }}
             >
@@ -431,7 +448,9 @@ export default function VideoGrid({
                 ? `📸 ${t('video.capturing')} ${photoIndex + 1}/${totalCount}...`
                 : (role === 'host' && !partnerConnected) 
                   ? `⌛ ${t('room.waiting')}` 
-                  : myPhotos.length > 0 ? `▶️ ${t('video.resumeCapture')}` : `📸 ${t('video.startCapture')}`}
+                  : myPhotos.length > 0 
+                    ? (photoIndex < totalCount ? `▶️ ${t('video.resumeCapture')}` : `🔄 ${t('video.retakeCapture')}`) 
+                    : `📸 ${t('video.startCapture')}`}
             </button>
           </div>
         </>
