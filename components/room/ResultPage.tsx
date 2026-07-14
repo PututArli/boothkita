@@ -6,7 +6,7 @@ import { composeDuoPhoto } from '@/lib/composition';
 import { useTranslation } from '@/lib/i18n';
 import SectionGuide from '@/components/SectionGuide';
 import { downloadDataUrl, downloadJpeg, downloadPoster, printImage } from '@/lib/exportUtils';
-import { Download, FileImage, Film, Image as ImageIcon, Printer, RotateCcw } from 'lucide-react';
+import { Download, FileImage, Film, Image as ImageIcon, Printer, RotateCcw, Share2 } from 'lucide-react';
 
 interface ResultPageProps {
   myPhotos: CapturedPhoto[];
@@ -99,6 +99,23 @@ export default function ResultPage({
   const handlePrintPdf = () => {
     if (!imgUrl) return;
     printImage(imgUrl, `photoboothduo-${roomCode}`);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.origin;
+    const title = 'BoothKita - Virtual Photobooth';
+    const text = t('result.shareMessage');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(`${text} ${url}`);
+      alert(t('result.shareCopied'));
+    }
   };
 
   const handleDownloadGif = async () => {
@@ -328,15 +345,42 @@ export default function ResultPage({
               </button>
             </div>
 
-            <button
-              onClick={onRetake}
-              className="result-retake-btn"
-            >
-              <RotateCcw size={16} />
-              {t('result.retake')}
-            </button>
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button
+                onClick={onRetake}
+                className="result-retake-btn"
+                style={{ flex: 1 }}
+              >
+                <RotateCcw size={16} />
+                {t('result.retake')}
+              </button>
+              
+              <button
+                onClick={handleShare}
+                className="result-retake-btn"
+                style={{ flex: 1, background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }}
+              >
+                <Share2 size={16} />
+                {t('result.share')}
+              </button>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Branding Footer */}
+      <div style={{
+        position: 'relative', zIndex: 1, width: '100%', textAlign: 'center', padding: '32px 20px',
+        borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 'auto',
+        fontSize: 12, color: 'var(--text-muted)'
+      }}>
+        <p style={{ marginBottom: 6 }}>
+          Built with <span style={{ color: '#ff6b98' }}>❤️</span> by{' '}
+          <a href="https://www.instagram.com/ar__lii?igsh=ZWhsZWZqZ21vcnEx" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 700, transition: 'opacity 0.2s' }}>
+            @ar__lii
+          </a>
+        </p>
+        <p style={{ opacity: 0.6 }}>&copy; {new Date().getFullYear()} BoothKita. All rights reserved.</p>
       </div>
 
       {/* Hidden canvas for composition */}

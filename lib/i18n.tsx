@@ -145,6 +145,7 @@ const dictionary = {
     'video.capturing': 'Capturing',
     'video.retakeCapture': 'Retake Capture',
     'video.resumeCapture': 'Resume Capture',
+    'video.bonusCapture': 'Take Bonus Photo',
     'video.startCapture': 'START CAPTURE',
     'video.skipToLayout': 'Skip to Layout',
     'video.partnerDisconnected': 'Partner disconnected',
@@ -231,6 +232,9 @@ const dictionary = {
     'result.processing': '⏳ Processing...',
     'result.downloadGif': 'Download GIF',
     'result.retake': 'Retake Photo',
+    'result.share': 'Share to Friends',
+    'result.shareMessage': 'Try BoothKita, a real-time virtual photobooth for two people!',
+    'result.shareCopied': 'Link copied to clipboard!',
 
     // Theme Backgrounds
     'theme.bg.white': 'White',
@@ -293,7 +297,7 @@ const dictionary = {
     'lobby.error.create': 'Gagal membuat ruang',
     'lobby.error.join': 'Kode ruangan tidak valid',
     'lobby.error.connection': 'Koneksi gagal',
-    'lobby.rejoin': 'masuk kembali ke ruangan',
+    'lobby.rejoin': 'masuk ke ruangan terakhir',
     
     // Tailscale Tutor (ID)
     'tutor.button': '🌐 Cara Menggunakan BoothKita',
@@ -418,6 +422,7 @@ const dictionary = {
     'video.capturing': 'Memotret',
     'video.retakeCapture': 'Ulangi Foto',
     'video.resumeCapture': 'Lanjutkan Sesi',
+    'video.bonusCapture': 'Ambil Foto Bonus',
     'video.startCapture': 'MULAI MEMOTRET',
     'video.skipToLayout': 'Lewati ke Layout',
     'video.partnerDisconnected': 'Partner terputus',
@@ -504,6 +509,9 @@ const dictionary = {
     'result.processing': '⏳ Memproses...',
     'result.downloadGif': 'Unduh GIF',
     'result.retake': 'Foto Ulang',
+    'result.share': 'Bagikan ke Teman',
+    'result.shareMessage': 'Cobain BoothKita yuk, photobooth virtual berdua yang bisa langsung share layar realtime!',
+    'result.shareCopied': 'Link berhasil disalin ke clipboard!',
 
     // Theme Backgrounds
     'theme.bg.white': 'Putih',

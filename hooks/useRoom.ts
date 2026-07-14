@@ -390,32 +390,14 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             }
             
             if (phaseRef.current === 'countdown' || phaseRef.current === 'capturing') {
-              // Mid-capture: restart the loop. Use real remaining time so the reconnecting
-              // user syncs to the current position rather than restarting from full timer.
-              const now = Date.now();
-              const remainingMs = captureAtRef.current - now;
-              const timerSeconds = remainingMs > 0
-                ? Math.ceil(remainingMs / 1000)
-                : (roomStateRef.current.timer || 3); // fallback to configured timer
-              const layoutCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
-              const totalCount = Math.max(6, layoutCount + 2);
-              const mode = captureModeRef.current;
-              
-              if (mode === 'retake') {
-                broadcastRef.current?.({
-                  type: 'retake_start',
-                  senderId: participantId,
-                  payload: { index: photoIndexRef.current, timer: timerSeconds, totalCount },
-                });
-              } else {
-                broadcastRef.current?.({
-                  type: 'photo_start',
-                  senderId: participantId,
-                  payload: { timer: timerSeconds, totalCount, nextIndex: photoIndexRef.current },
-                });
-              }
-              // scheduleCapture uses roleRef internally — both sides restart correctly
-              scheduleCapture(timerSeconds, totalCount, roleRef.current === 'host', mode);
+              // The user requested that if someone refreshes mid-capture, the session
+              // should pause cleanly so they can resume manually (Ambil Foto Bonus / Lanjutkan).
+              clearCountdown();
+              setCountdown(0);
+              setCaptureRunId(0);
+              setPhase('ready_to_capture');
+              broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: 'ready_to_capture' });
+
 
             } else {
               broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
