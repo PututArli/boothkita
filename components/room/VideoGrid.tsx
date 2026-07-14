@@ -4,6 +4,7 @@ import { RefObject, useState, useEffect } from 'react';
 import { RoomState, SessionPhase, ParticipantInfo, CapturedPhoto, CAMERA_FILTER_PRESETS } from '@/lib/types';
 import { useTranslation } from '@/lib/i18n';
 import SectionGuide from '@/components/SectionGuide';
+import DraggableWidget from '@/components/DraggableWidget';
 
 interface VideoGridProps {
   localStream: MediaStream | null;
@@ -168,18 +169,18 @@ export default function VideoGrid({
               </div>
             )}
 
-            {/* Left sidebar: Grid & Filter */}
+            {/* Left sidebar: Grid & Filter — draggable */}
             {!isCapturing && (
-              <>
+              <DraggableWidget storageKey="vg-sidebar" defaultX={8} defaultY={120}>
+                {/* Tools panel */}
                 <div
                   className="camera-tools-panel"
                   style={{
-                    position: 'absolute', top: '50%', left: 16,
-                    transform: 'translateY(-50%)', display: 'flex',
-                    flexDirection: 'column', gap: 8, zIndex: 50,
-                    background: 'rgba(255,255,255,0.1)', padding: '12px 8px',
-                    borderRadius: 24, backdropFilter: 'blur(10px)',
-                    border: '1px solid var(--border)',
+                    display: 'flex', flexDirection: 'column', gap: 8,
+                    background: 'rgba(20,20,30,0.65)', padding: '10px 8px',
+                    borderRadius: 20, backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
                   }}
                 >
                   <button
@@ -191,7 +192,7 @@ export default function VideoGrid({
                     <span style={{ fontSize: 10, fontWeight: 600 }}>{t('video.grid')}</span>
                   </button>
 
-                  <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                  <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '2px 0' }} />
 
                   <button
                     onClick={() => setShowFilterMenu(!showFilterMenu)}
@@ -201,8 +202,8 @@ export default function VideoGrid({
                     <div style={{ fontSize: 20 }}>🎨</div>
                     <span style={{ fontSize: 10, fontWeight: 600 }}>{t('video.filter')}</span>
                   </button>
-                  
-                  <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '4px 0' }} />
+
+                  <div style={{ width: '100%', height: 1, background: 'var(--border)', margin: '2px 0' }} />
 
                   <button
                     onClick={() => {
@@ -223,21 +224,22 @@ export default function VideoGrid({
                   </button>
                 </div>
 
+                {/* Filter menu — inside widget so it follows when dragged */}
                 {showFilterMenu && (
                   <div
                     className="filter-menu-panel"
                     style={{
-                      position: 'absolute', top: '50%', left: 72,
-                      transform: 'translateY(-50%)', width: 230,
+                      position: 'absolute', top: 0, left: 'calc(100% + 8px)',
+                      width: 230,
                       background: 'var(--surface)', border: '1px solid var(--border)',
                       borderRadius: 16, padding: 16, boxShadow: 'var(--shadow-lg)',
-                      zIndex: 60, maxHeight: 'min(320px, calc(100% - 32px))',
+                      zIndex: 60, maxHeight: 'min(320px, calc(100vh - 32px))',
                       display: 'flex', flexDirection: 'column',
                     }}
                   >
                     <div className="filter-menu-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <span style={{ fontWeight: 600, fontSize: 14 }}>{t('video.filter')}</span>
-                      <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none' }}>×</button>
+                      <button onClick={() => setShowFilterMenu(false)} style={{ color: 'var(--text-muted)', fontSize: 18, background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
                     </div>
                     <div className="filter-options-list" style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', paddingRight: 4 }}>
                       {CAMERA_FILTER_PRESETS.map(f => (
@@ -261,7 +263,7 @@ export default function VideoGrid({
                     </div>
                   </div>
                 )}
-              </>
+              </DraggableWidget>
             )}
 
             {/* Local video */}
@@ -282,18 +284,20 @@ export default function VideoGrid({
                 </div>
               )}
 
-              {/* Camera controls */}
-              <div className="camera-controls" style={{ position: 'absolute', bottom: 16, right: 16, display: 'flex', gap: 8, zIndex: 10 }}>
-                <button onClick={toggleMic} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={isMicOn ? t('video.micOff') : t('video.micOn')}>
-                  {isMicOn ? '🎤' : '🔇'}
-                </button>
-                <button onClick={toggleMirror} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={t('video.mirror')}>
-                  🪞
-                </button>
-                <button onClick={toggleCamera} style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18 }} title={t('video.switchCamera')}>
-                  🔄
-                </button>
-              </div>
+              {/* Camera controls — draggable */}
+              <DraggableWidget storageKey="vg-cam-controls" defaultX={9999} defaultY={9999}>
+                <div className="camera-controls" style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={toggleMic} style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} title={isMicOn ? t('video.micOff') : t('video.micOn')}>
+                    {isMicOn ? '🎤' : '🔇'}
+                  </button>
+                  <button onClick={toggleMirror} style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} title={t('video.mirror')}>
+                    🪞
+                  </button>
+                  <button onClick={toggleCamera} style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', fontSize: 18, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} title={t('video.switchCamera')}>
+                    🔄
+                  </button>
+                </div>
+              </DraggableWidget>
 
               {/* Camera error overlay */}
               {cameraError && (

@@ -1357,10 +1357,8 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .camera-controls {
-    bottom: 8px !important;
-    right: 8px !important;
-    transform: scale(0.85);
-    transform-origin: bottom right;
+    gap: 6px !important;
+    transform: none !important;
   }
 
   .video-cell-label {
@@ -3039,8 +3037,6 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .camera-controls {
-    bottom: 10px !important;
-    right: 10px !important;
     gap: 6px !important;
     transform: none !important;
   }
@@ -3052,12 +3048,6 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .camera-tools-panel {
-    position: fixed !important;
-    left: 10px !important;
-    right: auto !important;
-    top: 96px !important;
-    bottom: auto !important;
-    transform: none !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
@@ -3238,8 +3228,6 @@ input[type='range']::-webkit-slider-thumb {
 
 @media (max-width: 420px) {
   .camera-tools-panel {
-    top: 90px !important;
-    left: 8px !important;
     width: 48px !important;
     max-width: 48px !important;
   }
