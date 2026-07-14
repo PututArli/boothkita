@@ -343,27 +343,18 @@ export default function ResultPage({
                 <Printer size={16} />
                 {t('result.downloadPdf')}
               </button>
+
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button
-                onClick={onRetake}
-                className="result-retake-btn"
-                style={{ flex: 1 }}
-              >
-                <RotateCcw size={16} />
-                {t('result.retake')}
-              </button>
-              
-              <button
-                onClick={handleShare}
-                className="result-retake-btn"
-                style={{ flex: 1, background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }}
-              >
-                <Share2 size={16} />
-                {t('result.share')}
-              </button>
-            </div>
+            <button
+              onClick={onRetake}
+              className="result-retake-btn"
+              style={{ marginTop: 16 }}
+            >
+              <RotateCcw size={16} />
+              {t('result.retake')}
+            </button>
           </div>
         </div>
       </div>
@@ -380,7 +371,21 @@ export default function ResultPage({
             @ar__lii
           </a>
         </p>
-        <p style={{ opacity: 0.6 }}>&copy; {new Date().getFullYear()} BoothKita. All rights reserved.</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: 0.6 }}>
+          <span>&copy; {new Date().getFullYear()} BoothKita. All rights reserved.</span>
+          <span>•</span>
+          <button 
+            onClick={handleShare}
+            style={{ 
+              background: 'none', border: 'none', color: 'inherit', padding: 0, 
+              fontSize: 'inherit', cursor: 'pointer', textDecoration: 'underline',
+              display: 'inline-flex', alignItems: 'center', gap: 4
+            }}
+          >
+            <Share2 size={12} />
+            {t('result.share')}
+          </button>
+        </div>
       </div>
 
       {/* Hidden canvas for composition */}

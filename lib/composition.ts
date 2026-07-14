@@ -111,35 +111,10 @@ function drawThemedBackground(
   frameBg: RoomState['frameBg'],
   border: string
 ) {
-  const borderDef = BORDER_DEFS[border];
   const palette = getFramePalette(frameBg, border);
-
-  if (borderDef || isBrightFrame(frameBg)) {
-    const grad = ctx.createLinearGradient(0, 0, w, h);
-    grad.addColorStop(0, palette.backgroundStart);
-    grad.addColorStop(0.55, palette.paper);
-    grad.addColorStop(1, palette.backgroundEnd);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.save();
-    ctx.globalAlpha = borderDef ? 0.22 : 0.18;
-    ctx.fillStyle = borderDef?.accentSoft || 'rgba(255,255,255,0.5)';
-    const band = Math.max(80, Math.round(Math.min(w, h) * 0.08));
-    for (let x = -h; x < w + h; x += band * 2) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x + band, 0);
-      ctx.lineTo(x + h + band, h);
-      ctx.lineTo(x + h, h);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-    return palette;
-  }
-
+  
   drawBackground(ctx, w, h, frameBg);
+  
   return palette;
 }
 
@@ -260,7 +235,7 @@ function drawBackground(
         }
       }
     } else if (frameBg.val === 'denim') {
-      ctx.fillStyle = '#1e3799';
+      ctx.fillStyle = '#2c3e50';
       ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = 'rgba(255,255,255,0.05)';
       for (let i = 0; i < 2000; i++) {
@@ -449,6 +424,14 @@ function drawFooter(
     );
     ctx.globalAlpha = 1.0;
   }
+
+  // Permanent tiny watermark (Hard to remove without coding knowledge)
+  ctx.globalAlpha = 0.3;
+  ctx.font = `600 ${Math.max(10, Math.round(footerH * 0.1))}px 'Plus Jakarta Sans', sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('BoothKita © @ar__lii', w - 12, h - 12);
+  ctx.globalAlpha = 1.0;
 
   ctx.shadowBlur = 0;
 }

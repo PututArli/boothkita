@@ -16,6 +16,18 @@ const MiniLayout = ({ type }: { type: LayoutKey }) => {
       </div>
     );
   }
+  if (type.startsWith('horizontal')) {
+    const count = parseInt(type.replace('horizontal', ''));
+    return (
+      <div style={{
+        width: 120, height: 44, background: '#fff', borderRadius: 2, padding: 3, display: 'flex', gap: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} style={{ flex: 1, background: 'var(--surface-light, #e2e8f0)', borderRadius: 1 }} />
+        ))}
+      </div>
+    );
+  }
   if (type === 'grid2x2') {
     return (
       <div style={{
@@ -111,7 +123,7 @@ export function SetupLayout({ roomState, updateState, nextStep, prevStep, role }
                   <MiniLayout type={key as LayoutKey} />
                 </div>
                 <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)' }}>
-                  {key === 'strip2' ? t('layout.2_pics') : key === 'strip3' ? t('layout.3_pics') : key === 'strip4' ? t('layout.4_pics') : key === 'strip5' ? t('layout.5_pics') : key === 'grid2x2' ? t('layout.2x2_grid') : key === 'grid3x2' ? t('layout.3x2_grid') : t('layout.single')}
+                  {key === 'strip2' ? t('layout.2_pics') : key === 'strip3' ? t('layout.3_pics') : key === 'strip4' ? t('layout.4_pics') : key === 'strip5' ? t('layout.5_pics') : key === 'grid2x2' ? t('layout.2x2_grid') : key === 'grid3x2' ? t('layout.3x2_grid') : key === 'horizontal3' ? 'Horizontal 3' : key === 'horizontal4' ? 'Horizontal 4' : t('layout.single')}
                 </div>
               </div>
             );

@@ -13,6 +13,7 @@ import { SetupLayout, SetupTheme } from './room/WizardScreens';
 import { ArrangePage } from './room/ArrangePage';
 import SectionGuide from './SectionGuide';
 import DraggableWidget from './DraggableWidget';
+import LanguageToggle from './LanguageToggle';
 
 interface Props {
   roomId: string;
@@ -213,7 +214,7 @@ export default function PhotoboothRoom({ roomId, roomCode, roomExpiresAt }: Prop
 
   const partnerConnected = !!partnerInfo || isConnected;
   const layoutCount = LAYOUTS[roomState.layout as LayoutKey]?.count || 3;
-  const totalCount = Math.max(6, layoutCount + 2);
+  const totalCount = layoutCount;
   const roomMinutes = Math.floor(roomTimeLeft / 60000);
   const roomSeconds = Math.floor((roomTimeLeft % 60000) / 1000);
   const roomTimeLabel = `${roomMinutes}:${roomSeconds.toString().padStart(2, '0')}`;

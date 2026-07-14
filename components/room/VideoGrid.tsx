@@ -88,6 +88,7 @@ export default function VideoGrid({
       if (localVideoRef.current.srcObject !== localStream) {
         localVideoRef.current.srcObject = localStream;
       }
+      localVideoRef.current.play().catch(e => console.error('Local video play error:', e));
     }
   }, [localStream, localVideoRef]);
 
@@ -96,6 +97,7 @@ export default function VideoGrid({
       if (remoteVideoRef.current.srcObject !== remoteStream) {
         remoteVideoRef.current.srcObject = remoteStream;
       }
+      remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e));
     }
   }, [remoteStream, remoteVideoRef]);
 
@@ -256,7 +258,12 @@ export default function VideoGrid({
                             fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
                           }}
                         >
-                          <span style={{ width: 34, height: 24, borderRadius: 6, display: 'block', background: 'linear-gradient(135deg, #f8c8d8, #84fab0)', filter: f.style, border: '1px solid var(--border)' }} />
+                          <span style={{ 
+                            width: 34, height: 24, borderRadius: 6, display: 'block', 
+                            backgroundImage: 'url("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80")',
+                            backgroundSize: 'cover', backgroundPosition: 'center',
+                            filter: f.style, border: '1px solid var(--border)' 
+                          }} />
                           <span>{f.label}</span>
                         </button>
                       ))}

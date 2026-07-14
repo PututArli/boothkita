@@ -15,7 +15,17 @@ function saveBlob(blob: Blob, fileName: string) {
   link.href = url;
   link.download = fileName;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
@@ -105,9 +115,12 @@ export async function downloadPoster(dataUrl: string, fileName: string, width: n
 }
 
 export function printImage(dataUrl: string, title: string) {
+  const blob = dataUrlToBlob(dataUrl);
+  const blobUrl = URL.createObjectURL(blob);
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    downloadDataUrl(dataUrl, `${title}.png`);
+    saveBlob(blob, `${title}.png`);
     return;
   }
 
@@ -133,7 +146,7 @@ export function printImage(dataUrl: string, title: string) {
   printWindow.document.close();
   
   const img = printWindow.document.createElement('img');
-  img.src = dataUrl;
+  img.src = blobUrl;
   img.alt = title;
   
   const doPrint = () => {
@@ -148,5 +161,11 @@ export function printImage(dataUrl: string, title: string) {
   
   printWindow.onafterprint = () => {
     printWindow.close();
+    URL.revokeObjectURL(blobUrl);
   };
+  
+  // Fallback for iOS/mobile if onafterprint doesn't fire
+  setTimeout(() => {
+    URL.revokeObjectURL(blobUrl);
+  }, 60000);
 }
