@@ -5,17 +5,22 @@
 
 -- 1. ROOMS table
 create table if not exists rooms (
-  id          uuid primary key default gen_random_uuid(),
-  room_code   text not null unique,
-  status      text not null default 'waiting' check (status in ('waiting', 'active', 'done')),
-  created_at  timestamptz not null default now(),
-  expires_at  timestamptz not null default (now() + interval '30 minutes')
+  id             uuid primary key default gen_random_uuid(),
+  room_code      text not null unique,
+  status         text not null default 'waiting' check (status in ('waiting', 'active', 'done')),
+  created_at     timestamptz not null default now(),
+  expires_at     timestamptz not null default (now() + interval '30 minutes'),
+  last_active_at timestamptz not null default now()
 );
 
 -- Index for fast lookup by code
 create index if not exists idx_rooms_code on rooms(room_code);
 create index if not exists idx_rooms_expires on rooms(expires_at);
 create index if not exists idx_rooms_created_at on rooms(created_at);
+create index if not exists idx_rooms_last_active on rooms(last_active_at);
+
+-- Migration: add last_active_at to existing tables (safe to run on existing DB)
+alter table rooms add column if not exists last_active_at timestamptz not null default now();
 
 -- 2. ROOM PARTICIPANTS table
 create table if not exists room_participants (
@@ -61,11 +66,13 @@ create policy "participants_insert" on room_participants
 -- or handle in API
 -- ============================================================
 
--- Optional: function to clean expired rooms
+-- Cleanup function: deletes rooms that are expired OR have been inactive for 5+ minutes
 create or replace function cleanup_expired_rooms()
 returns void language plpgsql as $$
 begin
-  delete from rooms where expires_at < now();
+  delete from rooms
+  where expires_at < now()
+     or last_active_at < (now() - interval '5 minutes');
 end;
 $$;
 

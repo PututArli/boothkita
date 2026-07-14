@@ -15,11 +15,16 @@ export async function cleanupExpiredRooms() {
   const now = new Date().toISOString();
   const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
+  // Delete rooms that are either:
+  // 1. Past their expiry date, OR
+  // 2. Have had no heartbeat for 5+ minutes (last_active_at is stale — room is abandoned)
+  //    — this catches unlimited rooms that were left empty
   await supabase
     .from('rooms')
     .delete()
-    .or(`expires_at.lte.${now},and(status.eq.waiting,created_at.lte.${fiveMinsAgo})`);
+    .or(`expires_at.lte.${now},last_active_at.lte.${fiveMinsAgo}`);
 }
+
 
 export function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

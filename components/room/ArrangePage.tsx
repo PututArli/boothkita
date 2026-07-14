@@ -98,6 +98,9 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           grid-template-columns: 1fr 1fr;
           gap: 12px;
         }
+        .pool-scroll-nav {
+          display: none;
+        }
         .arrange-header {
           width: 100%;
           max-width: 1000px;
@@ -106,8 +109,6 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           align-items: center;
           gap: 12px;
           margin-bottom: 24px;
-        .pool-scroll-btn {
-          display: none !important;
         }
         @media (max-width: 768px) {
           .arrange-header {
@@ -133,20 +134,25 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
           .pool-grid {
             display: flex;
             overflow-x: auto;
-            padding-bottom: 8px; /* reduced since scrollbar is hidden */
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            gap: 10px;
+            padding: 4px 2px 8px;
           }
           .pool-grid::-webkit-scrollbar {
             display: none;
           }
-          .pool-scroll-btn {
-            display: flex !important;
-          }
           .pool-grid > button {
-            flex: 0 0 180px;
+            flex: 0 0 160px;
             scroll-snap-align: start;
+          }
+          .pool-scroll-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
           }
           .arrange-preview {
             max-width: 100%;
@@ -179,18 +185,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
 
       <div className="arrange-container">
         {/* Left: Pool of captured photos */}
-        <div className="arrange-pool" style={{ position: 'relative' }}>
-          {/* Scroll Left Button (Mobile only) */}
-          <button 
-            type="button" 
-            onClick={() => scrollPool('left')}
-            className="pool-scroll-btn"
-            style={{ position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
-            aria-label="Scroll left"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-
+        <div className="arrange-pool">
           <div className="pool-grid" ref={poolRef}>
             {myPhotos.map((p, i) => {
               const partnerP = partnerPhotos[i];
@@ -228,17 +223,31 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
               );
             })}
           </div>
-          
-          {/* Scroll Right Button (Mobile only) */}
-          <button 
-            type="button" 
-            onClick={() => scrollPool('right')}
-            className="pool-scroll-btn"
-            style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: 36, height: 36, alignItems: 'center', justifyContent: 'center', color: 'var(--text)', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
-            aria-label="Scroll right"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
+
+          {/* Mobile-only scroll nav — sits below the grid in normal flow */}
+          <div className="pool-scroll-nav">
+            <button
+              type="button"
+              onClick={() => scrollPool('left')}
+              aria-label="Scroll left"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 100, padding: '6px 14px', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              prev
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
+              swipe or tap arrows
+            </span>
+            <button
+              type="button"
+              onClick={() => scrollPool('right')}
+              aria-label="Scroll right"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 100, padding: '6px 14px', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              next
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
         </div>
 
         {/* Right: Layout slots */}

@@ -149,6 +149,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const myPhotosRef = useRef<CapturedPhoto[]>([]);
   const partnerPhotosRef = useRef<CapturedPhoto[]>([]);
   const photoIndexRef = useRef<number>(0);
+  const captureAtRef = useRef<number>(0); // tracks absolute timestamp of next capture
 
   // Keep refs in sync
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
@@ -159,6 +160,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   useEffect(() => { myPhotosRef.current = myPhotos; }, [myPhotos]);
   useEffect(() => { partnerPhotosRef.current = partnerPhotos; }, [partnerPhotos]);
   useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
+
 
   const broadcast = useCallback((msg: RealtimeMessage) => {
     channelRef.current?.send({
@@ -171,13 +173,29 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   // Keep broadcastRef in sync
   useEffect(() => { broadcastRef.current = broadcast; }, [broadcast]);
 
+  // Heartbeat: ping the server every 60s to keep the room alive in the DB
+  useEffect(() => {
+    if (!roomCode || !isInitialized) return;
+    const ping = () => {
+      fetch('/api/rooms/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode }),
+      }).catch(() => {}); // fire-and-forget, ignore errors
+    };
+    ping(); // ping immediately on connect
+    const interval = setInterval(ping, 60_000);
+    return () => clearInterval(interval);
+  }, [roomCode, isInitialized]);
+
+  // Host clock sync: broadcast host time to guest every 60s so they can compute clock offset
   useEffect(() => {
     if (role !== 'host') return;
     const interval = setInterval(() => {
       if (partnerInfoRef.current && broadcastRef.current) {
         broadcastRef.current({ type: 'sync_time', senderId: participantId, payload: { hostTime: Date.now() } });
       }
-    }, 60000);
+    }, 60_000);
     return () => clearInterval(interval);
   }, [role, participantId]);
 
@@ -267,12 +285,16 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     };
   }, [roomExpiresAt, expireRoom]);
 
-  const scheduleCapture = useCallback((timerSeconds: number, totalCount: number, isHost: boolean, mode: 'session' | 'retake' = captureModeRef.current) => {
+  const scheduleCapture = useCallback((timerSeconds: number, totalCount: number, _isHostParam: boolean, mode: 'session' | 'retake' = captureModeRef.current) => {
+    // NOTE: We always derive isHost from roleRef.current (live ref) rather than the
+    // _isHostParam that was captured at call-site — this prevents the stale-closure bug
+    // where the host refreshes and the guest calls scheduleCapture(... isHost=false).
     clearCountdown();
     captureModeRef.current = mode;
     setPhase('countdown');
 
     const localCaptureAt = Date.now() + timerSeconds * 1000;
+    captureAtRef.current = localCaptureAt;
 
     const updateVisuals = () => {
       if (!mountedRef.current) return;
@@ -294,7 +316,8 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
         setCaptureRunId(prev => prev + 1);
         setPhase('capturing');
 
-        if (isHost) {
+        // Use live roleRef so host always drives the loop, even after reconnect
+        if (roleRef.current === 'host') {
           captureTimeoutRef.current = setTimeout(() => {
             if (!mountedRef.current) return;
             setPhotoIndex(prevIndex => {
@@ -323,6 +346,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
     updateVisuals();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearCountdown, participantId]);
+
 
   const handleReset = useCallback((andBroadcast = true) => {
     setMyPhotos([]);
@@ -366,27 +390,33 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
             }
             
             if (phaseRef.current === 'countdown' || phaseRef.current === 'capturing') {
-              // If we are mid-capture, we must forcefully restart the loop for both of us!
-              // Otherwise if the Host refreshed, the Host's timer loop is dead and the session gets stuck.
-              const timer = roomStateRef.current.timer || 3;
+              // Mid-capture: restart the loop. Use real remaining time so the reconnecting
+              // user syncs to the current position rather than restarting from full timer.
+              const now = Date.now();
+              const remainingMs = captureAtRef.current - now;
+              const timerSeconds = remainingMs > 0
+                ? Math.ceil(remainingMs / 1000)
+                : (roomStateRef.current.timer || 3); // fallback to configured timer
               const layoutCount = LAYOUTS[roomStateRef.current.layout as LayoutKey]?.count || 4;
               const totalCount = Math.max(6, layoutCount + 2);
               const mode = captureModeRef.current;
               
               if (mode === 'retake') {
-                broadcastRef.current?.({ 
-                  type: 'retake_start', 
-                  senderId: participantId, 
-                  payload: { index: photoIndexRef.current, timer, totalCount } 
+                broadcastRef.current?.({
+                  type: 'retake_start',
+                  senderId: participantId,
+                  payload: { index: photoIndexRef.current, timer: timerSeconds, totalCount },
                 });
               } else {
-                broadcastRef.current?.({ 
-                  type: 'photo_start', 
-                  senderId: participantId, 
-                  payload: { timer, totalCount, nextIndex: photoIndexRef.current } 
+                broadcastRef.current?.({
+                  type: 'photo_start',
+                  senderId: participantId,
+                  payload: { timer: timerSeconds, totalCount, nextIndex: photoIndexRef.current },
                 });
               }
-              scheduleCapture(timer, totalCount, roleRef.current === 'host', mode);
+              // scheduleCapture uses roleRef internally — both sides restart correctly
+              scheduleCapture(timerSeconds, totalCount, roleRef.current === 'host', mode);
+
             } else {
               broadcastRef.current?.({ type: 'phase_update', senderId: participantId, payload: phaseRef.current });
             }
@@ -437,7 +467,8 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
         const timer = payload.timer ?? (payload.captureAt ? Math.max(1, Math.ceil((payload.captureAt - Date.now()) / 1000)) : 3);
         clearCountdown();
         setPhotoIndex(payload.nextIndex);
-        scheduleCapture(timer, payload.totalCount, false, 'session');
+        // Always use roleRef (live) for isHost — guards against reconnect race conditions
+        scheduleCapture(timer, payload.totalCount, roleRef.current === 'host', 'session');
         break;
       }
       case 'retake_start': {
@@ -445,6 +476,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
         const timer = payload.timer ?? (payload.captureAt ? Math.max(1, Math.ceil((payload.captureAt - Date.now()) / 1000)) : 3);
         clearCountdown();
         setPhotoIndex(payload.index);
+        // Always use roleRef (live) — host must drive even if it received its own broadcast after reconnect
         scheduleCapture(timer, payload.totalCount, roleRef.current === 'host', 'retake');
         break;
       }
