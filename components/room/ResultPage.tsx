@@ -38,6 +38,8 @@ export default function ResultPage({
   const [downloadDone, setDownloadDone] = useState(false);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [gifDone, setGifDone] = useState(false);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoDone, setVideoDone] = useState(false);
 
   const markSaved = () => {
     setDownloadDone(true);
@@ -164,6 +166,81 @@ export default function ResultPage({
     } catch (e) {
       console.error(e);
       setIsGeneratingGif(false);
+    }
+  };
+
+  const handleDownloadVideo = async () => {
+    if (isGeneratingVideo || !selectedIndices.length) return;
+    setIsGeneratingVideo(true);
+
+    try {
+      const tempCanvas = document.createElement('canvas');
+      
+      // Initialize first frame so canvas has dimensions before capturing stream
+      const firstI = selectedIndices[0];
+      await composeDuoPhoto({
+        myPhotos: [myPhotos[firstI]?.dataUrl || ''],
+        partnerPhotos: [partnerPhotos[firstI]?.dataUrl || ''],
+        state: { ...roomState, layout: 'single' },
+        canvas: tempCanvas
+      });
+
+      // @ts-ignore
+      const stream = tempCanvas.captureStream(30);
+      
+      let mimeType = '';
+      if (typeof MediaRecorder !== 'undefined') {
+        mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+      }
+
+      if (!mimeType) {
+        alert('Browser Anda tidak mendukung download video MP4/WebM secara langsung.');
+        setIsGeneratingVideo(false);
+        return;
+      }
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      const stopped = new Promise((resolve) => {
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          a.download = `photoboothduo-${roomCode}-${Date.now()}.${ext}`;
+          a.click();
+          URL.revokeObjectURL(url);
+          setVideoDone(true);
+          setIsGeneratingVideo(false);
+          setTimeout(() => setVideoDone(false), 2000);
+          resolve(null);
+        };
+      });
+
+      recorder.start();
+
+      for (let f = 0; f < selectedIndices.length; f++) {
+        if (f > 0) {
+          const i = selectedIndices[f];
+          await composeDuoPhoto({
+            myPhotos: [myPhotos[i]?.dataUrl || ''],
+            partnerPhotos: [partnerPhotos[i]?.dataUrl || ''],
+            state: { ...roomState, layout: 'single' },
+            canvas: tempCanvas
+          });
+        }
+        await new Promise(r => setTimeout(r, 600));
+      }
+
+      await new Promise(r => setTimeout(r, 600)); // wait for last frame
+      recorder.stop();
+      await stopped;
+    } catch (e) {
+      console.error(e);
+      setIsGeneratingVideo(false);
     }
   };
 
@@ -315,6 +392,15 @@ export default function ResultPage({
               >
                 <Film size={16} />
                 {gifDone ? t('result.saved') : isGeneratingGif ? t('result.processing') : t('result.downloadGif')}
+              </button>
+
+              <button
+                onClick={handleDownloadVideo}
+                disabled={isGeneratingVideo || !composed}
+                className="result-export-btn"
+              >
+                <Film size={16} />
+                {videoDone ? t('result.saved') : isGeneratingVideo ? t('result.processing') : t('result.downloadVideo')}
               </button>
 
               <button
