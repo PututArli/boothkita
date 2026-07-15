@@ -657,7 +657,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
   const startSession = useCallback((forceReset = false) => {
     const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
     const layoutCount = layout?.count || 4;
-    const captureCount = layoutCount; // No bonus photos per user request
+    const captureCount = layoutCount + 2; // Add 2 extra photos for choice
     
     if (forceReset !== true && myPhotosRef.current.length > 0 && photoIndexRef.current > 0 && photoIndexRef.current < captureCount) {
       // Resume interrupted session
@@ -703,7 +703,7 @@ export function useRoom(roomId: string, roomCode: string, roomExpiresAt?: string
 
     const layout = LAYOUTS[roomStateRef.current.layout as LayoutKey];
     const layoutCount = layout?.count || 4;
-    const totalCount = layoutCount;
+    const totalCount = layoutCount + 2;
     const timerSeconds = roomStateRef.current.timer || 3;
 
     clearCountdown();

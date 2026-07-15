@@ -223,19 +223,17 @@ export default function ResultPage({
       recorder.start();
 
       for (let f = 0; f < selectedIndices.length; f++) {
-        if (f > 0) {
-          const i = selectedIndices[f];
-          await composeDuoPhoto({
-            myPhotos: [myPhotos[i]?.dataUrl || ''],
-            partnerPhotos: [partnerPhotos[i]?.dataUrl || ''],
-            state: { ...roomState, layout: 'single' },
-            canvas: tempCanvas
-          });
-        }
-        await new Promise(r => setTimeout(r, 600));
+        const i = selectedIndices[f];
+        await composeDuoPhoto({
+          myPhotos: [myPhotos[i]?.dataUrl || ''],
+          partnerPhotos: [partnerPhotos[i]?.dataUrl || ''],
+          state: { ...roomState, layout: 'single' },
+          canvas: tempCanvas
+        });
+        // Wait so the recorder captures this frame clearly (800ms per photo)
+        await new Promise(r => setTimeout(r, 800));
       }
 
-      await new Promise(r => setTimeout(r, 600)); // wait for last frame
       recorder.stop();
       await stopped;
     } catch (e) {
