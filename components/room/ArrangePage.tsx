@@ -247,7 +247,7 @@ export function ArrangePage({ myPhotos, partnerPhotos, layoutKey, roomState, upd
               prev
             </button>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
-              swipe or tap arrows
+              {t('arrange.swipeHint')}
             </span>
             <button
               type="button"

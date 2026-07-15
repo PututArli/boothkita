@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.110.0",
     "gif.js": "^0.2.0",
     "lucide-react": "^1.23.0",
+    "mp4-muxer": "^5.2.2",
     "next": "13.5.7",
     "next-themes": "^0.4.6",
     "react": "^18",

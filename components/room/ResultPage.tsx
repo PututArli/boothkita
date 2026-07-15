@@ -124,7 +124,7 @@ export default function ResultPage({
     setIsGeneratingVideo(true);
 
     try {
-      // --- 1. Pre-render all frames to offscreen canvases ---
+      // --- 1. Pre-render all frames pixel-perfect ---
       const frames: HTMLCanvasElement[] = [];
       for (const idx of selectedIndices) {
         const fc = document.createElement('canvas');
@@ -136,83 +136,140 @@ export default function ResultPage({
         });
         frames.push(fc);
       }
+      if (frames.length === 0) { setIsGeneratingVideo(false); return; }
 
-      if (frames.length === 0) {
-        setIsGeneratingVideo(false);
-        return;
-      }
+      const W = frames[0].width;
+      const H = frames[0].height;
+      // Width and height must be even for H.264
+      const encW = W % 2 === 0 ? W : W + 1;
+      const encH = H % 2 === 0 ? H : H + 1;
 
-      // --- 2. Create recording canvas with matching size ---
-      const recCanvas = document.createElement('canvas');
-      recCanvas.width = frames[0].width;
-      recCanvas.height = frames[0].height;
-      const recCtx = recCanvas.getContext('2d')!;
+      // --- 2. Try WebCodecs + mp4-muxer (true MP4, best quality) ---
+      const supportsWebCodecs = typeof (window as any).VideoEncoder !== 'undefined';
 
-      // --- 3. Pick best supported mimeType ---
-      const candidates = [
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
-        'video/webm',
-        'video/mp4',
-      ];
-      const mimeType = candidates.find(m => {
-        try { return MediaRecorder.isTypeSupported(m); } catch { return false; }
-      }) || '';
+      if (supportsWebCodecs) {
+        const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
+        const FRAME_MS = 900;
 
-      if (!mimeType) {
-        alert('Browser Anda tidak mendukung download video. Gunakan Chrome atau Firefox.');
-        setIsGeneratingVideo(false);
-        return;
-      }
+        const target = new ArrayBufferTarget();
+        const muxer = new Muxer({
+          target,
+          video: { codec: 'avc', width: encW, height: encH },
+          fastStart: 'in-memory',
+        });
 
-      // --- 4. Start recording ---
-      // @ts-ignore
-      const stream = recCanvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4_000_000 });
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+        const chunks: EncodedVideoChunk[] = [];
+        const encoder = new (window as any).VideoEncoder({
+          output: (chunk: EncodedVideoChunk, meta: EncodedVideoChunkMetadata) => {
+            muxer.addVideoChunk(chunk, meta);
+          },
+          error: (e: Error) => console.error('Encoder error:', e),
+        });
 
-      const stopped = new Promise<void>((resolve) => {
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: mimeType });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-          a.download = `boothkita-${roomCode}-${Date.now()}.${ext}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-          setVideoDone(true);
+        encoder.configure({
+          codec: 'avc1.640028', // H.264 High Profile
+          width: encW,
+          height: encH,
+          bitrate: 20_000_000,
+          framerate: 1, // 1fps — each frame = 1 second duration
+        });
+
+        const encCanvas = document.createElement('canvas');
+        encCanvas.width = encW;
+        encCanvas.height = encH;
+        const encCtx = encCanvas.getContext('2d')!;
+
+        for (let f = 0; f < frames.length; f++) {
+          encCtx.clearRect(0, 0, encW, encH);
+          encCtx.drawImage(frames[f], 0, 0);
+
+          // Repeat each frame at ~30fps for FRAME_MS duration for smooth playback
+          const totalFrames = Math.round(FRAME_MS / 1000 * 30);
+          for (let rep = 0; rep < totalFrames; rep++) {
+            const timestamp = (f * FRAME_MS + rep * (1000 / 30)) * 1000; // microseconds
+            const vf = new (window as any).VideoFrame(encCanvas, { timestamp, duration: Math.round(1_000_000 / 30) });
+            encoder.encode(vf, { keyFrame: rep === 0 });
+            vf.close();
+          }
+        }
+
+        await encoder.flush();
+        muxer.finalize();
+
+        const buffer = target.buffer;
+        const blob = new Blob([buffer], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `boothkita-${roomCode}-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      } else {
+        // --- 3. Fallback: captureStream WebM for older browsers ---
+        const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+        const mimeType = candidates.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch { return false; } }) || '';
+        if (!mimeType) {
+          alert('Browser tidak mendukung download video. Gunakan Chrome 94+ atau Firefox.');
           setIsGeneratingVideo(false);
-          setTimeout(() => setVideoDone(false), 2000);
-          resolve();
-        };
-      });
+          return;
+        }
 
-      recorder.start(100); // collect data every 100ms
+        const recCanvas = document.createElement('canvas');
+        recCanvas.width = W; recCanvas.height = H;
+        const recCtx = recCanvas.getContext('2d', { alpha: false })!;
 
-      // --- 5. Paint each frame onto recording canvas with delay ---
-      const FRAME_DURATION_MS = 900;
-      for (const frame of frames) {
-        recCtx.clearRect(0, 0, recCanvas.width, recCanvas.height);
-        recCtx.drawImage(frame, 0, 0);
-        // Use requestAnimationFrame to flush to stream, then wait
-        await new Promise<void>(r => requestAnimationFrame(() => r()));
-        await new Promise(r => setTimeout(r, FRAME_DURATION_MS));
+        // @ts-ignore
+        const stream = recCanvas.captureStream(0);
+        // @ts-ignore
+        const videoTrack: any = stream.getVideoTracks()[0];
+        const bitrate = Math.max(16_000_000, W * H * 16);
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: bitrate });
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+        const stopped = new Promise<void>((resolve) => {
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `boothkita-${roomCode}-${Date.now()}.webm`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            resolve();
+          };
+        });
+
+        recorder.start(200);
+        for (const frame of frames) {
+          recCtx.drawImage(frame, 0, 0);
+          if (typeof videoTrack?.requestFrame === 'function') videoTrack.requestFrame();
+          let elapsed = 0;
+          while (elapsed < 900) {
+            await new Promise(r => setTimeout(r, 50));
+            elapsed += 50;
+            if (typeof videoTrack?.requestFrame === 'function') videoTrack.requestFrame();
+          }
+        }
+        await new Promise(r => setTimeout(r, 300));
+        recorder.stop();
+        await stopped;
       }
 
-      // Hold last frame briefly before stopping
-      await new Promise(r => setTimeout(r, 200));
-      recorder.stop();
-      await stopped;
+      setVideoDone(true);
+      setIsGeneratingVideo(false);
+      setTimeout(() => setVideoDone(false), 2000);
 
     } catch (e) {
       console.error('Video error:', e);
       setIsGeneratingVideo(false);
     }
   };
+
+
 
   return (
     <div style={{
