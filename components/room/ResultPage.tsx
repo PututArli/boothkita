@@ -36,8 +36,8 @@ export default function ResultPage({
   const [imgUrl, setImgUrl] = useState('');
   const [composed, setComposed] = useState(false);
   const [downloadDone, setDownloadDone] = useState(false);
-  const [isGeneratingApng, setIsGeneratingApng] = useState(false);
-  const [apngDone, setApngDone] = useState(false);
+  const [isGeneratingGif, setIsGeneratingGif] = useState(false);
+  const [gifDone, setGifDone] = useState(false);
 
   const markSaved = () => {
     setDownloadDone(true);
@@ -119,17 +119,19 @@ export default function ResultPage({
   };
 
 
-  const handleDownloadApng = async () => {
-    if (isGeneratingApng || !selectedIndices.length) return;
-    setIsGeneratingApng(true);
+  const handleDownloadGif = async () => {
+    if (isGeneratingGif || !selectedIndices.length) return;
+    setIsGeneratingGif(true);
 
     try {
       // @ts-ignore
-      const UPNG = require('upng-js');
-
-      const frameBuffers: ArrayBuffer[] = [];
-      let W = 0;
-      let H = 0;
+      const GIF = require('gif.js');
+      const gif = new (GIF.default || GIF)({
+        workers: 4,
+        quality: 1,        // 1 = best quality
+        workerScript: '/gif.worker.js',
+        dither: false,
+      });
 
       for (const idx of selectedIndices) {
         const fc = document.createElement('canvas');
@@ -139,33 +141,27 @@ export default function ResultPage({
           state: { ...roomState, layout: 'single' },
           canvas: fc,
         });
-        W = fc.width;
-        H = fc.height;
-        const ctx = fc.getContext('2d')!;
-        const imageData = ctx.getImageData(0, 0, W, H);
-        frameBuffers.push(imageData.data.buffer);
+        gif.addFrame(fc, { copy: true, delay: 900 });
       }
 
-      // Encode as APNG — 0 colors = full lossless color, delay 900ms per frame
-      const delays = selectedIndices.map(() => 900);
-      const apngBuffer = UPNG.encode(frameBuffers, W, H, 0, delays);
+      gif.on('finished', (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `boothkita-${roomCode}-${Date.now()}.gif`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setGifDone(true);
+        setIsGeneratingGif(false);
+        setTimeout(() => setGifDone(false), 2000);
+      });
 
-      const blob = new Blob([apngBuffer], { type: 'image/apng' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `boothkita-${roomCode}-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-      setApngDone(true);
-      setIsGeneratingApng(false);
-      setTimeout(() => setApngDone(false), 2000);
+      gif.render();
     } catch (e) {
-      console.error('APNG error:', e);
-      setIsGeneratingApng(false);
+      console.error('GIF error:', e);
+      setIsGeneratingGif(false);
     }
   };
 
@@ -315,12 +311,12 @@ export default function ResultPage({
               </button>
 
               <button
-                onClick={handleDownloadApng}
-                disabled={isGeneratingApng || !composed}
+                onClick={handleDownloadGif}
+                disabled={isGeneratingGif || !composed}
                 className="result-export-btn"
               >
                 <Film size={16} />
-                {apngDone ? t('result.saved') : isGeneratingApng ? t('result.processing') : t('result.downloadAnimated')}
+                {gifDone ? t('result.saved') : isGeneratingGif ? t('result.processing') : t('result.downloadGif')}
               </button>
 
               <button
